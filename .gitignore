@@ -1,0 +1,13 @@
+*.pyc
+.*.swp
+.#*
+#*#
+*~
+*DS_Store
+*cc.so
+*cc.d
+*C.so
+*C.d
+*.pcm
+*.png
+*.pdf
