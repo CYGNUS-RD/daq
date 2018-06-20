@@ -110,6 +110,7 @@ This task containes no graphs.
 This task accesses data from the following folders :
 <ul>
 <li type="circle">Event
+<li type="circle">RawOutput
 </ul>
 <h4>More Info</h4>
 <p>
@@ -166,6 +167,7 @@ The CYGAnalyzer incorporates the following folder structure :
 <li type="circle"><a href="#EventFolder"><b>Event</b></a>
 <li type="circle"><a href="#HitFolder"><b>Hit</b></a>
 <li type="circle"><a href="#LightClusterFolder"><b>LightCluster</b></a>
+<li type="circle"><a href="#RawOutputFolder"><b>RawOutput</b></a>
 <li type="circle"><a href="#AnalyzerConfigParametersFolder"><b>AnalyzerConfigParameters</b></a>
 </ul>
 The bold folders are data folders. The others are only used to structure the frame work.
@@ -245,6 +247,21 @@ The CYGAnalyzer incorporates the following support folders :
 
 
 <hr size="1">
+<h3><a name=RawOutputFolder class="object">RawOutput</a></h3>
+<p>
+<br>
+<p>
+<u>Fields</u>
+<table summary="Table showing fields in RawOutput folder">
+<tr class="cont"><td>Name</td><td>Type</td><td>Description</td></tr>
+<tr class="even"><td>&nbsp;CamPicture&nbsp;</td><td>&nbsp;TH2F&nbsp;</td><td>&nbsp;Camera picture&nbsp;</td></tr>
+<tr class="odd"><td>&nbsp;PMT&nbsp;</td><td>&nbsp;TGraph&nbsp;</td><td>&nbsp;Analog PMT waveform&nbsp;</td></tr>
+</table>
+<p>
+<a href="#top">top</a>, <a href="#folders">Folders</a>
+
+
+<hr size="1">
 <h3><a name=AnalyzerConfigParametersFolder class="object">AnalyzerConfigParameters</a></h3>
 <p>
 folder for configuration parameters<br>
@@ -282,6 +299,7 @@ In brackets are the folders, which are filled to the branch.
 <li type="disc">DataTree
 <ul>
 <li type="circle">lightclusters (LightCluster)
+<li type="circle">rawoutputs (RawOutput)
 </ul>
 </ul>
 <p>
