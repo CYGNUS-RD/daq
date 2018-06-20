@@ -119,6 +119,16 @@
 	<FieldComment>Number of photons</FieldComment>
       </Field>
     </Folder>
+    <Folder>
+      <FolderName>RawOutput</FolderName>
+      <NoResetByFramework>false</NoResetByFramework>
+      <NoResetModifiedByFramework>false</NoResetModifiedByFramework>
+      <Field>
+	<FieldName>CamPicture</FieldName>
+	<FieldType>TH2F</FieldType>
+	<FieldComment>Camera picture</FieldComment>
+      </Field>
+    </Folder>
   </Folders>
 
   <!--TASKS-->
@@ -138,6 +148,10 @@
       <Branch>
         <BranchName>lightclusters</BranchName>
         <RelatedFolder>LightCluster</RelatedFolder>
+      </Branch>
+      <Branch>
+        <BranchName>rawoutputs</BranchName>
+        <RelatedFolder>RawOutput</RelatedFolder>
       </Branch>
     </Tree>
   </Trees>
