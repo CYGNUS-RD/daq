@@ -104,9 +104,8 @@ void CYGTReadData::Event()
     Waveform *wfdgtz = event->GetDGTZWaveformAt(k);
     wfdgtz->RemoveSignal();
 
-    Double_t tmpv[4096], tmpt[4096];
-      
-    for(Int_t j=0;j<4096;j++){
+    Double_t tmpv[50000], tmpt[50000];
+    for(Int_t j=0;j<50000;j++){
 
       if(k==0) wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(j);
       else  wdata = gAnalyzer->GetMidasDAQ()->GetDIG1BankAt(j);
@@ -117,8 +116,8 @@ void CYGTReadData::Event()
       
     }
     
-    wfdgtz->SetNPoints(4096);
-    wfdgtz->Set(4096,tmpt,tmpv);
+    wfdgtz->SetNPoints(50000);
+    wfdgtz->Set(50000,tmpt,tmpv);
 
   }
 
@@ -130,7 +129,7 @@ void CYGTReadData::Event()
   event->SetCamPictureSize(1);
   event->GetCamPictureAt(0)->SetNPixels(NPX,NPY);    
 
-  /*
+
   //FULL PICTURE
   Int_t ip=0;
   for(Int_t ix=0;ix<NPX;ix++){
@@ -148,19 +147,29 @@ void CYGTReadData::Event()
     }
 
   }
-  */
-  
+
+  /*
   ///SPARSE
   for(Int_t ip=0;ip<gAnalyzer->GetMidasDAQ()->GetCAM0BankEntries();ip+=3){
 
     UInt_t ix = (UInt_t)(gAnalyzer->GetMidasDAQ()->GetCAM0BankAt(ip));
     UInt_t iy = (UInt_t)(gAnalyzer->GetMidasDAQ()->GetCAM0BankAt(ip+1));
     camdata = gAnalyzer->GetMidasDAQ()->GetCAM0BankAt(ip+2);
-    
+
     Double_t pixel_data = camdata + 0.0;
 
     event->GetCamPictureAt(0)->SetDataAt(ix,iy,pixel_data);
     
+  }
+  */
+  ofstream outfile("tmp.dat");
+
+  Picture *pic = event->GetCamPictureAt(0);
+  for(Int_t ix=0;ix<NPX;ix++){
+    for(Int_t iy=0;iy<NPY;iy++){
+      outfile << (int)(pic->GetDataAt(ix,iy)) << "  " ;
+    }
+    outfile << endl;
   }
   
 }
