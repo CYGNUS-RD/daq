@@ -51,9 +51,10 @@ if __name__ == '__main__':
     parser = OptionParser(usage='%prog DataTree1.root,...,DataTreeN.root [opts] ')
     parser.add_option('-o',   '--outdir', dest='outdir', type="string", default='./', help='directory where storing the ROOT files with the dump the TH1 and TH2');
     parser.add_option(        '--max-entries', dest='maxEntries', type='int', default=-1, help='Maximum number of events to process (default is all)');
-
     (options, args) = parser.parse_args()
 
+    print "args = ",args
     for infile in args:
-        conv = MidasToPlainROOTConverter(args[0],options)
+        print "infile = ",infile
+        conv = MidasToPlainROOTConverter(infile,options)
         conv.dumpAllPicsRAW()
