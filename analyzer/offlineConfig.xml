@@ -70,7 +70,7 @@
         <MaxMemory>100000000</MaxMemory>
         <Tree>
           <TreeName>DataTree</TreeName>
-          <Read>false</Read>
+          <Read>true</Read>
           <Write>true</Write>
           <Fill>true</Fill>
           <CompressionLevel>1</CompressionLevel>
@@ -84,6 +84,11 @@
           <SaveConfiguration>false</SaveConfiguration>
           <Branch>
             <BranchName>lightclusters</BranchName>
+            <Active>true</Active>
+            <Read>true</Read>
+          </Branch>
+          <Branch>
+            <BranchName>rawoutputs</BranchName>
             <Active>true</Active>
             <Read>true</Read>
           </Branch>
@@ -125,7 +130,7 @@
 
         <Task>
           <TaskName>WriteData</TaskName>
-          <Active>false</Active>
+          <Active>true</Active>
         </Task>
       </Tasks>
     </Analyzer>

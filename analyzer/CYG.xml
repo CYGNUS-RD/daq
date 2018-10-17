@@ -119,6 +119,31 @@
 	<FieldComment>Number of photons</FieldComment>
       </Field>
     </Folder>
+    <Folder>
+      <FolderName>RawOutput</FolderName>
+      <NoResetByFramework>false</NoResetByFramework>
+      <NoResetModifiedByFramework>false</NoResetModifiedByFramework>
+      <Include>
+	<IncludeName>TH2F.h</IncludeName>
+	<IncludeType>local</IncludeType>
+      </Include>
+      <Include>
+	<IncludeName>TGraph.h</IncludeName>
+	<IncludeType>local</IncludeType>
+      </Include>
+      <Field>
+	<FieldName>CamPicture</FieldName>
+	<FieldType>TH2F</FieldType>
+	<InheritTObject>true</InheritTObject>
+	<FieldComment>Camera picture</FieldComment>
+      </Field>
+      <Field>
+	<FieldName>PMT</FieldName>
+	<FieldType>TGraph</FieldType>
+	<InheritTObject>true</InheritTObject>
+	<FieldComment>Analog PMT waveform</FieldComment>
+      </Field>
+    </Folder>
   </Folders>
 
   <!--TASKS-->
@@ -138,6 +163,10 @@
       <Branch>
         <BranchName>lightclusters</BranchName>
         <RelatedFolder>LightCluster</RelatedFolder>
+      </Branch>
+      <Branch>
+        <BranchName>rawoutputs</BranchName>
+        <RelatedFolder>RawOutput</RelatedFolder>
       </Branch>
     </Tree>
   </Trees>
