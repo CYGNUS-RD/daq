@@ -29,6 +29,7 @@ class Picture : public TObject {
   void SetData(Double_t** data);
   void SetData(Double_t* data);
   void SetDataAt(Int_t px, Int_t py, Double_t data);
+  Double_t GetDataAt(Int_t px, Int_t py) { return fData[px*fNpy + py]; }
 
   TImage* GetImage();
   TH2F* GetHisto();

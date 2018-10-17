@@ -30,7 +30,7 @@
     </Online>
 
     <Paths>
-      <InputFilePath>/Users/emanuele/data/cygnus/daq/</InputFilePath>
+      <InputFilePath>/Users/emanuele/Work/data/cygnus/fng2018/</InputFilePath>
       <OutputFilePath>./results/</OutputFilePath>
       <OutputFileOption>RECREATE</OutputFileOption>
       <MakeOutputDirectory>false</MakeOutputDirectory>
