@@ -33,10 +33,8 @@ inline Bool_t operator!=(const CYGEvent &lhs, const CYGEvent &rhs) { return !(lh
 class CYGEvent : public TObject
 {
 protected:
-   Waveform*   * DGTZWaveform;           // Sense wire waveforms
-   Int_t         DGTZWaveformSize;       // ! number of elements of DGTZWaveform
-   Picture*    * CamPicture;             // Camera pictures
-   Int_t         CamPictureSize;         // ! number of elements of CamPicture
+   TClonesArray* DGTZWaveform;           // Sense wire waveforms
+   TClonesArray* CamPicture;             // Camera pictures
    TClonesArray* PMTWaveform;            // Analog waveforms
    Int_t         EventTime;              // event Unix time
    Bool_t        fModified;              //! Modified Folder Flag
@@ -56,12 +54,12 @@ public:
    // Warning! All fields may not be copied.
    CYGEvent& operator=(const CYGEvent &c);
 
-   Waveform*      GetDGTZWaveformAt(Int_t indx) const;
-   Waveform*    * GetDGTZWaveform() const           { return DGTZWaveform;           }
-   Int_t          GetDGTZWaveformSize() const           { return DGTZWaveformSize;           }
-   Picture*       GetCamPictureAt(Int_t indx) const;
-   Picture*     * GetCamPicture() const             { return CamPicture;             }
-   Int_t          GetCamPictureSize() const             { return CamPictureSize;             }
+   Waveform     * GetDGTZWaveformAt(Int_t indx) const;
+   TClonesArray*  GetDGTZWaveform() const           { return DGTZWaveform;           }
+   Int_t          GetDGTZWaveformSize() const           { return DGTZWaveform->GetEntriesFast();           }
+   Picture      * GetCamPictureAt(Int_t indx) const;
+   TClonesArray*  GetCamPicture() const             { return CamPicture;             }
+   Int_t          GetCamPictureSize() const             { return CamPicture->GetEntriesFast();             }
    Waveform     * GetPMTWaveformAt(Int_t indx) const;
    TClonesArray*  GetPMTWaveform() const            { return PMTWaveform;            }
    Int_t          GetPMTWaveformSize() const            { return PMTWaveform->GetEntriesFast();            }
@@ -69,11 +67,7 @@ public:
 
    virtual Bool_t         isModified();
 
-   void SetDGTZWaveformAt          (Int_t indx,Waveform*     DGTZWaveform_value);
-   void SetDGTZWaveform          (Waveform*   * DGTZWaveform_value          ) { DGTZWaveform = DGTZWaveform_value          ;           SetModified(true); }
    void SetDGTZWaveformSize(Int_t number);
-   void SetCamPictureAt            (Int_t indx,Picture*      CamPicture_value);
-   void SetCamPicture            (Picture*    * CamPicture_value            ) { CamPicture = CamPicture_value            ;             SetModified(true); }
    void SetCamPictureSize(Int_t number);
    void SetPMTWaveformSize(Int_t number);
    void SetEventTime             (Int_t         EventTime_value             ) { EventTime              = EventTime_value;              SetModified(true); }
