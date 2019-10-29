@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 #include <iostream>
 #include <unistd.h>
 #include "midas.h"
@@ -165,6 +166,7 @@ MVME_INTERFACE *gVme = 0;
 int gDGTZ;
 char *buffer_dgtz = NULL;
 double DGTZ_OFFSET[2] = {0.,0.};
+int ndgtz = 50000;
 #endif
 
 #ifdef HAVE_CAMERA
@@ -176,12 +178,17 @@ int gDisBase   = 0xEE000000;
 int gTdcBase   = 0x33330000;
 int gDigBase   = 0x22220000;
 
+
 /*-- Frontend Init -------------------------------------------------*/
 
 INT frontend_init()
 {
+
+  int vmeidx=0;
+  
   /* put any hardware initialization here */
 #ifdef HAVE_V1761
+  vmeidx=1;
   CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,0,0,gDigBase,&gDGTZ);
   if(ret != CAEN_DGTZ_Success) {
     printf("Can't open digitizer -- Error %d\n",ret);
@@ -192,7 +199,7 @@ INT frontend_init()
 
   CaenBrdgSetPar(cvV1718,0);
 
-  int status = mvme_open(&gVme,1);
+  int status = mvme_open(&gVme,vmeidx);
 
   printf("gVme %d status %d\n",gVme,status);
 
@@ -237,6 +244,8 @@ INT frontend_init()
   ConfigCamera();
   
 #endif
+
+
   
   disable_trigger();
   
@@ -372,6 +381,8 @@ INT poll_event(INT source, INT count, BOOL test)
   int lamDGTZ = 1;
   int lamCAM = 1;
 
+  if (count > 100) count = 100;
+  
   for (i = 0; i < count; i++) {
 
     /* poll hardware and set flag to TRUE if new event is available */
@@ -385,7 +396,7 @@ INT poll_event(INT source, INT count, BOOL test)
     DCAMWAIT_START waitstart;
     memset( &waitstart, 0, sizeof(waitstart) );
     waitstart.size = sizeof(waitstart);
-    waitstart.timeout = (int)(exposure*1000) + 30; //in ms --> max wait = exposure + USB transfer time 
+    waitstart.timeout = (int)(2.*exposure*1000) + 30; //in ms --> max wait = exposure + USB transfer time 
     
     //send a trigger to the camera
     dcamcap_firetrigger(gCam,0);
@@ -399,17 +410,24 @@ INT poll_event(INT source, INT count, BOOL test)
 
 #endif
 
-    //TEMPORARY
-    //usleep(50000);
-    
 #ifdef HAVE_V1190
-    lamTDC = v1190_DataReady(gVme,gTdcBase);
+    //lamTDC = 0;
+    //for(int itry=0;itry<10;itry++){
+      lamTDC = v1190_DataReady(gVme,gTdcBase);
+      //if(lamTDC) break;
+      //usleep(10000);
+      //}
 #endif
     
 #ifdef HAVE_V1761
-    uint32_t status;
-    CAEN_DGTZ_ReadRegister(gDGTZ,CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-    lamDGTZ = (status & 0x8); /* 4th bit is data ready */
+      //lamDGTZ = 0;
+      //for(int itry=0;itry<10;itry++){
+      uint32_t status;
+      CAEN_DGTZ_ReadRegister(gDGTZ,CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+      lamDGTZ = (status & 0x8); /* 4th bit is data ready */
+      //if(lamDGTZ) break;
+      //usleep(10000);
+      //}
 #endif
     
     flag = (lamTDC && lamDGTZ && lamCAM);
@@ -423,6 +441,9 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
 	
 #ifdef HAVE_CAMERA	
+	////TEMPORARY
+	//if(lamCAM) usleep(40000);
+    
 	waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
 	DCAMERR err2 = dcamwait_start( hwait, &waitstart );
 	if(failed(err2) || err2 == DCAMERR_TIMEOUT) break;
@@ -432,6 +453,14 @@ INT poll_event(INT source, INT count, BOOL test)
 	
       }
     }
+
+#ifdef HAVE_CAMERA
+    DCAMBUF_FRAME bufframe;
+    waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    DCAMERR err2 = dcamwait_start( hwait, &waitstart );
+    dcambuf_lockframe( gCam, &bufframe );
+    //dcambuf_release( gCam );
+#endif
     
 #ifdef HAVE_CAEN_BRD
     
@@ -536,6 +565,8 @@ INT init_vme_modules(){
   //Set OUT_0 as pulser A for periodic trigger to the camera
   CAENVME_SetOutputConf(gVme->handle,cvOutput0,cvDirect,cvActiveHigh,cvMiscSignals);
   
+  printf("ciao\n");
+
   //Set OUT_2 as pulser B for a single gate
   CAENVME_SetOutputConf(gVme->handle,cvOutput2,cvInverted,cvActiveHigh,cvMiscSignals);
   
@@ -543,7 +574,7 @@ INT init_vme_modules(){
 
   CAENVME_StopPulser(gVme->handle,cvPulserA);
   CAENVME_StopPulser(gVme->handle,cvPulserB);
-  
+
 #ifdef HAVE_V895
 
   /* DISCRIMINATOR INITIALIZATION */
@@ -554,7 +585,7 @@ INT init_vme_modules(){
   v895_writeReg16(gVme,gDisBase,0x42,255); // width 8-15
   v895_writeReg16(gVme,gDisBase,0x4A,0xFFFF); // enable all channels
   
-  //ConfigDisc();
+  ConfigDisc();
   
 #endif
 
@@ -594,8 +625,8 @@ INT init_vme_modules(){
   
   ////Waveform Setup
   ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ,3);                              /* Enable channel 0 and 1*/
-  ret |= CAEN_DGTZ_SetRecordLength(gDGTZ,4096);                                /* Set the lenght of each waveform (in samples) */
-  ret |= CAEN_DGTZ_SetPostTriggerSize(gDGTZ,32);                               /* Trigger position */
+  ret |= CAEN_DGTZ_SetRecordLength(gDGTZ,ndgtz);                                /* Set the lenght of each waveform (in samples) */
+  ret |= CAEN_DGTZ_SetPostTriggerSize(gDGTZ,80);                               /* Trigger position */
   
   ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED);
   ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,3);
@@ -655,7 +686,7 @@ INT ConfigBridge(){
 #ifdef HAVE_V895
 INT ConfigDisc(){
 
-  int thr = 20;
+  int thr = 20; 
 
   v895_writeReg16(gVme,gDisBase,0x00 ,thr);
   v895_writeReg16(gVme,gDisBase,0x02 ,thr);
@@ -674,6 +705,16 @@ INT ConfigDisc(){
   v895_writeReg16(gVme,gDisBase,0x1C ,thr);
   v895_writeReg16(gVme,gDisBase,0x1E ,thr);
 
+  int wdt = 255;
+  v895_writeReg16(gVme,gDisBase,0x40 ,wdt);
+  v895_writeReg16(gVme,gDisBase,0x42 ,wdt);
+
+  int maj = 2;
+  v895_writeReg16(gVme,gDisBase,0x48 , round((maj*50-25)/4));
+
+  int inib = 0xC000; //0b1100000000000000
+  v895_writeReg16(gVme,gDisBase,0x4A ,inib);
+
   return 0;
   
 }
@@ -685,9 +726,19 @@ INT ConfigCamera()
 
   //Set exposure time in seconds
   DCAMERR err;
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, 0.5);
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, 0.1);
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
 
+  dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_BITSPERCHANNEL, 16);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_BINNING, 1);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF); 
+  dcamprop_setvalue( gCam, DCAM_IDPROP_DEFECTCORRECT_MODE, DCAMPROP_DEFECTCORRECT_MODE__OFF);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_SPOTNOISEREDUCER, DCAMPROP_MODE__OFF);
+
+  
   return 0;
   
 }
@@ -847,9 +898,9 @@ int read_dgtz(char* pevent){
     char name[5];
     sprintf(name,"DIG%d",j);
     
-    bk_create(pevent, name, TID_WORD, &pdata32);
+    bk_create(pevent, name, TID_FLOAT, &pdata32);
     
-    for (int i=0; i<4096; ++i) {
+    for (int i=0; i<ndgtz; ++i) {
       
       uint16_t temp = Evt->DataChannel[j][i];
       *pdata32++ = temp;
@@ -909,7 +960,6 @@ INT read_camera(char *pevent)
 
   const char* pSrc = (const char*)bufframe.buf;
 
-  /*
   //////FULL MATRIX
   for(int y = 0; y < bufframe.height; y++ ){
 
@@ -928,9 +978,9 @@ INT read_camera(char *pevent)
     pSrc += bufframe.rowbytes;
 
   }
-  */
 
-  unsigned short int threshold = 100;
+  /*
+  unsigned short int threshold = 0;
   
   //////SPARSE MATRIX
   for(unsigned short int y = 0; y < bufframe.height; y++ ){
@@ -956,14 +1006,11 @@ INT read_camera(char *pevent)
     pSrc += bufframe.rowbytes;
 
   }
+  */
   
   bk_close(pevent, pdata);
 
-  cout << "wrote" << endl;
-
-  dcambuf_release( gCam );
-
-  cout << "released" << endl;
+  //dcambuf_release( gCam );
 
   return 1;
 

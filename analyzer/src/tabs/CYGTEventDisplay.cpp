@@ -27,6 +27,7 @@
 #include "TImage.h"
 #include "TH2F.h"
 #include "TStyle.h"
+#include "TROOT.h"
 #include <TGNumberEntry.h>
 #include <TGLabel.h>
 
@@ -40,19 +41,32 @@ ClassImp(CYGTEventDisplay)
 void CYGTEventDisplay::Init()
 {
 
-  gStyle->SetPalette(52);
   gStyle->SetOptStat(0);
-  
-  TGVerticalFrame *fVerticalFrame = new TGVerticalFrame(this,1600,900,kVerticalFrame);
+  gStyle->SetPalette(52);
+  /*
+  Int_t ncol = 50;
+  Int_t colors[ncol];
+  TColor *col;
+  Double_t dg=1/(Double_t)ncol;
+  Double_t grey=0.;
+  for (Int_t i=0; i<ncol; i++) {
+    colors[i]= 50+i;
+    col = gROOT->GetColor(colors[i]);
+    col->SetRGB(grey, grey, grey);
+    grey = grey+dg;
+  }
+  gStyle->SetPalette(50,colors);
+  */
+  TGVerticalFrame *fVerticalFrame = new TGVerticalFrame(this,800,700,kVerticalFrame);
 
-  TGVerticalFrame *fVerticalFramePic = new TGVerticalFrame(fVerticalFrame,1600,600,kVerticalFrame);
+  TGVerticalFrame *fVerticalFramePic = new TGVerticalFrame(fVerticalFrame,800,400,kVerticalFrame);
 
   TGHorizontalFrame *fHorizontalFrameRange = new TGHorizontalFrame(fVerticalFramePic,100,200,kHorizontalFrame);
 
   TGLabel *fLabelLow = new TGLabel(fHorizontalFrameRange, "Low");
   fHorizontalFrameRange->AddFrame(fLabelLow, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
 
-  fNumberLow = new TGNumberEntry(fHorizontalFrameRange, 0, 5, 1, TGNumberFormat::kNESInteger,
+  fNumberLow = new TGNumberEntry(fHorizontalFrameRange, 90, 5, 1, TGNumberFormat::kNESInteger,
 					      TGNumberFormat::kNEANonNegative,
 					      TGNumberFormat::kNELLimitMinMax,
 					      0, 65535);
@@ -62,7 +76,7 @@ void CYGTEventDisplay::Init()
   TGLabel *fLabelHigh = new TGLabel(fHorizontalFrameRange, "High");
   fHorizontalFrameRange->AddFrame(fLabelHigh, new TGLayoutHints(kLHintsLeft | kLHintsTop,10,2,2,5));
 
-  fNumberHigh = new TGNumberEntry(fHorizontalFrameRange, 65535, 5, 1, TGNumberFormat::kNESInteger,
+  fNumberHigh = new TGNumberEntry(fHorizontalFrameRange, 150, 5, 1, TGNumberFormat::kNESInteger,
 						 TGNumberFormat::kNEANonNegative,
 						 TGNumberFormat::kNELLimitMinMax,
 						 0, 65535);
@@ -71,18 +85,18 @@ void CYGTEventDisplay::Init()
 
   fVerticalFramePic->AddFrame(fHorizontalFrameRange, new TGLayoutHints(kLHintsRight | kLHintsTop,2,2,2,2));
 
-  fCanvas = new TRootEmbeddedCanvas("fCanvas",this,700,600);
+  fCanvas = new TRootEmbeddedCanvas("fCanvas",this,500,400);
   Int_t camCanvas = fCanvas->GetCanvasWindowId();
-  TCanvas *c123 = new TCanvas("c123", 680, 580,camCanvas);
+  TCanvas *c123 = new TCanvas("c123", 480, 380,camCanvas);
   c123->SetRightMargin(0.15);
   fCanvas->AdoptCanvas(c123);
   fVerticalFramePic->AddFrame(fCanvas, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
 
   fVerticalFrame->AddFrame(fVerticalFramePic, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));  
   
-  fCanvasDig = new TRootEmbeddedCanvas("fCanvasDig",this,700,250);
+  fCanvasDig = new TRootEmbeddedCanvas("fCanvasDig",this,500,170);
   Int_t wfCanvasDig = fCanvasDig->GetCanvasWindowId();
-  TCanvas *cDig = new TCanvas("cDig", 680, 230, wfCanvasDig);
+  TCanvas *cDig = new TCanvas("cDig", 480, 150, wfCanvasDig);
   cDig->Divide(1,2);
   cDig->cd(1)->SetBottomMargin(0.18);
   cDig->cd(2)->SetBottomMargin(0.18);
@@ -93,7 +107,7 @@ void CYGTEventDisplay::Init()
 
   //TQObject::Connect(fNumberHigh,"ValueSet(Long_t)","TCanvas", c123,"Update()");
   //TQObject::Connect(fNumberLow,"ValueSet(Long_t)","TCanvas", c123,"Update()");
-  
+
 }
 
 //______________________________________________________________________________
@@ -112,16 +126,18 @@ void CYGTEventDisplay::EventHandler()
   Int_t low = fNumberLow->GetNumberEntry()->GetIntNumber();
   Int_t high = fNumberHigh->GetNumberEntry()->GetIntNumber();
   
-  //TImage *image = event->GetCamPictureAt(0)->GetImage();
-  //image->Draw();
-  if(event->GetCamPictureSize() > 0){
+  if(event->GetCamPictureSize() > 0){ 
     Picture *pic = event->GetCamPictureAt(0);
+    /*
+    TImage *image = pic->GetImage();
+    image->Draw();
+    */
     pic->GetHisto()->GetZaxis()->SetRangeUser(low,high);
     pic->GetHisto()->SetTitle(Form("CAMERA %d",0));
     pic->GetHisto()->SetTitle(Form("CAMERA %d",0));
+    pic->GetHisto()->SetContour(100);
     pic->GetHisto()->Draw("colz");
   }
-
   fCanvas->GetCanvas()->Update();
 
   if(event->GetDGTZWaveformSize()>0){
@@ -137,7 +153,7 @@ void CYGTEventDisplay::EventHandler()
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
     event->GetDGTZWaveformAt(0)->GetGraph()->Draw("AL");
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetNdivisions(505);
-    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-900.,100.);
+    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-200.,100.);
     fCanvasDig->GetCanvas()->cd(2);
     event->GetDGTZWaveformAt(1)->GetGraph()->SetTitle("");
     event->GetDGTZWaveformAt(1)->GetGraph()->GetXaxis()->SetTitleSize(0.1);
@@ -150,7 +166,7 @@ void CYGTEventDisplay::EventHandler()
     event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
     event->GetDGTZWaveformAt(1)->GetGraph()->Draw("AL");
     event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetNdivisions(505);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetRangeUser(-900.,100.);
+    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetRangeUser(-200.,100.);
   }
 
   fCanvasDig->GetCanvas()->Update();  

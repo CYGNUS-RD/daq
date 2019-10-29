@@ -3,7 +3,7 @@
 killall mlogger
 killall mhttpd
 killall cygnus_fe
-killall analyzer
+killall cyganalyzer.exe
 sleep 1
 
 #end file

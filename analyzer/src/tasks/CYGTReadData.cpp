@@ -132,9 +132,9 @@ void CYGTReadData::Event()
 
   //FULL PICTURE
   Int_t ip=0;
-  for(Int_t ix=0;ix<NPX;ix++){
+  for(Int_t iy=0;iy<NPY;iy++){
 
-    for(Int_t iy=0;iy<NPY;iy++){
+    for(Int_t ix=0;ix<NPX;ix++){
 
       camdata = gAnalyzer->GetMidasDAQ()->GetCAM0BankAt(ip);
 

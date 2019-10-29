@@ -1,6 +1,9 @@
 # daq
 Code based on Midas and Rome for CYGNUS Data Acquisition
 
+# screen connection to CAEN N1570
+sudo screen /dev/ttyACM0 9600,cs8,-parenb,-cstopb
+
 ## To run the code that converts the DAQ (.mid) files to ROOT Trees:
 
 mkdir results
@@ -18,3 +21,4 @@ mkdir results
 ./PlainHdf5Dumper.py ~/Work/cygnus/daq/analyzer/results/DataTree00070.root [--max-entries=10] --outdir results
 
 * it saves a root/hdf5 file for each run
+
