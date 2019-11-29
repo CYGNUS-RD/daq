@@ -53,13 +53,18 @@ void DataTreeBaseClass::Loop()
       CamPicture.SetName(Form("pic_%s",postfix));
       CamPicture.SetTitle(Form("Camera, timestamp %d",Info_time));
 
-      // get the TGraph of the PMT waveform (only the used channel)
+      // get the TGraph of the PMT waveform
       PMT.SetName(Form("wfm_%s",postfix));
       PMT.SetTitle(Form("PMT, timestamp %d",Info_time));
-                   
+
+      // get the TGraph of the GEM waveform
+      WF1.SetName(Form("gem_%s",postfix));
+      WF1.SetTitle(Form("GEM, timestamp %d",Info_time));
+
       // write to the output ROOT file
       CamPicture.Write();
       PMT.Write();
+      WF1.Write();
    }
    tfout->Close();
 }
