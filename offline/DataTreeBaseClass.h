@@ -45,6 +45,7 @@ public :
    UInt_t          fBits;
    TH2F            CamPicture;
    TGraph          PMT;
+   TGraph          WF1;
 
    // List of branches
    TBranch        *b_Info_TObject_fUniqueID;   //!
@@ -60,6 +61,7 @@ public :
    TBranch        *b_rawoutputs_fBits;   //!
    TBranch        *b_rawoutputs_CamPicture;   //!
    TBranch        *b_rawoutputs_PMT;   //!
+   TBranch        *b_rawoutputs_WF1;   //!
 
    std::string m_outfile;
    
@@ -83,9 +85,9 @@ DataTreeBaseClass::DataTreeBaseClass(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("DataTree01704.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("DataTree02364.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("DataTree01704.root");
+         f = new TFile("DataTree02364.root");
       }
       f->GetObject("DataTree",tree);
 
@@ -147,6 +149,7 @@ void DataTreeBaseClass::Init(TTree *tree)
    fChain->SetBranchAddress("fBits", &fBits, &b_rawoutputs_fBits);
    fChain->SetBranchAddress("CamPicture", &CamPicture, &b_rawoutputs_CamPicture);
    fChain->SetBranchAddress("PMT", &PMT, &b_rawoutputs_PMT);
+   fChain->SetBranchAddress("WF1", &WF1, &b_rawoutputs_WF1);
    Notify();
 }
 
