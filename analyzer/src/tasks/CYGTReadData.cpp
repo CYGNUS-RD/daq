@@ -99,25 +99,29 @@ void CYGTReadData::Event()
 
   WORD wdata;
 
+  int ndgtz = 100000;
+  double offset[2] = {950.,200.};
+  
   for(Int_t k=0;k<2;k++){
 
     Waveform *wfdgtz = event->GetDGTZWaveformAt(k);
     wfdgtz->RemoveSignal();
 
-    Double_t tmpv[50000], tmpt[50000];
-    for(Int_t j=0;j<50000;j++){
+    Double_t tmpv[100000], tmpt[100000];
+    for(Int_t j=0;j<100000;j++){
 
       if(k==0) wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(j);
       else  wdata = gAnalyzer->GetMidasDAQ()->GetDIG1BankAt(j);
 
       tmpt[j] = j*0.25;
-      tmpv[j] = ((uint16_t)wdata)/1024.*1000.-900.;
+      tmpv[j] = ((uint16_t)wdata)/1024.*1000.-offset[k];
+
       //if(k==0) tmpv[j] *= -1.;
       
     }
     
-    wfdgtz->SetNPoints(50000);
-    wfdgtz->Set(50000,tmpt,tmpv);
+    wfdgtz->SetNPoints(100000);
+    wfdgtz->Set(100000,tmpt,tmpv);
 
   }
 

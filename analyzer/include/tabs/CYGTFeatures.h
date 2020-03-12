@@ -14,6 +14,7 @@
 /////////////////////////////////////----///////////////////////////////////////
 
 #include "generated/CYGTFeatures_Base.h"
+#include <TGNumberEntry.h>
 
 class CYGWindow;
 
@@ -27,6 +28,9 @@ private:
    CYGTFeatures &operator=(const CYGTFeatures &c); // not implemented
 
    TRootEmbeddedCanvas *fCanvas;
+
+   TGNumberEntry *fNumberLow;
+   TGNumberEntry *fNumberHigh;
 
 public:
    CYGTFeatures(CYGWindow* window = 0):CYGTFeatures_Base(window)

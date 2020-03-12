@@ -13,6 +13,7 @@ sleep 2
 xterm -e ./cygnus_fe &
 xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
 mlogger -D
+msequencer -D
 
 echo Please point your web browser to http://localhost:8081
 echo Or run: mozilla http://localhost:8081 &

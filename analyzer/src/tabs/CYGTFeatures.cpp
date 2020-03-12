@@ -25,6 +25,7 @@
 #include "generated/CYGEvent.h"
 #include "TCanvas.h"
 #include "TH1F.h"
+#include <TGLabel.h>
 
 // uncomment if you want to include headers of all folders
 //#include "CYGAllFolders.h"
@@ -38,9 +39,33 @@ void CYGTFeatures::Init()
 
   TGVerticalFrame *fVerticalFrame = new TGVerticalFrame(this,1600,900,kVerticalFrame);
 
-  fCanvas = new TRootEmbeddedCanvas("fCanvasFeat",this,700,300);
+  TGHorizontalFrame *fHorizontalFrameRange = new TGHorizontalFrame(fVerticalFrame,100,200,kHorizontalFrame);
+
+  TGLabel *fLabelLow = new TGLabel(fHorizontalFrameRange, "Low");
+  fHorizontalFrameRange->AddFrame(fLabelLow, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
+
+  fNumberLow = new TGNumberEntry(fHorizontalFrameRange, 90, 5, 1, TGNumberFormat::kNESInteger,
+					      TGNumberFormat::kNEANonNegative,
+					      TGNumberFormat::kNELLimitMinMax,
+					      0, 65535);
+
+  fHorizontalFrameRange->AddFrame(fNumberLow, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
+
+  TGLabel *fLabelHigh = new TGLabel(fHorizontalFrameRange, "High");
+  fHorizontalFrameRange->AddFrame(fLabelHigh, new TGLayoutHints(kLHintsLeft | kLHintsTop,10,2,2,5));
+
+  fNumberHigh = new TGNumberEntry(fHorizontalFrameRange, 150, 5, 1, TGNumberFormat::kNESInteger,
+						 TGNumberFormat::kNEANonNegative,
+						 TGNumberFormat::kNELLimitMinMax,
+						 0, 65535);
+  
+  fHorizontalFrameRange->AddFrame(fNumberHigh, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
+
+  fVerticalFrame->AddFrame(fHorizontalFrameRange, new TGLayoutHints(kLHintsRight | kLHintsTop,2,2,2,2));
+
+  fCanvas = new TRootEmbeddedCanvas("fCanvasFeat",this,500,300);
   Int_t wfCanvas = fCanvas->GetCanvasWindowId();
-  TCanvas *c123 = new TCanvas("c123Feat", 680, 280,wfCanvas);
+  TCanvas *c123 = new TCanvas("c123Feat", 480, 280,wfCanvas);
   fCanvas->AdoptCanvas(c123);
   fVerticalFrame->AddFrame(fCanvas, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
 
@@ -59,10 +84,14 @@ void CYGTFeatures::EventHandler()
 
   CYGEvent *event = gAnalyzer->GetEvent();
   
+  Int_t low = fNumberLow->GetNumberEntry()->GetIntNumber();
+  Int_t high = fNumberHigh->GetNumberEntry()->GetIntNumber();
+
   fCanvas->GetCanvas()->cd();
 
   if(event->GetCamPictureSize() > 0){
     Picture *pic = event->GetCamPictureAt(0);
+    pic->GetLightHisto()->GetXaxis()->SetRangeUser(low,high);
     pic->GetLightHisto()->Draw("colz");
   }
 

@@ -11,3 +11,11 @@
 *.pcm
 *.png
 *.pdf
+*.mid
+*.mid.gz
+*.hst
+*.idf
+*.idx
+*.log
+*.so
+*.root
