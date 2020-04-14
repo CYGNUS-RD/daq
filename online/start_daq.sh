@@ -11,6 +11,7 @@ odbedit -c clean
 mhttpd --http 8081 -D
 sleep 2
 xterm -e ./cygnus_fe &
+xterm -e ./scfe &
 mlogger -D
 
 echo Please point your web browser to http://localhost:8081

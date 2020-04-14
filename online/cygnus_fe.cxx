@@ -49,89 +49,82 @@ using namespace std;
 #endif
 
 /* make frontend functions callable from the C framework */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-  /*-- Globals -------------------------------------------------------*/
+/*-- Globals -------------------------------------------------------*/
 
-  /* The frontend name (client name) as seen by other MIDAS clients   */
-  char *frontend_name = "cygnus_daq";
-  /* The frontend file name, don't change it */
-  char *frontend_file_name = __FILE__;
+/* The frontend name (client name) as seen by other MIDAS clients   */
+char *frontend_name = "cygnus_daq";
+/* The frontend file name, don't change it */
+char *frontend_file_name = __FILE__;
 
-  /* frontend_loop is called periodically if this variable is TRUE    */
-  BOOL frontend_call_loop = FALSE;
+/* frontend_loop is called periodically if this variable is TRUE    */
+BOOL frontend_call_loop = FALSE;
 
-  /* a frontend status page is displayed with this frequency in ms */
-  INT display_period = 3000;
+/* a frontend status page is displayed with this frequency in ms */
+INT display_period = 3000;
 
-  /* maximum event size produced by this frontend */
-  INT max_event_size = 300000000;
+/* maximum event size produced by this frontend */
+INT max_event_size = 300000000;
 
-  /* maximum event size for fragmented events (EQ_FRAGMENTED) */
-  INT max_event_size_frag = 5 * 1024 * 1024;
+/* maximum event size for fragmented events (EQ_FRAGMENTED) */
+INT max_event_size_frag = 5 * 1024 * 1024;
 
-  /* buffer size to hold events */
-  INT event_buffer_size = 600000000;
+/* buffer size to hold events */
+INT event_buffer_size = 600000000;
 
-  /*-- Function declarations -----------------------------------------*/
+/*-- Function declarations -----------------------------------------*/
 
-  INT frontend_init();
-  INT frontend_exit();
-  INT begin_of_run(INT run_number, char *error);
-  INT end_of_run(INT run_number, char *error);
-  INT pause_run(INT run_number, char *error);
-  INT resume_run(INT run_number, char *error);
-  INT frontend_loop();
+INT frontend_init();
+INT frontend_exit();
+INT begin_of_run(INT run_number, char *error);
+INT end_of_run(INT run_number, char *error);
+INT pause_run(INT run_number, char *error);
+INT resume_run(INT run_number, char *error);
+INT frontend_loop();
 
-  INT read_event(char *pevent, INT off);
+INT read_event(char *pevent, INT off);
+
+INT poll_event(INT source, INT count, BOOL test);
+INT interrupt_configure(INT cmd, INT source, POINTER_T adr);
+
+/* Custom Routines */
+
+INT init_vme_modules();
+INT ConfigBridge();
+INT ConfigDisc();
+INT ConfigCamera();
+INT disable_trigger();
+INT enable_trigger();
+INT ClearDevice();
+INT read_tdc(char *pevent);
+INT read_dgtz(char *pevent);
+INT read_camera(char *pevent);
+
+/*-- Equipment list ------------------------------------------------*/
+
+EQUIPMENT equipment[] = {
   
-  INT poll_event(INT source, INT count, BOOL test);
-  INT interrupt_configure(INT cmd, INT source, POINTER_T adr);
-
-  /* Custom Routines */
-
-  INT init_vme_modules();
-  INT ConfigBridge();
-  INT ConfigDisc();
-  INT ConfigCamera();
-  INT disable_trigger();
-  INT enable_trigger();
-  INT ClearDevice();
-  INT read_tdc(char *pevent);
-  INT read_dgtz(char *pevent);
-  INT read_camera(char *pevent);
+  {"Trigger",               /* equipment name */
+   {1, 0,                   /* event ID, trigger mask */
+    "SYSTEM",               /* event buffer */
+    EQ_POLLED,              /* equipment type */
+    0,                      /* event source */
+    "MIDAS",                /* format */
+    TRUE,                   /* enabled */
+    RO_RUNNING              /* read only when running */
+    //|            
+    //RO_ODB                /* and update ODB */
+    ,
+    100,                    /* poll for 100ms */
+    0,                      /* stop run after this event limit */
+    0,                      /* number of sub events */
+    0,                      /* don't log history */
+    "", "", "",},
+   read_event,      /* readout routine */
+  },
   
-  /*-- Equipment list ------------------------------------------------*/
-
-  EQUIPMENT equipment[] = {
-
-    {"Trigger",               /* equipment name */
-     {1, 0,                   /* event ID, trigger mask */
-      "SYSTEM",               /* event buffer */
-      EQ_POLLED,              /* equipment type */
-      0,                      /* event source */
-      "MIDAS",                /* format */
-      TRUE,                   /* enabled */
-      RO_RUNNING              /* read only when running */
-      //|            
-      //RO_ODB                /* and update ODB */
-      ,
-      100,                    /* poll for 100ms */
-      0,                      /* stop run after this event limit */
-      0,                      /* number of sub events */
-      0,                      /* don't log history */
-      "", "", "",},
-     read_event,      /* readout routine */
-    },
-
-    {""}
-  };
-
-#ifdef __cplusplus
-}
-#endif
+  {""}
+};
 
 /********************************************************************\
               Callback routines for system transitions
