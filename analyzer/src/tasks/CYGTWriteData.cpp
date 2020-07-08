@@ -67,10 +67,12 @@ void CYGTWriteData::Event()
     TGraph *gr0 = (TGraph*)wf0->GetGraph()->Clone(Form("Event%d_wf0",event->GetEventTime()));
     
     Waveform *wf1 = event->GetDGTZWaveformAt(1);
+    TGraph *gr1 = (TGraph*)wf1->GetGraph()->Clone(Form("Event%d_wf1",event->GetEventTime()));
 
     ///Write to file
     output->SetCamPicture(*th2);
     output->SetPMT(*gr0);
+    output->SetWF1(*gr1);
   }
 
 }

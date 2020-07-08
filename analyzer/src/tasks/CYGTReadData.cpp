@@ -94,31 +94,50 @@ void CYGTReadData::Event()
   }
 
   //////DIGITIZER
-  event->SetDGTZWaveformSize(0);
-  event->SetDGTZWaveformSize(2);
+  event->SetDGTZWaveformSize(0); //Clear previous waveforms
 
   WORD wdata;
+  DWORD header_data;
+  header_data = gAnalyzer->GetMidasDAQ()->GetDIGHBankAt(0);
 
-  for(Int_t k=0;k<2;k++){
+  int ndgtz = (header_data & (0xF<<28))>>28;  
+  int NCHDGTZ = (header_data & (0x1F<<23))>>23;  
+  int NumEvents = (header_data & 0x7FFFFF);
+  
+  event->SetDGTZWaveformSize(NCHDGTZ*NumEvents);
 
-    Waveform *wfdgtz = event->GetDGTZWaveformAt(k);
-    wfdgtz->RemoveSignal();
+  for(int k=0;k<NCHDGTZ;k++){
 
-    Double_t tmpv[50000], tmpt[50000];
-    for(Int_t j=0;j<50000;j++){
+    header_data = gAnalyzer->GetMidasDAQ()->GetDIGHBankAt(k+1);
+    double offset = ((uint32_t)header_data - 32768.)/65536.;
 
-      if(k==0) wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(j);
-      else  wdata = gAnalyzer->GetMidasDAQ()->GetDIG1BankAt(j);
+    for(int iev=0;iev<NumEvents;iev++){
 
-      tmpt[j] = j*0.25;
-      tmpv[j] = ((uint16_t)wdata)/1024.*1000.-900.;
-      //if(k==0) tmpv[j] *= -1.;
+      Waveform *wfdgtz = event->GetDGTZWaveformAt(NumEvents*k+iev);
+      wfdgtz->RemoveSignal();
+
+      Double_t *tmpt = new Double_t[ndgtz];
+      Double_t *tmpv = new Double_t[ndgtz];
+
+      for(Int_t j=0;j<ndgtz;j++){
+	
+	wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(ndgtz*(NumEvents*k+iev)+j);
+	
+	tmpt[j] = j*0.25;
+	tmpv[j] = ((uint16_t)wdata)/1024.*1000.-offset;
+	
+	//if(k==0) tmpv[j] *= -1.;
+	
+      }
+      
+      wfdgtz->SetNPoints(ndgtz);
+      wfdgtz->Set(ndgtz,tmpt,tmpv);
+
+      delete [] tmpt;
+      delete [] tmpv;
       
     }
     
-    wfdgtz->SetNPoints(50000);
-    wfdgtz->Set(50000,tmpt,tmpv);
-
   }
 
   //////READ CAMERA DATA
@@ -132,9 +151,9 @@ void CYGTReadData::Event()
 
   //FULL PICTURE
   Int_t ip=0;
-  for(Int_t ix=0;ix<NPX;ix++){
+  for(Int_t iy=0;iy<NPY;iy++){
 
-    for(Int_t iy=0;iy<NPY;iy++){
+    for(Int_t ix=0;ix<NPX;ix++){
 
       camdata = gAnalyzer->GetMidasDAQ()->GetCAM0BankAt(ip);
 

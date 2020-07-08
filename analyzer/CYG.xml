@@ -143,6 +143,12 @@
 	<InheritTObject>true</InheritTObject>
 	<FieldComment>Analog PMT waveform</FieldComment>
       </Field>
+      <Field>
+	<FieldName>WF1</FieldName>
+	<FieldType>TGraph</FieldType>
+	<InheritTObject>true</InheritTObject>
+	<FieldComment>Analog waveform</FieldComment>
+      </Field>
     </Folder>
   </Folders>
 
@@ -199,12 +205,12 @@
 	  <BankType>DWORD</BankType>
 	</Bank>
 	<Bank>
-	  <BankName>DIG0</BankName>
-	  <BankType>float</BankType>
+	  <BankName>DIGH</BankName>
+	  <BankType>DWORD</BankType>
 	</Bank>
 	<Bank>
-	  <BankName>DIG1</BankName>
-	  <BankType>float</BankType>
+	  <BankName>DIG0</BankName>
+	  <BankType>WORD</BankType>
 	</Bank>
 	<Bank>
 	  <BankName>CAM0</BankName>
