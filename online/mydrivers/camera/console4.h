@@ -8,23 +8,28 @@
 
 #include	<windows.h>
 
-#elif defined( LINUX )
+#else // ! _WIN32
+
+#include    <stdlib.h>
+#include    <string.h>
+#include    <stdint.h>
+
+#if defined( LINUX )
 
 // Linux
 
-#include	<string.h>
-#include	<stdint.h>
-#include	<stdlib.h>
 #include	<pthread.h>
+#include	<ctype.h>
 
-#elif defined( MACOSX ) || __ppc64__ || __i386__ || __x86_64__
+#elif defined( MACOSX )
 
 // Mac
-
 // No carbon
 
-#endif
+#include    <unistd.h>
 
+#endif
+#endif // _WIN32
 
 // common headers
 
@@ -42,13 +47,13 @@
 #define	DCAMAPI_VERMIN	4000
 #endif
 
-//#if	defined( LINUX )
-#include			"dcamapi.h"
+#if	defined( LINUX )
+#include			"dcamapi4.h"
 #include			"dcamprop.h"
-//#else
-//#include			"../../inc/dcamapi.h"
-//#include			"../../inc/dcamprop.h"
-//#endif
+#else
+#include			"../../../inc/dcamapi4.h"
+#include			"../../../inc/dcamprop.h"
+#endif
 
 #if defined( _WIN64 )
 #pragma comment(lib,"../../../lib/win64/dcamapi.lib")
@@ -57,20 +62,6 @@
 #endif
 
 #endif // _NO_DCAMAPI
-
-// ----------------
-
-#ifdef _USE_DCIMGAPI
-
-#include			"../../inc/dcimgapi.h"
-
-#if defined( _WIN64 )
-#pragma comment(lib,"../../../lib/win64/dcimgapi.lib")
-#elif defined( _WIN32 )
-#pragma comment(lib,"../../../lib/win32/dcimgapi.lib")
-#endif
-
-#endif // _USE_DCIMGAPI
 
 // ----------------------------------------------------------------
 
@@ -84,8 +75,6 @@
 
 #ifdef _WIN32
 
-#define	strcmpi	_strcmpi
-
 #if defined(UNICODE) || defined(_UNICODE)
 #define	_T(str)	L##str
 #else
@@ -94,25 +83,70 @@
 
 #elif defined( MACOSX ) || __ppc64__ || __i386__ || __x86_64__ || defined( LINUX )
 
-#define	strcmpi	strcasecmp
 #define	_T(str)	str
 
 #endif
 
 // absorb Visual Studio 2005 and later
 
-#if defined( WIN32 ) && _MSC_VER >= 1400
+#if ! defined( WIN32 ) || _MSC_VER < 1400
 
-#define	_secure_buf(buf)		buf,sizeof( buf )
-#define	_secure_ptr(ptr,size)	ptr,size
+#define	_stricmp(str1, str2)				strncasecmp( str1, str2, strlen(str2) )
+#define	sprintf_s							snprintf
 
-#else
+#define	BOOL			int
+#define	BYTE			uint8_t
+#define	WORD			uint16_t
+#define	DWORD			uint32_t
+#define	LONGLONG		int64_t
 
-#define	memcpy_s				memcpy
-#define	sprintf_s				sprintf
-#define	strcat_s				strcat
-#define	_secure_buf(buf)		buf
-#define	_secure_ptr(ptr,size)	ptr
+#define	MAX_PATH		256
+#define	TRUE			1
+#define	FALSE			0
+
+#define LARGE_INTEGER	int64_t
+
+inline int fopen_s( FILE** fpp, const char* filename, const char* filemode )
+{
+	*fpp = fopen( filename, filemode );
+	if( fpp == NULL )
+		return 1;
+	else
+		return 0;
+}
+
+inline void Sleep( DWORD dwMillseconds )
+{
+#if defined( MACOSX )
+    int usec = dwMillseconds * 1000;
+    usleep(usec);
+#else // expect defined( LINUX )
+	struct timespec t;
+	t.tv_sec = dwMillseconds / 1000;
+	t.tv_nsec = ( dwMillseconds % 1000 ) * 1000000;
+	nanosleep( &t, NULL );
+#endif
+}
+
+inline void* memcpy_s( void* dst, size_t dstsize, const void* src, size_t srclen )
+{
+	if( dstsize < srclen )
+		return memcpy( dst, src, dstsize );
+	else
+		return memcpy( dst, src, srclen );
+}
+
+inline char* strcpy_s( char* dst, size_t dstsize, const char* src )
+{
+	return (char*)memcpy_s( dst, dstsize, src, strlen(src) );
+}
+
+inline char* strcat_s( char* dst, size_t dstsize, const char* src )
+{
+	size_t	dstused = strlen(dst);
+	strcpy_s( dst + dstused, dstsize - dstused, src );
+	return dst;
+}
 
 #endif
 
