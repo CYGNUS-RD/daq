@@ -42,7 +42,7 @@ message(STATUS "MIDAS cygnus_fe: MIDASSYS set to " $ENV{MIDASSYS})
 if (NOT EXISTS $ENV{MIDASSYS})
   message(FATAL_ERROR "Environment variable $MIDASSYS not defined, aborting.")
 endif()
-set(INC_PATH $ENV{MIDAS_BASE}/mscb/include $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR})
+set(INC_PATH $ENV{MIDASSYS}/mscb/include $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR})
 link_directories($ENV{MIDASSYS}/lib)
 
 # default build type
@@ -101,12 +101,14 @@ target_include_directories(cygnus_fe PRIVATE ${INC_PATH})
 target_link_libraries(cygnus_fe mfe midas vme camera ${LIBS})
 
 set(DRIVERS
+  $ENV{MIDASSYS}/drivers/class/hv
   $ENV{MIDASSYS}/drivers/class/multi
   $ENV{MIDASSYS}/drivers/device/dd_sy4527
   $ENV{MIDASSYS}/drivers/bus/null
   $ENV{MIDASSYS}/drivers/device/mscbdev
   $ENV{MIDASSYS}/mscb/src/mscb
   gem_hv
+  iseg_hps
   )
 
 add_executable(scfe scfe.cxx ${DRIVERS})
