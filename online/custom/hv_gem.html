@@ -52,20 +52,20 @@ window.onload = function() {
   mjsonrpc_db_get_values(paths).then(function(rpc) {
 
     document.getElementById('txtSetOffset').innerHTML = rpc.result.data[0][0];
-    document.getElementById('txtSetG3').innerHTML = rpc.result.data[0][1] - rpc.result.data[0][0];
-    document.getElementById('txtSetG2').innerHTML = rpc.result.data[0][3] - rpc.result.data[0][2];
-    document.getElementById('txtSetG1').innerHTML = rpc.result.data[0][5] - rpc.result.data[0][4];
-    document.getElementById('txtSetT2').innerHTML = (rpc.result.data[0][2] - rpc.result.data[0][1])/1000./d_gem;
-    document.getElementById('txtSetT1').innerHTML = (rpc.result.data[0][4] - rpc.result.data[0][3])/1000./d_gem;
-    document.getElementById('txtSetD').innerHTML = (rpc.result.data[6] - rpc.result.data[0][5])/1000./(n_ring*d_ring);
- 
+    document.getElementById('txtSetG3').innerHTML = rpc.result.data[0][1];
+    document.getElementById('txtSetG2').innerHTML = rpc.result.data[0][3];
+    document.getElementById('txtSetG1').innerHTML = rpc.result.data[0][5];
+    document.getElementById('txtSetT2').innerHTML = rpc.result.data[0][2]/1000./d_gem;
+    document.getElementById('txtSetT1').innerHTML = rpc.result.data[0][4]/1000./d_gem;
+    document.getElementById('txtSetD').innerHTML = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]))/1000./(n_ring*d_ring);
+
     document.getElementById('txtRequestOffset').value = rpc.result.data[0][0];
-    document.getElementById('txtRequestG3').value = rpc.result.data[0][1] - rpc.result.data[0][0];
-    document.getElementById('txtRequestG2').value = rpc.result.data[0][3] - rpc.result.data[0][2];
-    document.getElementById('txtRequestG1').value = rpc.result.data[0][5] - rpc.result.data[0][4];
-    document.getElementById('txtRequestT2').value = (rpc.result.data[0][2] - rpc.result.data[0][1])/1000./d_gem;
-    document.getElementById('txtRequestT1').value = (rpc.result.data[0][4] - rpc.result.data[0][3])/1000./d_gem;
-    document.getElementById('txtRequestD').value = (rpc.result.data[6] - rpc.result.data[0][5])/1000./(n_ring*d_ring);
+    document.getElementById('txtRequestG3').value = rpc.result.data[0][1];
+    document.getElementById('txtRequestG2').value = rpc.result.data[0][3];
+    document.getElementById('txtRequestG1').value = rpc.result.data[0][5];
+    document.getElementById('txtRequestT2').value = rpc.result.data[0][2]/1000./d_gem;
+    document.getElementById('txtRequestT1').value = rpc.result.data[0][4]/1000./d_gem;
+    document.getElementById('txtRequestD').value = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]))/1000./(n_ring*d_ring);
 
     var ch = 0;
     document.getElementById('rhv0').checked = true;
@@ -96,7 +96,7 @@ function applySetAll() {
   }
   var value = parseFloat(txt.value);
   document.getElementById('txtSetG3').innerHTML = value;
-  var setHV1 = value + setHV0;
+  var setHV1 = value;
 
   if(document.getElementById('lockT').checked){
     txt = document.getElementById('txtRequestT2');
@@ -106,7 +106,7 @@ function applySetAll() {
   }
   value = parseFloat(txt.value);
   document.getElementById('txtSetT2').innerHTML = value;
-  var setHV2 = value*1000.*d_gem + setHV1;
+  var setHV2 = value*1000.*d_gem;
 
   if(document.getElementById('lockG2').checked){
    txt = document.getElementById('txtRequestG2');
@@ -116,22 +116,22 @@ function applySetAll() {
   }
   value = parseFloat(txt.value);
   document.getElementById('txtSetG2').innerHTML = value;
-  var setHV3 = value + setHV2;
+  var setHV3 = value;
 
   txt = document.getElementById('txtRequestT1');
   value = parseFloat(txt.value);
   document.getElementById('txtSetT1').innerHTML = value;
-  var setHV4 = value*1000*d_gem + setHV3;
+  var setHV4 = value*1000.*d_gem;
 
   txt = document.getElementById('txtRequestG1');
   value = parseFloat(txt.value);
   document.getElementById('txtSetG1').innerHTML = value;
-  var setHV5 = value + setHV4;
+  var setHV5 = value;
 
   txt = document.getElementById('txtRequestD');
   value = parseFloat(txt.value);
   document.getElementById('txtSetD').innerHTML = value;
-  var setHV6 = setHV5 + value*1000*d_ring;
+  var setHV6 = setHV0 + setHV1 + setHV2 + setHV3 + setHV4 + setHV5 + value*1000*d_ring;
   var setHV7 = setHV6 + value*1000*(n_ring-1)*d_ring;
 
   var paths = ["/Equipment/HV/Variables/Demand[0]",
@@ -302,8 +302,6 @@ function applyTrip(){
 
 function applyTripT(){
 
-  if(document.getElementById('tript').disabled) return;
-
   var ch = "0-6";
   if(document.getElementById('rhv0').checked) ch="0";
   else if(document.getElementById('rhv1').checked) ch="1";
@@ -325,8 +323,6 @@ function applyTripT(){
 }
 
 function applyHot(){
-
-  if(document.getElementById('hot').disabled) return;
 
   var ch = "0-6";
   if(document.getElementById('rhv0').checked) ch="0";
@@ -374,6 +370,73 @@ function applyOnAll(){
 
 }
 
+function applyOnDrift(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[6]",
+               "/Equipment/CATHODE/Variables/ChState[0]"
+              ];
+
+  mjsonrpc_db_paste(paths,[1,1]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
+
+function applyOffDrift(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[6]",
+               "/Equipment/CATHODE/Variables/ChState[0]"
+              ];
+
+  mjsonrpc_db_paste(paths,[0,0]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
+
+function applyOnTr(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[0,2,4]"];
+  mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
+
+function applyOffTr(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[0,2,4]"];
+
+  mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
+
+function applyOnGain(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[1,3,5]"];
+  mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
+
+function applyOffGain(){
+
+  var paths = ["/Equipment/HV/Variables/ChState[1,3,5]"];
+
+  mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+}
 
 </script>
 
@@ -399,7 +462,7 @@ padding: 8px;
       <th class="mtableheader" id="page_title" colspan="2">High Voltage Control Page</th>
     </tr>
     <tr>
-      <td style="vertical-align:top">
+      <td style="vertical-align:center">
 	<table class="mtable" style="float:left;width:6in">
 	  <tr><th class="mtableheader" colspan=3>Electric Fields</tr>
 	  <tr height="35"><th></th><th style="width:1.5in">Input</th><th style="width:1.5in">Set</th></tr>
@@ -515,7 +578,16 @@ padding: 8px;
       <td>
       <table class="mtable" style="width:6in;font-size:18px">
 	<tr align="center">
-	  <td colspan=2 style="width:2in"> <input class="mbutton" id="btnAllOff" type="button" value="ON ALL" onclick="applyOnAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/><input class="mbutton" id="btnAllOff" type="button" value="OFF ALL" onclick="applyOffAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
+	  <td colspan=2 style="width:2in"> <input class="mbutton" id="btnAllOff" type="button" value="ON ALL" onclick="applyOnAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/> <input class="mbutton" id="btnAllOff" type="button" value="OFF ALL" onclick="applyOffAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
+	</tr>
+	<tr align="center">
+	  <td style="width:2in">DRIFT</td><td><input class="mbutton"id="btnDOn" type="button" value="ON" onclick="applyOnDrift()" style="padding: 7px 20px;font-size:18px;margin:5px"/><input class="mbutton" id="btnDOff" type="button" value="OFF" onclick="applyOffDrift()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
+	</tr>
+	<tr align="center">
+	  <td style="width:2in">TRANSFER</td><td><input class="mbutton" id="btnTOn" type="button" value="ON" onclick="applyOnTr()" style="padding: 7px 20px;font-size:18px;margin:5px"/><input class="mbutton" id="btnTOff" type="button" value="OFF" onclick="applyOffTr()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
+	</tr>
+	<tr align="center">
+	  <td style="width:2in">GAIN</td><td><input class="mbutton" id="btnGOn" type="button" value="ON" onclick="applyOnGain()" style="padding: 7px 20px;font-size:18px;margin:5px"/><input class="mbutton" id="btnGOff" type="button" value="OFF" onclick="applyOffGain()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
 	</tr>
       </table>
       </td>
