@@ -22,7 +22,7 @@ protected:
 
 	static	DWORD WINAPI threadentry( LPVOID pparam );
 
-#elif defined( MACOSX ) || __ppc64__ || __i386__ || __x86_64__ || __aarch64__ || __arm__
+#elif defined( MACOSX ) || __ppc64__ || __i386__ || __x86_64__
 
 	static	void*	threadentry(void* pparam );
 
