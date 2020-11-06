@@ -14,7 +14,7 @@
 #include "mfe.h"
 #include "class/hv.h"
 #include "gem_hv.h"
-#include "device/dd_sy4527.h"
+#include "gem_dd_sy4527.h"
 #include "iseg_hps.h"
 #include "bus/null.h"
 
@@ -44,15 +44,16 @@ INT event_buffer_size = 10 * 10000;
 
 /* device driver list */
 DEVICE_DRIVER sy4527_driver[] = {
-  {"sy4527", dd_sy4527, 7, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
+  {"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
 
+/*
 DEVICE_DRIVER iseg_hps_driver[] = {
   {"iseg_hps", iseg_hps, 1, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
-
+*/
 
 EQUIPMENT equipment[] = {
 
@@ -75,24 +76,24 @@ EQUIPMENT equipment[] = {
     NULL,                       /* init string */
     },
 
-   {"CATHODE",                       /* equipment name */
-    {3, 0,                       /* event ID, trigger mask */
-     "SYSTEM",                  /* event buffer */
-     EQ_SLOW,                   /* equipment type */
-     0,                         /* event source */
-     "FIXED",                   /* format */
-     TRUE,                      /* enabled */
-     RO_RUNNING | RO_TRANSITIONS,        /* read when running and on transitions */
-     60000,                     /* read every 60 sec */
-     0,                         /* stop run after this event limit */
-     0,                         /* number of sub events */
-     10000,                         /* log history every event */
-     "", "", ""} ,
-    cd_hv_read,                 /* readout routine */
-    cd_hv,                      /* class driver main routine */
-    iseg_hps_driver,                  /* device driver list */
-    NULL,                       /* init string */
-    },
+   // {"CATHODE",                       /* equipment name */
+   //  {3, 0,                       /* event ID, trigger mask */
+   //   "SYSTEM",                  /* event buffer */
+   //   EQ_SLOW,                   /* equipment type */
+   //   0,                         /* event source */
+   //   "FIXED",                   /* format */
+   //   TRUE,                      /* enabled */
+   //   RO_RUNNING | RO_TRANSITIONS,        /* read when running and on transitions */
+   //   60000,                     /* read every 60 sec */
+   //   0,                         /* stop run after this event limit */
+   //   0,                         /* number of sub events */
+   //   10000,                         /* log history every event */
+   //   "", "", ""} ,
+   //  cd_hv_read,                 /* readout routine */
+   //  cd_hv,                      /* class driver main routine */
+   //  iseg_hps_driver,                  /* device driver list */
+   //  NULL,                       /* init string */
+   //  },
 
    {""}
    

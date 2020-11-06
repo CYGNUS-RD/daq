@@ -389,6 +389,7 @@ INT gem_hv_ramp(GEM_HV_INFO * hv_info)
 
 void gem_hv_demand(INT hDB, INT hKey, void *info)
 {
+
    INT i;
    GEM_HV_INFO *hv_info;
    EQUIPMENT *pequipment;
@@ -422,6 +423,7 @@ void gem_hv_demand(INT hDB, INT hKey, void *info)
 
    /* execute one ramping for devices which have not hardware ramping */
    gem_hv_ramp(hv_info);
+
 }
 
 /*------------------------------------------------------------------*/
@@ -1057,12 +1059,13 @@ INT gem_hv_exit(EQUIPMENT * pequipment)
 
 INT gem_hv_idle(EQUIPMENT * pequipment)
 {
+
    INT act, status = 0;
    DWORD act_time;
    GEM_HV_INFO *hv_info;
 
    hv_info = (GEM_HV_INFO *) pequipment->cd_info;
-
+  
    /* do ramping */
    gem_hv_ramp(hv_info);
 
@@ -1097,6 +1100,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
       hv_info->last_channel_updated = act;
    }
 
+
    int i;
    //int j;
    int trip_found=0;
@@ -1122,7 +1126,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      }
 
    }
-   
+   /*
    if(trip_found==1) {
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
@@ -1133,7 +1137,8 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
 	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
        }
    }
-   
+   */
+   /*
    if(hotspot_current==1) {
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
@@ -1160,7 +1165,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      if(val >= hv_info->demand_recovery[i]) hv_info->recovery = 0;
      hv_info->t_recovery = ss_millitime();
    }
-   
+   */   
    return status;
 
 }

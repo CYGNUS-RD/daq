@@ -103,11 +103,11 @@ target_link_libraries(cygnus_fe mfe midas vme camera ${LIBS})
 set(DRIVERS
   $ENV{MIDASSYS}/drivers/class/hv
   $ENV{MIDASSYS}/drivers/class/multi
-  $ENV{MIDASSYS}/drivers/device/dd_sy4527
   $ENV{MIDASSYS}/drivers/bus/null
   $ENV{MIDASSYS}/drivers/device/mscbdev
   $ENV{MIDASSYS}/mscb/src/mscb
   gem_hv
+  gem_dd_sy4527.cxx
   iseg_hps
   )
 

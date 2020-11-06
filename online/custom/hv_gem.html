@@ -55,9 +55,9 @@ window.onload = function() {
     document.getElementById('txtSetG3').innerHTML = rpc.result.data[0][1];
     document.getElementById('txtSetG2').innerHTML = rpc.result.data[0][3];
     document.getElementById('txtSetG1').innerHTML = rpc.result.data[0][5];
-    document.getElementById('txtSetT2').innerHTML = rpc.result.data[0][2]/1000./d_gem;
-    document.getElementById('txtSetT1').innerHTML = rpc.result.data[0][4]/1000./d_gem;
-    document.getElementById('txtSetD').innerHTML = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]))/1000./(n_ring*d_ring);
+    document.getElementById('txtSetT2').innerHTML = (rpc.result.data[0][2]/1000./d_gem).toFixed(3);
+    document.getElementById('txtSetT1').innerHTML = (rpc.result.data[0][4]/1000./d_gem).toFixed(3);
+    document.getElementById('txtSetD').innerHTML = ((rpc.result.data[6] - rpc.result.data[0][5])/1000./(n_ring-1.)/d_ring).toFixed(3);
 
     document.getElementById('txtRequestOffset').value = rpc.result.data[0][0];
     document.getElementById('txtRequestG3').value = rpc.result.data[0][1];
@@ -105,7 +105,7 @@ function applySetAll() {
     txt = document.getElementById('txtRequestT1');
   }
   value = parseFloat(txt.value);
-  document.getElementById('txtSetT2').innerHTML = value;
+  document.getElementById('txtSetT2').innerHTML = value.toFixed(3);
   var setHV2 = value*1000.*d_gem;
 
   if(document.getElementById('lockG2').checked){
@@ -120,7 +120,7 @@ function applySetAll() {
 
   txt = document.getElementById('txtRequestT1');
   value = parseFloat(txt.value);
-  document.getElementById('txtSetT1').innerHTML = value;
+  document.getElementById('txtSetT1').innerHTML = value.toFixed(3);
   var setHV4 = value*1000.*d_gem;
 
   txt = document.getElementById('txtRequestG1');
@@ -130,8 +130,8 @@ function applySetAll() {
 
   txt = document.getElementById('txtRequestD');
   value = parseFloat(txt.value);
-  document.getElementById('txtSetD').innerHTML = value;
-  var setHV6 = setHV0 + setHV1 + setHV2 + setHV3 + setHV4 + setHV5 + value*1000*d_ring;
+  document.getElementById('txtSetD').innerHTML = value.toFixed(3);
+  var setHV6 = value*1000*d_ring;
   var setHV7 = setHV6 + value*1000*(n_ring-1)*d_ring;
 
   var paths = ["/Equipment/HV/Variables/Demand[0]",
@@ -509,65 +509,65 @@ padding: 8px;
 	  <tr><th style="width:1in"></th><th style="width:1in">Demand <br> [V]</th><th style="width:1in">Read <br> [V]</th><th style="width:1in">Current <br> [&mu;A]</th><th style="width:0.3in"><img style="width:0.2in" src="on-off.png" alt=""/></th><th style="width:0.3in"><img style="width:0.27in" src="trip3.png" alt=""/></th></tr>
 	  <tr>
 	    <td>HV0</td>
-	    <td align="right"><div id="txtDemHV0" class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[0]"></div></td>
+	    <td align="right"><div id="txtDemHV0" class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[0]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[0]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[0]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[0]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[0]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV1</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[1]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[1]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[1]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[1]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[1]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[1]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[1]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[1]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV2</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[2]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[2]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[2]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[2]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[2]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[2]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[2]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[2]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV3</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[3]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[3]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[3]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[3]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[3]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[3]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[3]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[3]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV4</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[4]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[4]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[4]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[4]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[4]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[4]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[4]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[4]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV5</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[5]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[5]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[5]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[5]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[5]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[5]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[5]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[5]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV6</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Demand[6]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Measured[6]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/HV/Variables/Current[6]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[6]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[6]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[6]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[6]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[6]" data-formula="x & 0x1" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV7</td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/CATHODE/Variables/Demand[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/CATHODE/Variables/Measured[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-odb-path="/Equipment/CATHODE/Variables/Current[0]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/CATHODE/Variables/Demand[0]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/CATHODE/Variables/Measured[0]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/CATHODE/Variables/Current[0]"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/CATHODE/Variables/ChState[0]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
 	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/CATHODE/Variables/ChStatus[0]" data-formula="x & 0xFFFF" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
@@ -636,6 +636,7 @@ padding: 8px;
       </table>
       </td>
     </tr>
+<!--
     <tr>
       <td colspan="3">
 	<table class="mtable"">
@@ -652,6 +653,7 @@ padding: 8px;
 	</table>
       </td>
     </tr>
+-->
   </table>
 </div>
 
