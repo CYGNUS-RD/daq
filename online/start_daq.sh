@@ -1,7 +1,5 @@
 #!/bin/sh
 
-source setup.sh
-
 ./kill_daq.sh
 
 odbedit -c clean
@@ -11,8 +9,10 @@ odbedit -c clean
 mhttpd -D
 sleep 2
 xterm -e ./cygnus_fe &
+sleep 2
 xterm -e ./scfe &
 mlogger -D
+xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
 
 echo Please point your web browser to http://localhost:8081
 echo Or run: mozilla http://localhost:8081 &

@@ -57,7 +57,7 @@ window.onload = function() {
     document.getElementById('txtSetG1').innerHTML = rpc.result.data[0][5];
     document.getElementById('txtSetT2').innerHTML = (rpc.result.data[0][2]/1000./d_gem).toFixed(3);
     document.getElementById('txtSetT1').innerHTML = (rpc.result.data[0][4]/1000./d_gem).toFixed(3);
-    document.getElementById('txtSetD').innerHTML = ((rpc.result.data[6] - rpc.result.data[0][5])/1000./(n_ring-1.)/d_ring).toFixed(3);
+    document.getElementById('txtSetD').innerHTML = ((rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring-1.)/d_ring).toFixed(3);
 
     document.getElementById('txtRequestOffset').value = rpc.result.data[0][0];
     document.getElementById('txtRequestG3').value = rpc.result.data[0][1];
@@ -65,7 +65,7 @@ window.onload = function() {
     document.getElementById('txtRequestG1').value = rpc.result.data[0][5];
     document.getElementById('txtRequestT2').value = rpc.result.data[0][2]/1000./d_gem;
     document.getElementById('txtRequestT1').value = rpc.result.data[0][4]/1000./d_gem;
-    document.getElementById('txtRequestD').value = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]))/1000./(n_ring*d_ring);
+    document.getElementById('txtRequestD').value = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring*d_ring);
 
     var ch = 0;
     document.getElementById('rhv0').checked = true;
@@ -132,7 +132,7 @@ function applySetAll() {
   value = parseFloat(txt.value);
   document.getElementById('txtSetD').innerHTML = value.toFixed(3);
   var setHV6 = value*1000*d_ring;
-  var setHV7 = setHV6 + value*1000*(n_ring-1)*d_ring;
+  var setHV7 = setHV0 + setHV1 + setHV2 + setHV3 + setHV4 + setHV5 + setHV6 + value*1000*(n_ring-1)*d_ring;
 
   var paths = ["/Equipment/HV/Variables/Demand[0]",
                "/Equipment/HV/Variables/Demand[1]",
@@ -636,7 +636,6 @@ padding: 8px;
       </table>
       </td>
     </tr>
-<!--
     <tr>
       <td colspan="3">
 	<table class="mtable"">
@@ -653,7 +652,6 @@ padding: 8px;
 	</table>
       </td>
     </tr>
--->
   </table>
 </div>
 

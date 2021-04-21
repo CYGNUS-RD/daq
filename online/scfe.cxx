@@ -47,14 +47,12 @@ DEVICE_DRIVER sy4527_driver[] = {
   {"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
-
 /*
 DEVICE_DRIVER iseg_hps_driver[] = {
   {"iseg_hps", iseg_hps, 1, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
 */
-
 EQUIPMENT equipment[] = {
 
    {"HV",                       /* equipment name */

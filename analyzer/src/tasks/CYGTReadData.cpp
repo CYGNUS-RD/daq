@@ -38,8 +38,10 @@ using namespace std;
 
 // uncomment if you want to include headers of all folders
 //#include "CYGAllFolders.h"
-Int_t NPX = 2048;
-Int_t NPY = 2048;
+//Int_t NPX = 2048; 
+//Int_t NPY = 2048; 
+Int_t NPX = 2304;
+Int_t NPY = 2304;
 
 ClassImp(CYGTReadData)
 
@@ -98,38 +100,38 @@ void CYGTReadData::Event()
 
   WORD wdata;
   DWORD header_data;
-  header_data = gAnalyzer->GetMidasDAQ()->GetDIGHBankAt(0);
-
-  int ndgtz = (header_data & (0xF<<28))>>28;  
-  int NCHDGTZ = (header_data & (0x1F<<23))>>23;  
-  int NumEvents = (header_data & 0x7FFFFF);
+  
+  uint32_t ndgtz = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(0);
+  uint32_t NCHDGTZ = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(1);
+  uint32_t NumEvents = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(2);
+  uint32_t reso = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(3);
   
   event->SetDGTZWaveformSize(NCHDGTZ*NumEvents);
 
-  for(int k=0;k<NCHDGTZ;k++){
+  for(int iev=0;iev<NumEvents;iev++){
 
-    header_data = gAnalyzer->GetMidasDAQ()->GetDIGHBankAt(k+1);
-    double offset = ((uint32_t)header_data - 32768.)/65536.;
+    for(int k=0;k<NCHDGTZ;k++){
 
-    for(int iev=0;iev<NumEvents;iev++){
+      header_data = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(k+4);
+      double offset = ((uint32_t)header_data - 32768.)/65536.;
 
       Waveform *wfdgtz = event->GetDGTZWaveformAt(NumEvents*k+iev);
       wfdgtz->RemoveSignal();
-
+      
       Double_t *tmpt = new Double_t[ndgtz];
       Double_t *tmpv = new Double_t[ndgtz];
 
       for(Int_t j=0;j<ndgtz;j++){
 	
-	wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(ndgtz*(NumEvents*k+iev)+j);
-	
+	wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(ndgtz*(NCHDGTZ*iev+k)+j);
+
 	tmpt[j] = j*0.25;
-	tmpv[j] = ((uint16_t)wdata)/1024.*1000.-offset;
+	tmpv[j] = ((uint16_t)wdata-reso/2.)/(reso+0.0)*1000. + offset;
 	
 	//if(k==0) tmpv[j] *= -1.;
 	
       }
-      
+
       wfdgtz->SetNPoints(ndgtz);
       wfdgtz->Set(ndgtz,tmpt,tmpv);
 

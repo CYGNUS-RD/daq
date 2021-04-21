@@ -138,16 +138,22 @@
 	<FieldComment>Camera picture</FieldComment>
       </Field>
       <Field>
-	<FieldName>PMT</FieldName>
+	<FieldName>WF0</FieldName>
 	<FieldType>TGraph</FieldType>
 	<InheritTObject>true</InheritTObject>
-	<FieldComment>Analog PMT waveform</FieldComment>
+	<FieldComment>Analog WF0 waveform</FieldComment>
       </Field>
       <Field>
-	<FieldName>WF1</FieldName>
+	<FieldName>WF6</FieldName>
 	<FieldType>TGraph</FieldType>
 	<InheritTObject>true</InheritTObject>
-	<FieldComment>Analog waveform</FieldComment>
+	<FieldComment>Analog WF6 waveform</FieldComment>
+      </Field>
+	<Field>
+	<FieldName>WF8</FieldName>
+	<FieldType>TGraph</FieldType>
+	<InheritTObject>true</InheritTObject>
+	<FieldComment>Analog WF8 waveform</FieldComment>
       </Field>
     </Folder>
   </Folders>
@@ -205,7 +211,7 @@
 	  <BankType>DWORD</BankType>
 	</Bank>
 	<Bank>
-	  <BankName>DIGH</BankName>
+	  <BankName>DGH0</BankName>
 	  <BankType>DWORD</BankType>
 	</Bank>
 	<Bank>
