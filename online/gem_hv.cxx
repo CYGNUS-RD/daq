@@ -811,9 +811,6 @@ INT gem_hv_init(EQUIPMENT * pequipment)
      db_set_data(hDB, hKey, editable, count*NAME_LENGTH, count, TID_STRING);
    }
 
-   /* Status */
-   gem_hv_validate_odb_int_read(hDB, hv_info, "Settings/Recovery", 0, &hv_info->recovery);
-
    // Names
    for (i = 0; i < hv_info->num_channels; i++){
       if((hv_info->driver[i]->flags & DF_LABELS_FROM_DEVICE) == 0)
@@ -863,6 +860,9 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    /* Ramp down */
    gem_hv_validate_odb_array(hDB, hv_info, "Settings/Ramp Down Speed", 0, CMD_GET_RAMPDOWN, 
                       hv_info->rampdown_speed, gem_hv_set_rampdown, pequipment);
+
+   /* Recovery status */
+   gem_hv_validate_odb_int_read(hDB, hv_info, "Settings/Recovery", 0, &hv_info->recovery);
 
    /* Crate Map */
    if (hv_info->driver[0]->flags & DF_REPORT_CRATEMAP){
@@ -986,6 +986,8 @@ INT gem_hv_init(EQUIPMENT * pequipment)
       db_find_key(hDB, hv_info->hKeyRoot, "Variables/ChState", &hKey);
       db_set_record(hDB, hKey, hv_info->chState, hv_info->num_channels * sizeof(DWORD), 'n');
    }
+   db_find_key(hDB, hv_info->hKeyRoot, "Settings/Recovery", &hKey);
+   db_set_record(hDB, hKey, &hv_info->recovery, sizeof(INT), 0);
    if (hv_info->driver[0]->flags & DF_REPORT_CRATEMAP){
       sprintf(str, "Settings/Devices/%s/DD/crateMap", pequipment->driver[0].name);
       db_find_key(hDB, hv_info->hKeyRoot, str, &hKey);
@@ -1117,7 +1119,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      }
      if(hv_info->current[i] > (hv_info->current_hotspot[i])){
        if(hv_info->recovery == 0) hotspot_current=1;
-       //trip if current is still large after 10 seconds of recovery
+       //trip if current is still large or the hot spot appears again after 10 seconds of recovery
        else if(hv_info->recovery == 1 && ss_millitime() - hv_info->t_recovery > 10000) {
 	 trip_found=1;
 	 hotspot_current=0;
@@ -1126,46 +1128,81 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      }
 
    }
-   /*
+
+   ////Trip handling -- switch all off if one channel is tripped
    if(trip_found==1) {
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
      float val=0;
-     for (i = 0 ; i < hv_info->num_channels ; i++)
+     for (i = 0 ; i < hv_info->num_channels ; i++){
        if(hv_info->chStatus[i]!=1){
-	 /////TO DO -- ONLY IF NAME MATCHED SOME PATTERN
+	 /////TO DO -- ONLY IF NAME MATCHES SOME PATTERN
 	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
        }
+     }
    }
-   */
-   /*
-   if(hotspot_current==1) {
+
+   ////Hot spot handling
+   ////Start recovery procedure by lowering the HV by 100 V
+   if(hotspot_current==1){
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
      float val=0;
-     for (i = 0 ; i < hv_info->num_channels ; i++){
-       hv_info->demand_recovery[i] = hv_info->demand[i];
-       val = hv_info->demand[i] - 100.;
-       if(val < 0.) val = 0.;
-       db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
-     }
-     hv_info->recovery = 1;
+     if(hv_info->recovery==0) {
+       for (i = 0 ; i < hv_info->num_channels ; i++){
+	 /////TO DO -- ONLY IF NAME MATCHES SOME PATTERN
+         hv_info->demand_recovery[i] = hv_info->demand[i];
+         val = hv_info->demand[i] - 100.;
+         if(val < 0.) val = 0.;
+         db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
+       }
+       hv_info->recovery = 1;
+       int rval = 1;
+       db_set_value(hDB, hv_info->hKeyRoot, "Settings/Recovery", &rval, sizeof(rval), TID_INT, FALSE);
+     }   
      hv_info->t_recovery = ss_millitime();
    }
+   ///If the recovery is ongoing, rise HV by 30 V every 30 sec.
    else if(hv_info->recovery==1 && ss_millitime() - hv_info->t_recovery > 30000.){
      ////TO DO - wait more (i.e. simply set t_recovery to current time) if the current is not below some other threshold
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
      float val=0;
      for (i = 0 ; i < hv_info->num_channels ; i++){
+       /////TO DO -- ONLY IF NAME MATCHES SOME PATTERN
        val = hv_info->demand[i] + 20.;
-       if(val > hv_info->demand_recovery[i]) val = hv_info->demand_recovery[i];
+       if(val >= hv_info->demand_recovery[i]) {
+	 val = hv_info->demand_recovery[i];
+	 hv_info->recovery = 0;
+	 int rval = 0;
+	 db_set_value(hDB, hv_info->hKeyRoot, "Settings/Recovery", &rval, sizeof(rval), TID_INT, FALSE);
+       }
        db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
      }
-     if(val >= hv_info->demand_recovery[i]) hv_info->recovery = 0;
      hv_info->t_recovery = ss_millitime();
    }
-   */   
+
+   ////Set off after 1000 sec. of unsuccessful recovery or if all channels are switched off
+   if(hv_info->recovery==1){
+     BOOL all_off = true;
+     HNDLE hDB;
+     cm_get_experiment_database(&hDB, NULL);
+     bool val;
+     for (i = 0 ; i < hv_info->num_channels ; i++){
+       /////TO DO -- ONLY IF NAME MATCHES SOME PATTERN
+       if(hv_info->chState[i] == 1) all_off = false;
+     }
+     if(ss_millitime() - hv_info->t_recovery > 1000000. || all_off){
+       for (i = 0 ; i < hv_info->num_channels ; i++){
+	 /////TO DO -- ONLY IF NAME MATCHES SOME PATTERN
+	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/ChState", &val, sizeof(val), i, TID_BOOL, FALSE);
+       }
+       hv_info->recovery=0;
+       int rval = 0;
+       db_set_value(hDB, hv_info->hKeyRoot, "Settings/Recovery", &rval, sizeof(rval), TID_INT, FALSE);
+     }
+   }
+   
    return status;
 
 }
