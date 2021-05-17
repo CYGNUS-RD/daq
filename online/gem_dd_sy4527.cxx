@@ -176,6 +176,7 @@ INT dd_sy4527_init (HNDLE hkey, void **pinfo, WORD channels,
     }
   // initialize driver
   info->num_channels = channels;
+  printf("Tot. channels %d\n", channels);
   info->array = (float *) calloc (channels, sizeof (float));
   info->hkey = hkey;
   

@@ -8,7 +8,7 @@ odbedit -c clean
 
 mhttpd -D
 sleep 2
-xterm -e ./cygnus_fe &
+#xterm -e ./cygnus_fe &
 sleep 2
 xterm -e ./scfe &
 mlogger -D

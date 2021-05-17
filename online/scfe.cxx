@@ -44,7 +44,7 @@ INT event_buffer_size = 10 * 10000;
 
 /* device driver list */
 DEVICE_DRIVER sy4527_driver[] = {
-  {"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
+  {"sy4527", dd_sy4527, 64, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
 /*
