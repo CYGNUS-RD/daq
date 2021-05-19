@@ -67,6 +67,16 @@
 	<IncludeType>local</IncludeType>
       </Include>
       <Field>
+	<FieldName>NTrigger</FieldName>
+	<FieldType>Int_t</FieldType>
+	<FieldComment>Number of trigger</FieldComment>
+      </Field>
+      <Field>
+	<FieldName>NChannelDgtz</FieldName>
+	<FieldType>Int_t</FieldType>
+	<FieldComment>Number of digitizer channels</FieldComment>
+      </Field>
+      <Field>
 	<FieldName>DGTZWaveform</FieldName>
 	<FieldType>Waveform*</FieldType>
 	<ArraySize>variable</ArraySize>
@@ -138,22 +148,11 @@
 	<FieldComment>Camera picture</FieldComment>
       </Field>
       <Field>
-	<FieldName>WF0</FieldName>
+	<FieldName>WF</FieldName>
 	<FieldType>TGraph</FieldType>
+	<ArraySize>variable</ArraySize>
 	<InheritTObject>true</InheritTObject>
 	<FieldComment>Analog WF0 waveform</FieldComment>
-      </Field>
-      <Field>
-	<FieldName>WF6</FieldName>
-	<FieldType>TGraph</FieldType>
-	<InheritTObject>true</InheritTObject>
-	<FieldComment>Analog WF6 waveform</FieldComment>
-      </Field>
-	<Field>
-	<FieldName>WF8</FieldName>
-	<FieldType>TGraph</FieldType>
-	<InheritTObject>true</InheritTObject>
-	<FieldComment>Analog WF8 waveform</FieldComment>
       </Field>
     </Folder>
   </Folders>
@@ -188,6 +187,10 @@
     <Tab>
       <TabName>EventDisplay</TabName>
       <TabTitle>Event Display</TabTitle>
+    </Tab>
+    <Tab>
+      <TabName>WaveformDisplay</TabName>
+      <TabTitle>Waveform Display</TabTitle>
     </Tab>
     <Tab>
       <TabName>Features</TabName>

@@ -163,6 +163,13 @@
         </Tab>
 
         <Tab>
+          <TabName>WaveformDisplay</TabName>
+          <Active>true</Active>
+          <ScreenShotFileName></ScreenShotFileName>
+          <NewWindow>false</NewWindow>
+        </Tab>
+
+        <Tab>
           <TabName>Features</TabName>
           <Active>true</Active>
           <ScreenShotFileName></ScreenShotFileName>

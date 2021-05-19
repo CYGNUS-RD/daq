@@ -125,6 +125,7 @@ For more information take a look at the <A TARGET=_top HREF="htmldoc//CYGTWriteD
 
 <ul>
 <li><a href="#EventDisplayTab">EventDisplay</a>
+<li><a href="#WaveformDisplayTab">WaveformDisplay</a>
 <li><a href="#FeaturesTab">Features</a>
 </ul>
 <p>
@@ -141,6 +142,18 @@ This tab containes no steering parameters.
 <h4>More Info</h4>
 <p>
 For more information take a look at the <A TARGET=_top HREF="htmldoc//CYGTEventDisplay.html">class file</a>
+<p>
+<a href="#top">top</a>, <a href="#tabs">Tabs</a>
+
+
+<hr size="1">
+<h3><a name=WaveformDisplayTab class="object">WaveformDisplay</a></h3>
+
+<h4>Steering Parameters</h4>
+This tab containes no steering parameters.
+<h4>More Info</h4>
+<p>
+For more information take a look at the <A TARGET=_top HREF="htmldoc//CYGTWaveformDisplay.html">class file</a>
 <p>
 <a href="#top">top</a>, <a href="#tabs">Tabs</a>
 
@@ -208,6 +221,8 @@ The CYGAnalyzer incorporates the following support folders :
 <u>Fields</u>
 <table summary="Table showing fields in Event folder">
 <tr class="cont"><td>Name</td><td>Type</td><td>Description</td></tr>
+<tr class="odd"><td>&nbsp;NTrigger&nbsp;</td><td>&nbsp;Int_t&nbsp;</td><td>&nbsp;Number of trigger&nbsp;</td></tr>
+<tr class="even"><td>&nbsp;NChannelDgtz&nbsp;</td><td>&nbsp;Int_t&nbsp;</td><td>&nbsp;Number of digitizer channels&nbsp;</td></tr>
 <tr class="odd"><td>&nbsp;DGTZWaveform&nbsp;</td><td>&nbsp;Waveform*&nbsp;</td><td>&nbsp;Sense wire waveforms&nbsp;</td></tr>
 <tr class="even"><td>&nbsp;CamPicture&nbsp;</td><td>&nbsp;Picture*&nbsp;</td><td>&nbsp;Camera pictures&nbsp;</td></tr>
 <tr class="odd"><td>&nbsp;PMTWaveform&nbsp;</td><td>&nbsp;Waveform*&nbsp;</td><td>&nbsp;Analog waveforms&nbsp;</td></tr>
@@ -255,9 +270,7 @@ The CYGAnalyzer incorporates the following support folders :
 <table summary="Table showing fields in RawOutput folder">
 <tr class="cont"><td>Name</td><td>Type</td><td>Description</td></tr>
 <tr class="even"><td>&nbsp;CamPicture&nbsp;</td><td>&nbsp;TH2F&nbsp;</td><td>&nbsp;Camera picture&nbsp;</td></tr>
-<tr class="odd"><td>&nbsp;WF0&nbsp;</td><td>&nbsp;TGraph&nbsp;</td><td>&nbsp;Analog WF0 waveform&nbsp;</td></tr>
-<tr class="even"><td>&nbsp;WF6&nbsp;</td><td>&nbsp;TGraph&nbsp;</td><td>&nbsp;Analog WF6 waveform&nbsp;</td></tr>
-<tr class="odd"><td>&nbsp;WF8&nbsp;</td><td>&nbsp;TGraph&nbsp;</td><td>&nbsp;Analog WF8 waveform&nbsp;</td></tr>
+<tr class="odd"><td>&nbsp;WF&nbsp;</td><td>&nbsp;TGraph&nbsp;</td><td>&nbsp;Analog WF0 waveform&nbsp;</td></tr>
 </table>
 <p>
 <a href="#top">top</a>, <a href="#folders">Folders</a>

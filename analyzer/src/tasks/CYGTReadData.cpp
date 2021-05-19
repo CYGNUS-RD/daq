@@ -100,53 +100,93 @@ void CYGTReadData::Event()
 
   WORD wdata;
   DWORD header_data;
+
+  int nchtot = 0;
   
-  uint32_t ndgtz = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(0);
-  uint32_t NCHDGTZ = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(1);
-  uint32_t NumEvents = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(2);
-  uint32_t reso = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(3);
+  int counter = 0;
+  int scounter = 0;
   
-  event->SetDGTZWaveformSize(NCHDGTZ*NumEvents);
+  uint32_t nboard = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
 
-  for(int iev=0;iev<NumEvents;iev++){
+  uint32_t *ch0 = new uint32_t[nboard];
+  uint32_t *name = new uint32_t[nboard];
+  uint32_t *ndgtz = new uint32_t[nboard];
+  uint32_t *NCHDGTZ = new uint32_t[nboard];
+  uint32_t *NumEvents = new uint32_t[nboard];
+  uint32_t *reso = new uint32_t[nboard];
+  uint32_t *sampling = new uint32_t[nboard];
 
-    for(int k=0;k<NCHDGTZ;k++){
+  double **offset = new double*[nboard];
+  
+  for(int ib=0;ib<nboard;ib++){
 
-      header_data = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(k+4);
-      double offset = ((uint32_t)header_data - 32768.)/65536.;
+    ch0[ib] = nchtot;
+    
+    name[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
+    ndgtz[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
+    NCHDGTZ[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
+    NumEvents[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
+    reso[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
+    sampling[ib] = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter++);
 
-      Waveform *wfdgtz = event->GetDGTZWaveformAt(NumEvents*k+iev);
-      wfdgtz->RemoveSignal();
-      
-      Double_t *tmpt = new Double_t[ndgtz];
-      Double_t *tmpv = new Double_t[ndgtz];
-
-      for(Int_t j=0;j<ndgtz;j++){
+    offset[ib] = new double[NCHDGTZ[ib]];
+    
+    for(int k=0;k<NCHDGTZ[ib];k++){
 	
-	wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(ndgtz*(NCHDGTZ*iev+k)+j);
+      header_data = gAnalyzer->GetMidasDAQ()->GetDGH0BankAt(counter+k);
+      offset[ib][k] = ((uint32_t)header_data - 32768.)/65536.;
 
-	tmpt[j] = j*0.25;
-	tmpv[j] = ((uint16_t)wdata-reso/2.)/(reso+0.0)*1000. + offset;
-	
-	//if(k==0) tmpv[j] *= -1.;
-	
-      }
-
-      wfdgtz->SetNPoints(ndgtz);
-      wfdgtz->Set(ndgtz,tmpt,tmpv);
-
-      delete [] tmpt;
-      delete [] tmpv;
-      
     }
     
+    nchtot += NCHDGTZ[ib];
+    counter += NCHDGTZ[ib];
+
   }
 
+  event->SetNTrigger(NumEvents[0]);
+  event->SetNChannelDgtz(nchtot);
+  
+  event->SetDGTZWaveformSize(nchtot*NumEvents[0]);
+    
+  for(int ib=0;ib<nboard;ib++){
+
+    for(int iev=0;iev<NumEvents[0];iev++){
+
+      for(int k=0;k<NCHDGTZ[ib];k++){
+
+	Waveform *wfdgtz = event->GetDGTZWaveformAt(nchtot*iev + ch0[ib] + k);
+	wfdgtz->RemoveSignal();
+	
+	Double_t *tmpt = new Double_t[ndgtz[ib]];
+	Double_t *tmpv = new Double_t[ndgtz[ib]];
+      
+      for(Int_t j=0;j<ndgtz[ib];j++){
+	  
+	  wdata = gAnalyzer->GetMidasDAQ()->GetDIG0BankAt(scounter++);
+	  
+	  tmpt[j] = j*sampling[ib]/1000.;
+	  tmpv[j] = ((uint16_t)wdata-reso[ib]/2.)/(reso[ib]+0.0)*1000. + offset[ib][k]*1000;
+
+	  //if(k==0) tmpv[j] *= -1.;
+	  
+	}
+	
+	wfdgtz->SetNPoints(ndgtz[ib]);
+	wfdgtz->Set(ndgtz[ib],tmpt,tmpv);
+	
+	delete [] tmpt;
+	delete [] tmpv;
+      
+      }
+    
+    }
+
+  } 
   //////READ CAMERA DATA
   WORD camdata = 0;
-
+    
   event->SetCamPictureSize(0);
-
+  
   event->SetCamPictureSize(1);
   event->GetCamPictureAt(0)->SetNPixels(NPX,NPY);    
 

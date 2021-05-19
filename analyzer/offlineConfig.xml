@@ -163,6 +163,13 @@
         </Tab>
 
         <Tab>
+          <TabName>WaveformDisplay</TabName>
+          <Active>true</Active>
+          <ScreenShotFileName></ScreenShotFileName>
+          <NewWindow>false</NewWindow>
+        </Tab>
+
+        <Tab>
           <TabName>Features</TabName>
           <Active>true</Active>
           <ScreenShotFileName></ScreenShotFileName>
@@ -184,11 +191,11 @@
           <Active>true</Active>
         </Bank>
         <Bank>
-          <BankName>DIG0</BankName>
+          <BankName>DGH0</BankName>
           <Active>true</Active>
         </Bank>
         <Bank>
-          <BankName>DGH0</BankName>
+          <BankName>DIG0</BankName>
           <Active>true</Active>
         </Bank>
         <Bank>

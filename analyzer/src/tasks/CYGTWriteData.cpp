@@ -56,27 +56,27 @@ void CYGTWriteData::Event()
 
   CYGEvent *event = gAnalyzer->GetEvent();
   CYGRawOutput *output = gAnalyzer->GetRawOutput();
+
+  Int_t nwf = event->GetDGTZWaveformSize();
+  
+  output->SetWFSize(nwf);
   
   if(event->GetCamPictureSize() > 0){
 
-
     Picture *pic = event->GetCamPictureAt(0);
     TH2F *th2 = (TH2F*)pic->GetHisto()->Clone(Form("Event%d_th2",event->GetEventTime()));
-    
-    Waveform *wf0 = event->GetDGTZWaveformAt(0);
-    TGraph *gr0 = (TGraph*)wf0->GetGraph()->Clone(Form("Event%d_wf0",event->GetEventTime()));
-    
-    Waveform *wf1 = event->GetDGTZWaveformAt(6);
-    TGraph *gr1 = (TGraph*)wf1->GetGraph()->Clone(Form("Event%d_wf1",event->GetEventTime()));
-    
-    Waveform *wf2 = event->GetDGTZWaveformAt(8);
-    TGraph *gr2 = (TGraph*)wf2->GetGraph()->Clone(Form("Event%d_wf2",event->GetEventTime()));
 
-    ///Write to file
-    output->SetCamPicture(*th2);
-    output->SetWF0(*gr0);
-    output->SetWF6(*gr1);
-    output->SetWF8(*gr2);
+    for(Int_t iwf=0;iwf<nwf;iwf++){
+
+      Waveform *wf = event->GetDGTZWaveformAt(iwf);
+      TGraph *gr = (TGraph*)wf->GetGraph()->Clone(Form("Event%d_wf%d",event->GetEventTime(),iwf));
+
+      ///Write to file
+      output->SetCamPicture(*th2);
+      *output->GetWFAt(iwf) = *gr;
+
+    }
+
   }
 
 }

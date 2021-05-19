@@ -66,7 +66,7 @@ void CYGTEventDisplay::Init()
   TGLabel *fLabelLow = new TGLabel(fHorizontalFrameRange, "Low");
   fHorizontalFrameRange->AddFrame(fLabelLow, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
 
-  fNumberLow = new TGNumberEntry(fHorizontalFrameRange, 90, 5, 1, TGNumberFormat::kNESInteger,
+  fNumberLow = new TGNumberEntry(fHorizontalFrameRange, 95, 5, 1, TGNumberFormat::kNESInteger,
 					      TGNumberFormat::kNEANonNegative,
 					      TGNumberFormat::kNELLimitMinMax,
 					      0, 65535);
@@ -76,7 +76,7 @@ void CYGTEventDisplay::Init()
   TGLabel *fLabelHigh = new TGLabel(fHorizontalFrameRange, "High");
   fHorizontalFrameRange->AddFrame(fLabelHigh, new TGLayoutHints(kLHintsLeft | kLHintsTop,10,2,2,5));
 
-  fNumberHigh = new TGNumberEntry(fHorizontalFrameRange, 150, 5, 1, TGNumberFormat::kNESInteger,
+  fNumberHigh = new TGNumberEntry(fHorizontalFrameRange, 120, 5, 1, TGNumberFormat::kNESInteger,
 						 TGNumberFormat::kNEANonNegative,
 						 TGNumberFormat::kNELLimitMinMax,
 						 0, 65535);
@@ -153,20 +153,20 @@ void CYGTEventDisplay::EventHandler()
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
     event->GetDGTZWaveformAt(0)->GetGraph()->Draw("AL");
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetNdivisions(505);
-    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-1000.,200.);
+    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-1000.,1000.);
     fCanvasDig->GetCanvas()->cd(2);
-    event->GetDGTZWaveformAt(1)->GetGraph()->SetTitle("");
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetXaxis()->SetTitleSize(0.1);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetTitleSize(0.1);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetXaxis()->SetTitleOffset(0.8);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetTitleOffset(0.5);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetXaxis()->SetLabelSize(0.1);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetLabelSize(0.1);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetXaxis()->SetTitle("Time [ns]");
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
-    event->GetDGTZWaveformAt(1)->GetGraph()->Draw("AL");
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetNdivisions(505);
-    event->GetDGTZWaveformAt(1)->GetGraph()->GetYaxis()->SetRangeUser(-300.,900.);
+    event->GetDGTZWaveformAt(2)->GetGraph()->SetTitle("");
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetXaxis()->SetTitleSize(0.1);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetTitleSize(0.1);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetXaxis()->SetTitleOffset(0.8);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetTitleOffset(0.5);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetXaxis()->SetLabelSize(0.1);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetLabelSize(0.1);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetXaxis()->SetTitle("Time [ns]");
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
+    event->GetDGTZWaveformAt(2)->GetGraph()->Draw("AL");
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetNdivisions(505);
+    event->GetDGTZWaveformAt(2)->GetGraph()->GetYaxis()->SetRangeUser(-1000.,1000.);
   }
 
   fCanvasDig->GetCanvas()->Update();  

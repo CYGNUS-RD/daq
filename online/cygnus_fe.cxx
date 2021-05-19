@@ -23,7 +23,7 @@
 using namespace std;
 
 #define HAVE_CAEN_BRD
-#define HAVE_CAMERA
+//#define HAVE_CAMERA
 
 #ifdef HAVE_CAEN_BRD
 #define HAVE_V895
@@ -107,6 +107,7 @@ INT ClearDevice();
 INT read_tdc(char *pevent);
 INT read_dgtz(char *pevent);
 INT read_camera(char *pevent);
+void ReadDgtzConfig();
 
 /*-- Equipment list ------------------------------------------------*/
 BOOL equipment_common_overwrite = TRUE;
@@ -166,31 +167,26 @@ int gTdcBase   = 0x33330000;
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
-int gDGTZ;
-char *buffer_dgtz = NULL;
-int posttrg = 70;
+int nboard = 2;
+int *gDGTZ;
+char **buffer_dgtz;
+int *posttrg;   //=  70;
 
-#ifdef HAVE_V1761
-double DGTZ_OFFSET[2] = {0.};
-int NCHDGTZ = 2;
-int ndgtz = 40000;
-int SAMPLING = 250;
-int gDigBase   = 0x22220000;
-#endif
-#ifdef HAVE_V1742
-int NCHDGTZ = 32;
-double DGTZ_OFFSET[32] = {0.};
-int ndgtz = 1024;
-int SAMPLING = 200;
-int gDigBase   = 0x22220000;
+//#ifdef HAVE_V1761
+double **DGTZ_OFFSET;
+uint32_t *NCHDGTZ;        // = 40000;
+uint32_t *ndgtz;          //= 1024;
+uint32_t *SAMPLING;    //250;
+uint32_t *gDigBase;     //0x22220000;
+char **BoardName;
 #endif
 
-#endif
 
 #ifdef HAVE_CAMERA
 HDCAM gCam = 0;
 HDCAMWAIT hwait = 0;
 #endif
+
 
 /*-- Frontend Init -------------------------------------------------*/
 
@@ -198,10 +194,7 @@ INT frontend_init()
 {
   /* put any hardware initialization here */
 #ifdef HAVE_CAEN_DGTZ
-  CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,2,0,gDigBase,&gDGTZ);
-  if(ret != CAEN_DGTZ_Success) {
-    printf("Can't open digitizer -- Error %d\n",ret);
-  }
+  ReadDgtzConfig();
 #endif
 
 #ifdef HAVE_CAEN_BRD
@@ -432,21 +425,21 @@ INT poll_event(INT source, INT count, BOOL test)
     //  time_t result = time(nullptr);
     //  outfile << result << "  " ;
     //}
-    
-    //send a trigger to the camera
-    dcamcap_firetrigger(gCam,0);
 
-    waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-    DCAMERR err1 = dcamwait_start( hwait, &waitstart );
+   //send a trigger to the camera
+   dcamcap_firetrigger(gCam,0);
 
-    //if(!test){
-    //  time_t result = time(nullptr);
-    //  outfile << result << endl ;
-    //  outfile.close();
-    //}    
-    
-    if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
-
+   waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+   DCAMERR err1 = dcamwait_start( hwait, &waitstart );
+   
+   //if(!test){
+   //  time_t result = time(nullptr);
+   //  outfile << result << endl ;
+   //  outfile.close();
+   //}    
+   
+   if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
+   
 #endif
 
 #ifdef HAVE_V1190
@@ -455,8 +448,10 @@ INT poll_event(INT source, INT count, BOOL test)
     
 #ifdef HAVE_CAEN_DGTZ
     uint32_t status;
-    CAEN_DGTZ_ReadRegister(gDGTZ,CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-    lamDGTZ = (status & 0x8); /* 4th bit is data ready */
+    for(int i=0;i<nboard;i++){
+      CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+      lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+    }
 #endif
 
     flag = (lamTDC && lamDGTZ && lamCAM);
@@ -478,6 +473,7 @@ INT poll_event(INT source, INT count, BOOL test)
 	return TRUE;
 	
       }
+
     }
 
 #ifdef HAVE_CAMERA
@@ -498,12 +494,11 @@ INT poll_event(INT source, INT count, BOOL test)
     
 #ifdef HAVE_CAEN_DGTZ
     if(lamDGTZ) {
-      CAEN_DGTZ_ClearData(gDGTZ);
+      for(int i=0;i<nboard;i++){
+	CAEN_DGTZ_ClearData(gDGTZ[i]);
+      }
     }
 #endif
-    
-    //SET OUT_1 to 1 (not busy)
-    CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
     
     //Reset GATE (pulser B)
     CAENVME_StopPulser(gVme->handle,cvPulserB);
@@ -571,6 +566,66 @@ INT read_event(char *pevent, INT off)
 
 ///////CUSTOM ROUTINES
 
+#ifdef HAVE_CAEN_DGTZ
+void ReadDgtzConfig(){
+
+  CAEN_DGTZ_ErrorCode ret;
+  HNDLE hDB;
+
+  cm_get_experiment_database(&hDB, NULL);
+
+  /////Number of boards
+  int size = sizeof(int);
+  db_get_value(hDB, 0, "/Configurations/Number of Digitizers",&nboard,&size,TID_INT,TRUE);
+
+  gDGTZ = new int[nboard];
+  gDigBase = new int[nboard];     //0x22220000;
+  BoardName = new char*[nboard];
+  buffer_dgtz = new char*[nboard];
+  NCHDGTZ = new int[nboard];        // = 40000;
+  DGTZ_OFFSET = new double*[nboard];
+  /////Number of samples per waveform and sampling rate
+  ndgtz = new int[nboard];          //= 1024;
+  SAMPLING = new int[nboard] ;    //250;
+  /////Horizontal offset
+  posttrg = new int[nboard];   //=  70;
+
+  //read from the database and initialise gDigBase
+  for(int i=0;i<nboard;i++){
+
+    /////Open the board
+    char query[100];
+    sprintf(query,"/Configurations/Digitizer Base Address[%d]",i);
+    db_get_value(hDB, 0, query,&gDigBase[i],&size,TID_INT,TRUE);
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,0,0,gDigBase[i],&gDGTZ[i]);
+    if(ret != CAEN_DGTZ_Success) {
+      printf("Can't open digitizer, board number %d\n-- Error %d\n",i,ret);
+    }
+
+    ////Board name
+    CAEN_DGTZ_BoardInfo_t BoardInfo;
+    CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
+    BoardName[i] = new char[10];
+    strcpy(BoardName[i],BoardInfo.ModelName);
+    printf("%s\n",BoardName[i]);
+
+    ////Buffer preparation
+    buffer_dgtz[i]=NULL;
+
+    ////Number of channels
+    NCHDGTZ[i] = BoardInfo.Channels;
+    if(strcmp(BoardName[i],"V1742")==0)
+      NCHDGTZ[i] *= 8;
+
+    ////Vertical Offsets
+    DGTZ_OFFSET[i]=new double[32];
+    for(int j=0;j<32;j++) DGTZ_OFFSET[i][j]=0.;
+
+  }
+
+}
+#endif
+
 #ifdef HAVE_CAEN_BRD
 
 INT init_vme_modules(){
@@ -636,40 +691,45 @@ INT init_vme_modules(){
   
   /* DIGITIZER INITIALIZATION */
   
-  CAEN_DGTZ_BoardInfo_t BoardInfo;
+  CAEN_DGTZ_BoardInfo_t *BoardInfo= new CAEN_DGTZ_BoardInfo_t[nboard] ;
   CAEN_DGTZ_ErrorCode ret;
+
+  for(int i=0;i<nboard;i++)
+    {
+      ret = CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo[i]);
+
+      printf("\nConnected to CAEN Digitizer Model %s %d -- %d channels\n", BoardInfo[i].ModelName,BoardInfo[i].FamilyCode,NCHDGTZ[i]);
+
   
-  ret = CAEN_DGTZ_GetInfo(gDGTZ, &BoardInfo);
+      ////Reset the board
+      ret |= CAEN_DGTZ_Reset(gDGTZ[i]);                                               /* Reset Digitizer */
+      ret |= CAEN_DGTZ_ClearData(gDGTZ[i]);
 
-  printf("\nConnected to CAEN Digitizer Model %s %d -- %d channels\n", BoardInfo.ModelName,BoardInfo.FamilyCode,NCHDGTZ);
-
+      //#ifdef HAVE_V1761
+      ////Waveform Setup
+      if(strcmp(BoardName[i],"V1761")==0)
+	ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ[i],0x3);                        /* Enable channel 0 and 1*/
+      else if(strcmp(BoardName[i],"V1742")==0)
+	CAEN_DGTZ_SetGroupEnableMask(gDGTZ[i],0xF); 
+      //#endif
+      //#ifdef HAVE_V1742
+      //ret |= CAEN_DGTZ_SetGroupEnableMask(gDGTZ,0x20);                        /* Enable channel 0 and 1*/
+      //#endif
+   
+      ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_DISABLED);
+      //ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,???); //TO BE FIXED 
+      ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+      ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i],128);                                /* Set the max number of events to transfer in a sigle readout */
   
-  ////Reset the board
-  ret |= CAEN_DGTZ_Reset(gDGTZ);                                               /* Reset Digitizer */
-  ret |= CAEN_DGTZ_ClearData(gDGTZ);
-  ret |= CAEN_DGTZ_GetInfo(gDGTZ, &BoardInfo);                                 /* Get Board Info */
+      //Acquisition mode
+      ret |= CAEN_DGTZ_SetAcquisitionMode(gDGTZ[i],CAEN_DGTZ_SW_CONTROLLED);          /* Set the acquisition mode */
 
-#ifdef HAVE_V1761
-  ////Waveform Setup
-  ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ,0x3);                        /* Enable channel 0 and 1*/
-#endif
-#ifdef HAVE_V1742
-  ret |= CAEN_DGTZ_SetGroupEnableMask(gDGTZ,0xF);                        /* Enable channel 0 and 1*/
-#endif
-  
-  ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED);
-  //ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,???); //TO BE FIXED 
-  ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ,CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
-  ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ,128);                                /* Set the max number of events to transfer in a sigle readout */
-  
-  //Acquisition mode
-  ret |= CAEN_DGTZ_SetAcquisitionMode(gDGTZ,CAEN_DGTZ_SW_CONTROLLED);          /* Set the acquisition mode */
+      if(ret != CAEN_DGTZ_Success) {  
+	printf("Errors during Digitizer Initialization, board number %d.\n",i);
+      }
 
-  if(ret != CAEN_DGTZ_Success) {  
-    printf("Errors during Digitizer Initialization.\n");
-  }
-
-  ConfigDgtz();
+    }
+ ConfigDgtz();
   
 #endif  
 
@@ -709,94 +769,115 @@ INT ConfigDgtz(){
   int size = sizeof(int);
 
   HNDLE hDB;
-
+  char query[64];
+  
   cm_get_experiment_database(&hDB, NULL);
   
-#ifdef HAVE_V1761
-  db_get_value(hDB, 0, "/Configurations/DigitizerSamples",&ndgtz,&size,TID_INT,TRUE);
-  if(ndgtz > 56250) ndgtz = 56250;                                         /* max 23 bit to allocate the number of samples */
-  CAEN_DGTZ_SetRecordLength(gDGTZ,ndgtz);                                /* Set the lenght of each waveform (in samples) */
-  SAMPLING = 250;
-#endif
+  //#ifdef HAVE_V1761
+  for(int i=0;i<nboard;i++){
 
-#ifdef HAVE_V1742
-  int fsampling = 0;  
-  db_get_value(hDB, 0, "/Configurations/SamplingFrequency",&fsampling,&size,TID_INT,TRUE);
-  CAEN_DGTZ_DRS4Frequency_t DRS4Frequency;				//NEW
-  switch(fsampling){
-  case 0:
-    ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ,CAEN_DGTZ_DRS4_750MHz);
-    SAMPLING = (int)((1000.0/750.0)*1000.0);
-    DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;			//NEW
-    break;
-  case 1:
-    ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ,CAEN_DGTZ_DRS4_1GHz);
-    SAMPLING = (int)1000;
-    DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;			//NEW
-    break;
-  case 2:
-    ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ,CAEN_DGTZ_DRS4_2_5GHz);
-    SAMPLING = (int)400;
-    DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			//NEW
-    break;
-  case 3:
-    ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ,CAEN_DGTZ_DRS4_5GHz);
-    SAMPLING = (int)200;
-    DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
-    break;
-  default:
-    ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ,CAEN_DGTZ_DRS4_5GHz);
-    SAMPLING = (float)200.;
-    DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
-    break;
-  }
-#endif
-  
-  db_get_value(hDB, 0, "/Configurations/DigitizerPostTrg",&posttrg,&size,TID_INT,TRUE);
-  CAEN_DGTZ_SetPostTriggerSize(gDGTZ,posttrg);                               /* Trigger position */
-
-  size = sizeof(double);
-  
-  for(int ich=0;ich<NCHDGTZ;ich++){
+    sprintf(query,"/Configurations/DigitizerSamples[%d]",i);
+    db_get_value(hDB, 0, query,&ndgtz[i],&size,TID_INT,TRUE);
     
-    char name[64];
-    sprintf(name,"/Configurations/DigitizerOffset[%d]",ich);
-    
-    db_get_value(hDB,0,name,&DGTZ_OFFSET[ich],&size,TID_DOUBLE,TRUE);
-    
-    if(DGTZ_OFFSET[ich] > 0.5) DGTZ_OFFSET[ich] = 0.5;
-    else if(DGTZ_OFFSET[ich] < -0.5) DGTZ_OFFSET[ich] = -0.5;
+    if(strcmp(BoardName[i],"V1761")==0)   //da decidere
+      {
+	if(ndgtz[i] > 56250) ndgtz[i] = 56250;                                         /* max 23 bit to allocate the number of samples */
+	CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+	SAMPLING[i] = 250;
+      }
+    //#endif
 
-    CAEN_DGTZ_SetChannelDCOffset(gDGTZ,ich,(uint32_t)(DGTZ_OFFSET[ich]*65536 + 32767));
+    //#ifdef HAVE_V1742
+    CAEN_DGTZ_DRS4Frequency_t DRS4Frequency = CAEN_DGTZ_DRS4_5GHz;
+    if(strcmp(BoardName[i],"V1742")==0)      //da decidere
+      {
+	ndgtz[i] = 1024;
+	int fsampling = 0;
+	sprintf(query,"/Configurations/SamplingFrequency[%d]",i);
+	db_get_value(hDB, 0, query,&fsampling,&size,TID_INT,TRUE);
+	switch(fsampling){
+	case 0:
+	  SAMPLING[i] = (int)((1000.0/750.0)*1000.0);
+             DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;			//NEW
+             break;
+	case 1:
+	  SAMPLING[i] = (int)1000;
+	  DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;			//NEW
+	  break;
+	case 2:
+	  SAMPLING[i] = (int)400;
+	  DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			//NEW
+	  break;
+	case 3:
+	  SAMPLING[i] = (int)200;
+	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
+	  break;
+	default:
+	  SAMPLING[i] = (int)200;
+	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
+	  break;
+	}
+	ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ[i],DRS4Frequency);
+      }
     
-  }
-	//////////////NEW
-  //Uploading and enebling the automatic correction for the 1742 digitizer
-  #ifdef HAVE_V1742
-  if ((ret = CAEN_DGTZ_LoadDRS4CorrectionData(gDGTZ,DRS4Frequency)) != CAEN_DGTZ_Success) 
-  { 
-	  cerr<<"Error in LoadDRS4Correction"<<endl;
-	  exit(EXIT_FAILURE);
-  }
-  if ((ret = CAEN_DGTZ_EnableDRS4Correction(gDGTZ)) != CAEN_DGTZ_Success)
-  { 
-	  cerr<<"Error in EnableDRS4Correction"<<endl;
-	  exit(EXIT_FAILURE);
-  }
-  #endif
-	//////////////NEW
+    //#endif
+    
+    sprintf(query,"/Configurations/DigitizerPostTrg[%d]",i);
+    db_get_value(hDB, 0, query,&posttrg[i],&size,TID_INT,TRUE);
+    CAEN_DGTZ_SetPostTriggerSize(gDGTZ[i],posttrg[i]);                               /* Trigger position */
+    
+    size = sizeof(double);
+    
+    for(int ich=0;ich<NCHDGTZ[i];ich++){
+      
+      sprintf(query,"/Configurations/DigitizerOffset[%d]",i*32+ich);      
+      db_get_value(hDB,0,query,&DGTZ_OFFSET[i][ich],&size,TID_DOUBLE,TRUE);
+      
+      if(DGTZ_OFFSET[i][ich] > 0.5) DGTZ_OFFSET[i][ich] = 0.5;
+      else if(DGTZ_OFFSET[i][ich] < -0.5) DGTZ_OFFSET[i][ich] = -0.5;
+      
+      if(strcmp(BoardName[i],"V1761")==0)      //da decidere
+	CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
+      else if(strcmp(BoardName[i],"V1742")==0){      //da decidere
+	int grreg = 0x1098 | (ich/8 << 8);
+	int data = (ich%8<<16) | (int)(DGTZ_OFFSET[i][ich]/2.*65536 + 32767);
+	//CAEN_DGTZ_SetGroupDCOffset(gDGTZ[i],ich/8,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
+	CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
+      }
+	
+    }
+    //////////////NEW
+    //Uploading and enebling the automatic correction for the 1742 digitizer
+    // #ifdef HAVE_V1742
 
-  //Calibration
-  CAEN_DGTZ_Calibrate(gDGTZ);
-  
-  //Buffer allocation
-  uint32_t bsize;
-  ret = CAEN_DGTZ_MallocReadoutBuffer(gDGTZ,&buffer_dgtz,&bsize);
+    if(strcmp(BoardName[i],"V1742")==0)      //da decidere
+      {
+	if ((ret = CAEN_DGTZ_LoadDRS4CorrectionData(gDGTZ[i],DRS4Frequency)) != CAEN_DGTZ_Success) 
+          { 
+	    cerr<<"Error in LoadDRS4Correction"<<endl;
+	    exit(EXIT_FAILURE);
+          } 
+	if ((ret = CAEN_DGTZ_EnableDRS4Correction(gDGTZ[i])) != CAEN_DGTZ_Success)
+          { 
+	    cerr<<"Error in EnableDRS4Correction"<<endl;
+	    exit(EXIT_FAILURE);
+          }
+      }
+    //  #endif
+    //////////////NEW
 
-  if(ret != CAEN_DGTZ_Success) {  
-    printf("Errors during Digitizer Configuration.\n");
-  }
-  
+    //Calibration
+    CAEN_DGTZ_Calibrate(gDGTZ[i]);
+    
+    //Buffer allocation
+    uint32_t bsize;
+    ret = CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i],&buffer_dgtz[i],&bsize);
+    
+    if(ret != CAEN_DGTZ_Success) {  
+      printf("Errors during Digitizer Configuration.\n");
+    }
+    
+  }//end for cycle on boards
   return SUCCESS;
   
 }
@@ -901,7 +982,9 @@ INT disable_trigger()
   CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);  
 
 #ifdef HAVE_CAEN_DGTZ
-  CAEN_DGTZ_SWStopAcquisition(gDGTZ);
+  for(int i=0;i<nboard;i++){
+    CAEN_DGTZ_SWStopAcquisition(gDGTZ[i]);
+  }
 #endif
 
 #endif 
@@ -916,7 +999,9 @@ INT enable_trigger()
   ClearDevice();
 
 #ifdef HAVE_CAEN_DGTZ
-  CAEN_DGTZ_SWStartAcquisition(gDGTZ);
+  for(int i=0;i<nboard;i++){
+    CAEN_DGTZ_SWStartAcquisition(gDGTZ[i]);
+  }
 #endif
 
   return 0;
@@ -932,7 +1017,9 @@ INT ClearDevice()
   v1190_SoftClear(gVme,gTdcBase);
 #endif
 #ifdef HAVE_CAEN_DGTZ
-  CAEN_DGTZ_ClearData(gDGTZ);
+  for(int i=0;i<nboard;i++){
+    CAEN_DGTZ_ClearData(gDGTZ[i]);
+  }
 #endif
 
   //SET OUT_1 to 1 (not busy)
@@ -1029,107 +1116,125 @@ int read_dgtz(char* pevent){
   uint32_t NumEvents;
   CAEN_DGTZ_EventInfo_t eventInfo;
   
-  CAEN_DGTZ_ReadData(gDGTZ,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz,&bsize);
-  CAEN_DGTZ_GetNumEvents(gDGTZ,buffer_dgtz,bsize,&NumEvents);
-
   WORD* pdata16 = NULL;
   bk_create(pevent, "DIG0", TID_WORD, &pdata16);
-
-  //if(NumEvents != 1) cout << "---------- ERROR!!!!! DGTZ > 1 event!!! ----------" << endl;
-  cout << "NumEvents = " << NumEvents << endl;
-
-#ifdef HAVE_V1761
-
-  CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
   
-  for(int iev=0;iev<NumEvents;iev++){
-
-    CAEN_DGTZ_AllocateEvent(gDGTZ, (void**)&Evt);
-
-    CAEN_DGTZ_GetEventInfo(gDGTZ,buffer_dgtz,bsize,iev,&eventInfo,&evtptr);
-    CAEN_DGTZ_DecodeEvent(gDGTZ,evtptr,(void**)&Evt);
-
-    for(int j=0;j<NCHDGTZ;j++){
-
-      for (uint32_t i=0; i<ndgtz; ++i) {
-
-	uint16_t temp = (uint16_t)(Evt->DataChannel[j][i]);
-	*pdata16++ = temp;
+  for(int i=0;i<nboard;i++){
+    
+    CAEN_DGTZ_ReadData(gDGTZ[i],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz[i],&bsize);
+    CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);    
+    
+    //if(NumEvents != 1) cout << "---------- ERROR!!!!! DGTZ > 1 event!!! ----------" << endl;
+    //cout << "NumEvents = " << NumEvents << endl;
+    
+    //#ifdef HAVE_V1761
+    if(strcmp(BoardName[i],"V1761")==0){
+      
+      CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
+    
+      for(int iev=0;iev<NumEvents;iev++){
+      
+	CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
+      
+	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+	CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+      
+	for(int j=0;j<NCHDGTZ[i];j++){
 	
+	  for (uint32_t k=0; k<ndgtz[i]; ++k) {
+	  
+	    uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
+	    *pdata16++ = temp;
+	  
+	  }
+	
+	}
+      
+	CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
       }
 
     }
     
-    CAEN_DGTZ_FreeEvent(gDGTZ,&Evt);
+    //#ifdef HAVE_V1742
+    else if(strcmp(BoardName[i],"V1742")==0){
 
-  }
-#endif
+      
+      CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
 
-#ifdef HAVE_V1742
-
-  CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
-
-  for(int iev=0;iev<NumEvents;iev++){
-
-    CAEN_DGTZ_AllocateEvent(gDGTZ, (void**)&Evt);					
-
-    CAEN_DGTZ_GetEventInfo(gDGTZ,buffer_dgtz,bsize,iev,&eventInfo,&evtptr);
-    CAEN_DGTZ_DecodeEvent(gDGTZ,evtptr,(void**)&Evt);
-    
-    for(int j=0;j<NCHDGTZ;j++){
-
-      uint32_t ig = j/8;
-      uint32_t ich = j%8;
-
-      for (uint32_t i=0; i<ndgtz; ++i) {
-
-	uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][i]);
-	*pdata16++ = temp;
+      for(int iev=0;iev<NumEvents;iev++){
+      
+	CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);					
+      
+	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+	CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+      
+	for(int j=0;j<NCHDGTZ[i];j++){
 	
+	  uint32_t ig = j/8;
+	  uint32_t ich = j%8;
+	
+	  for (uint32_t k=0; k<ndgtz[i]; ++k) {
+	  
+	    uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][k]);
+	    *pdata16++ = temp;
+	  
+	  }
+	
+	}
+      
+	CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
+      
       }
-
-    }
-
-    CAEN_DGTZ_FreeEvent(gDGTZ,&Evt);
-
-  }
-
-#endif  
-  
-  bk_close(pevent, pdata16);
+    } 
+      //#endif  
+    
+    bk_close(pevent, pdata16);
+    
+  }//end for on boards for reading data
 
   uint32_t* hdata = NULL;
+  uint32_t header_data = 0;
   bk_create(pevent, "DGH0", TID_DWORD, (void **)&hdata);
 
-  uint32_t header_data = 0;
-
-  header_data = ndgtz;
+  header_data = nboard;
   *hdata++ = header_data;
 
-  header_data = NCHDGTZ;
-  *hdata++ = header_data;
+  for(int i=0;i<nboard;i++){
 
-  header_data = NumEvents;
-  *hdata++ = header_data;
-
-#ifdef HAVE_V1761
-  header_data = 1024;
-#endif
-#ifdef HAVE_V1742
-  header_data = 4096;
-#endif
-  *hdata++ = header_data;
-
-  header_data = SAMPLING;
-  *hdata++ = header_data;
-  
-  for(int j=0;j<NCHDGTZ;j++){
-    header_data = (uint32_t)(DGTZ_OFFSET[j]*65536 + 32768);
+    // uint32_t* hdata = NULL;
+    // sprintf(query,"DGH%d",i);
+    //bk_create(pevent, query, TID_DWORD, (void **)&hdata);
+    
+    // uint32_t header_data = 0;
+    
+    header_data = atoi(&BoardName[i][1]);
     *hdata++ = header_data;
-  }
-
-  bk_close(pevent, hdata);
-
+    
+    header_data = ndgtz[i];
+    *hdata++ = header_data;
+    
+    header_data = NCHDGTZ[i];
+    *hdata++ = header_data;
+    
+    header_data = NumEvents;
+    *hdata++ = header_data;
+    
+    CAEN_DGTZ_BoardInfo_t BoardInfo;
+    CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
+    header_data = (uint32_t)pow(2,BoardInfo.ADC_NBits);
+    *hdata++ = header_data;
+    
+    header_data = SAMPLING[i];
+    *hdata++ = header_data;
+    
+    for(int j=0;j<NCHDGTZ[i];j++){
+      header_data = (uint32_t)(DGTZ_OFFSET[i][j]*65536 + 32768);
+      *hdata++ = header_data;
+    }
+    
+    bk_close(pevent, hdata);
+  }//end for on boards for header
+  
   return 0;
 
 }
