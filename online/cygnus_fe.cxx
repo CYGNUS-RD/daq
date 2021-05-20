@@ -30,10 +30,10 @@ using namespace std;
 #define HAVE_V895
 //#define HAVE_V1190
 #define HAVE_CAEN_DGTZ
-#ifdef HAVE_CAEN_DGTZ
+//#ifdef HAVE_CAEN_DGTZ
 //#define HAVE_V1761 
-#define HAVE_V1742
-#endif
+//#define HAVE_V1742
+//#endif
 #endif
 
 #ifdef HAVE_CAEN_BRD
@@ -173,7 +173,6 @@ int *gDGTZ;
 char **buffer_dgtz;
 int *posttrg;   //=  70;
 
-//#ifdef HAVE_V1761
 double **DGTZ_OFFSET;
 uint32_t *NCHDGTZ;        // = 40000;
 uint32_t *ndgtz;          //= 1024;
@@ -708,7 +707,7 @@ INT init_vme_modules(){
 
       //#ifdef HAVE_V1761
       ////Waveform Setup
-      if(strcmp(BoardName[i],"V1761")==0)
+      if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720")==0)
 	ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ[i],0x3);                        /* Enable channel 0 and 1*/
       else if(strcmp(BoardName[i],"V1742")==0)
 	CAEN_DGTZ_SetGroupEnableMask(gDGTZ[i],0xF); 
@@ -771,26 +770,34 @@ INT ConfigDgtz(){
 
   HNDLE hDB;
   char query[64];
-  
+  int  maxtriggersize;
   cm_get_experiment_database(&hDB, NULL);
   
-  //#ifdef HAVE_V1761
+  db_get_value(hDB, 0,"/Configurations/MultiTriggerMaxSize",&maxtriggersize,&size,TID_INT,TRUE);
+  
+  //for_V1761
   for(int i=0;i<nboard;i++){
 
     sprintf(query,"/Configurations/DigitizerSamples[%d]",i);
     db_get_value(hDB, 0, query,&ndgtz[i],&size,TID_INT,TRUE);
     
-    if(strcmp(BoardName[i],"V1761")==0)   //da decidere
+    CAEN_DGTZ_DRS4Frequency_t DRS4Frequency = CAEN_DGTZ_DRS4_5GHz;
+
+    if(strcmp(BoardName[i],"V1761")==0)   
       {
-	if(ndgtz[i] > 56250) ndgtz[i] = 56250;                                         /* max 23 bit to allocate the number of samples */
+	if(ndgtz[i] > (7.2e6/maxtriggersize) ) ndgtz[i] = (int)(7.2e6/maxtriggersize);
 	CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
 	SAMPLING[i] = 250;
       }
-    //#endif
-
+     //for_V1720
+    else if(strcmp(BoardName[i],"V1720")==0)   
+      {
+	if(ndgtz[i] > (1.25e6/maxtriggersize) ) ndgtz[i] = (int)(1.25e6/maxtriggersize);                                         
+	CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+	SAMPLING[i] = 4000;
+      }
     //#ifdef HAVE_V1742
-    CAEN_DGTZ_DRS4Frequency_t DRS4Frequency = CAEN_DGTZ_DRS4_5GHz;
-    if(strcmp(BoardName[i],"V1742")==0)      //da decidere
+    else if(strcmp(BoardName[i],"V1742")==0)     
       {
 	ndgtz[i] = 1024;
 	int fsampling = 0;
@@ -799,23 +806,23 @@ INT ConfigDgtz(){
 	switch(fsampling){
 	case 0:
 	  SAMPLING[i] = (int)((1000.0/750.0)*1000.0);
-             DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;			//NEW
+             DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;		
              break;
 	case 1:
 	  SAMPLING[i] = (int)1000;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;			//NEW
+	  DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;		
 	  break;
 	case 2:
 	  SAMPLING[i] = (int)400;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			//NEW
+	  DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			
 	  break;
 	case 3:
 	  SAMPLING[i] = (int)200;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
+	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
 	  break;
 	default:
 	  SAMPLING[i] = (int)200;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			//NEW
+	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
 	  break;
 	}
 	ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ[i],DRS4Frequency);
@@ -837,7 +844,7 @@ INT ConfigDgtz(){
       if(DGTZ_OFFSET[i][ich] > 0.5) DGTZ_OFFSET[i][ich] = 0.5;
       else if(DGTZ_OFFSET[i][ich] < -0.5) DGTZ_OFFSET[i][ich] = -0.5;
       
-      if(strcmp(BoardName[i],"V1761")==0)      //da decidere
+      if( (strcmp(BoardName[i],"V1761")==0) || (strcmp(BoardName[i],"V1720")==0) )    
 	CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
       else if(strcmp(BoardName[i],"V1742")==0){      //da decidere
 	int grreg = 0x1098 | (ich/8 << 8);
@@ -847,8 +854,8 @@ INT ConfigDgtz(){
       }
 	
     }
-    //////////////NEW
-    //Uploading and enebling the automatic correction for the 1742 digitizer
+    
+    //Uploading and enabling the automatic correction for the 1742 digitizer
     // #ifdef HAVE_V1742
 
     if(strcmp(BoardName[i],"V1742")==0)      //da decidere
@@ -865,7 +872,7 @@ INT ConfigDgtz(){
           }
       }
     //  #endif
-    //////////////NEW
+    
 
     //Calibration
     CAEN_DGTZ_Calibrate(gDGTZ[i]);
@@ -1129,7 +1136,7 @@ int read_dgtz(char* pevent){
     //cout << "NumEvents = " << NumEvents << endl;
     
     //#ifdef HAVE_V1761
-    if(strcmp(BoardName[i],"V1761")==0){
+    if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720")==0){
       
       CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
     
