@@ -23,8 +23,8 @@
 
 using namespace std;
 
-#define HAVE_CAEN_BRD
-//#define HAVE_CAMERA
+//#define HAVE_CAEN_BRD
+#define HAVE_CAMERA
 
 #ifdef HAVE_CAEN_BRD
 #define HAVE_V895
@@ -109,6 +109,7 @@ INT read_tdc(char *pevent);
 INT read_dgtz(char *pevent);
 INT read_camera(char *pevent);
 void ReadDgtzConfig();
+void FrameLoop();
 
 /*-- Equipment list ------------------------------------------------*/
 BOOL equipment_common_overwrite = TRUE;
@@ -185,6 +186,10 @@ char **BoardName;
 #ifdef HAVE_CAMERA
 HDCAM gCam = 0;
 HDCAMWAIT hwait = 0;
+pthread_t th0;
+DWORD DataReadyFlag;
+DCAMBUF_FRAME bufframe[2];
+bool run_camera = false;
 #endif
 
 
@@ -233,9 +238,17 @@ INT frontend_init()
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERPOLARITY" << endl;
   */
   
-  //Software trigger
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE ); 
+  //External trigger
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL); 
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
+
+  //Normal mode
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL); 
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
+
+  //Sync. readout
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__SYNCREADOUT); 
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;  
   
   //Global exposure as output signal with positive polarity
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE );
@@ -279,7 +292,7 @@ INT begin_of_run(INT run_number, char *error)
 #ifdef HAVE_CAEN_BRD
 
   ConfigBridge();
-  CAENVME_StartPulser(gVme->handle,cvPulserA);
+  //CAENVME_StartPulser(gVme->handle,cvPulserA);
 
 #ifdef HAVE_CAEN_DGTZ
   ConfigDgtz();
@@ -321,7 +334,7 @@ INT end_of_run(INT run_number, char *error)
   disable_trigger();
 
 #ifdef HAVE_CAEN_BRD
-  CAENVME_StopPulser(gVme->handle,cvPulserA);
+  //CAENVME_StopPulser(gVme->handle,cvPulserA);
 #endif
 
 #ifdef HAVE_CAMERA
@@ -395,53 +408,14 @@ INT poll_event(INT source, INT count, BOOL test)
   
   int i;
   DWORD flag;
-  
-  int lamTDC = 1;
-  int lamDGTZ = 1;
-  int lamCAM = 1;
 
-  count = 1;
-
-  if (count > 100) count = 100;
-  
   for (i = 0; i < count; i++) {
 
-    /* poll hardware and set flag to TRUE if new event is available */
-#ifdef HAVE_CAMERA
-    
-    //wait for frame ready
-    
-    double exposure;
-    dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
-    
-    DCAMWAIT_START waitstart;
-    memset( &waitstart, 0, sizeof(waitstart) );
-    waitstart.size = sizeof(waitstart);
-    waitstart.timeout = (int)(2.*exposure*1000) + 30; //in ms --> max wait = exposure + USB transfer time 
+#ifndef HAVE_CAMERA  
 
-    //ofstream outfile;
-    //if(!test){
-    //  outfile.open("time.dat",ios_base::app);
-    //  time_t result = time(nullptr);
-    //  outfile << result << "  " ;
-    //}
-
-   //send a trigger to the camera
-   dcamcap_firetrigger(gCam,0);
-
-   waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-   DCAMERR err1 = dcamwait_start( hwait, &waitstart );
-   
-   //if(!test){
-   //  time_t result = time(nullptr);
-   //  outfile << result << endl ;
-   //  outfile.close();
-   //}    
-   
-   if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
-   
-#endif
-
+    int lamTDC = 1;
+    int lamDGTZ = 1;
+  
 #ifdef HAVE_V1190
     lamTDC = v1190_DataReady(gVme,gTdcBase);
 #endif
@@ -454,8 +428,14 @@ INT poll_event(INT source, INT count, BOOL test)
     }
 #endif
 
-    flag = (lamTDC && lamDGTZ && lamCAM);
+    flag = (lamTDC && lamDGTZ);
 
+#else
+
+    flag = DataReadyFlag;
+    
+#endif    
+    
     if (flag){
       if (!test){
 
@@ -464,49 +444,38 @@ INT poll_event(INT source, INT count, BOOL test)
 	CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 #endif
 	
-#ifdef HAVE_CAMERA	
-	//waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-	//DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-	//if(failed(err2) || err2 == DCAMERR_TIMEOUT) break;
-#endif
-	
 	return TRUE;
 	
       }
 
     }
 
-#ifdef HAVE_CAMERA
-    //DCAMBUF_FRAME bufframe;
-    //waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-    //DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-    //dcambuf_lockframe( gCam, &bufframe );
-    //dcambuf_release( gCam );
-#endif
-        
+#ifndef HAVE_CAMERA
+    
 #ifdef HAVE_CAEN_BRD
-    
+      
 #ifdef HAVE_V1190
-    if(lamTDC) {
-      v1190_SoftClear(gVme,gTdcBase);
-    }
-#endif
-    
-#ifdef HAVE_CAEN_DGTZ
-    if(lamDGTZ) {
-      for(int i=0;i<nboard;i++){
-	CAEN_DGTZ_ClearData(gDGTZ[i]);
+      if(lamTDC) {
+	v1190_SoftClear(gVme,gTdcBase);
       }
-    }
 #endif
-    
-    //Reset GATE (pulser B)
-    CAENVME_StopPulser(gVme->handle,cvPulserB);
-    
+      
+#ifdef HAVE_CAEN_DGTZ
+      
+      if(lamDGTZ) {
+	for(int i=0;i<nboard;i++){
+	  CAEN_DGTZ_ClearData(gDGTZ[i]);
+	}
+      }
+      
+#endif
+
+#endif
+
 #endif
     
   }
-  
+
   return 0;
   
 }
@@ -565,6 +534,111 @@ INT read_event(char *pevent, INT off)
 }
 
 ///////CUSTOM ROUTINES
+
+#ifdef HAVE_CAMERA
+void FrameLoop(){
+
+  double exposure;
+  dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
+
+  DCAMWAIT_START waitstart;
+  memset( &waitstart, 0, sizeof(waitstart) );
+  waitstart.size = sizeof(waitstart);
+  waitstart.timeout = (int)(2.*exposure*1000) + 30; //in ms --> max wait = exposure + USB transfer time 
+
+  ///dcamcap_firetrigger(gCam,0);
+  int lamTDC = 1;
+  int lamDGTZ = 1;
+  int lamCAM = 1;
+
+  while(run_camera){
+
+    waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    DCAMERR err1 = dcamwait_start( hwait, &waitstart );
+
+    if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
+
+#ifdef HAVE_CAEN_BRD	
+
+#ifdef HAVE_V1190
+    lamTDC = v1190_DataReady(gVme,gTdcBase);
+#endif
+    
+#ifdef HAVE_CAEN_DGTZ
+    uint32_t status;
+    for(int i=0;i<nboard;i++){
+      CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+      lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+    }
+#endif
+
+#endif
+    
+    int TriggerFlag = (lamTDC && lamDGTZ && lamCAM);
+
+    if(TriggerFlag){
+
+      ////// Store picture in buffer[0] //////
+      memset( &bufframe[0], 0, sizeof(bufframe[0]) );
+      bufframe[0].size= sizeof(bufframe[0]);
+      bufframe[0].iFrame = -1;
+
+      //Read the data
+      dcambuf_lockframe( gCam, &bufframe[0] );
+
+#ifdef HAVE_CAEN_BRD
+      ///// Set VME to rise veto at next camera trigger ////
+      CAENVME_SetOutputRegister(gVme->handle,cvOut3Bit);  
+#endif HAVE_CAEN_BRD
+      
+      ///// Wait frameready
+      bool good = true;
+      waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+      DCAMERR err1 = dcamwait_start( hwait, &waitstart );
+      
+      if(failed(err1) || err1 == DCAMERR_TIMEOUT) good = false;
+
+      ///// Store picture in buffer[1]
+      memset( &bufframe[1], 0, sizeof(bufframe[1]) );
+      bufframe[1].size= sizeof(bufframe[1]);
+      bufframe[1].iFrame = -1;
+
+      //Read the data
+      dcambuf_lockframe( gCam, &bufframe[1] );
+      
+      ///// Rise data ready flag
+      DataReadyFlag = 1;
+      
+    }
+
+    else{
+
+#ifdef HAVE_CAEN_BRD
+      
+#ifdef HAVE_V1190
+      if(lamTDC) {
+	v1190_SoftClear(gVme,gTdcBase);
+      }
+#endif
+      
+#ifdef HAVE_CAEN_DGTZ
+      
+      if(lamDGTZ) {
+	for(int i=0;i<nboard;i++){
+	  CAEN_DGTZ_ClearData(gDGTZ[i]);
+	}
+      }
+      
+#endif
+
+#endif
+      
+    }
+
+  }
+  
+}
+#endif
 
 #ifdef HAVE_CAEN_DGTZ
 void ReadDgtzConfig(){
@@ -642,6 +716,9 @@ INT init_vme_modules(){
   //USE OUT_1 as VME VETO
   data = 0xC;
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
+
+  //USE OUT_3 as VME VETO
+  CAENVME_SetOutputConf(gVme->handle,cvOutput3,cvDirect,cvActiveHigh,cvManualSW);
 
   //Set OUT_0 as pulser A for periodic trigger to the camera
   CAENVME_SetOutputConf(gVme->handle,cvOutput0,cvDirect,cvActiveHigh,cvMiscSignals);
@@ -742,10 +819,18 @@ INT init_vme_modules(){
 #ifdef HAVE_CAEN_BRD
 INT ConfigBridge(){
 
+  HNDLE hDB;
+
+  cm_get_experiment_database(&hDB, NULL);
+
+  double exposure;
+  int size = sizeof(double);
+  db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
+
   //Configure pulser A for camera trigger
   //---Start and reset from SW
   CVTimeUnits unit = cvUnit410us;
-  DWORD period = 100000/410; //in units of 410 us
+  DWORD period = (int)(exposure*1e6)/410; //in units of 410 us
   DWORD width = 10; //in units of 410 us
   CAENVME_SetPulserConf(gVme->handle,cvPulserA,period,width,unit,0,cvManualSW,cvManualSW);
 
@@ -964,12 +1049,12 @@ INT ConfigCamera()
   int size = sizeof(double);
   db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
 
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, exposure);
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, 2.*exposure);
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
 
   dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
   dcamprop_setvalue( gCam, DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
+  dcamprop_setvalue( gCam, DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.0225);
   dcamprop_setvalue( gCam, DCAM_IDPROP_BITSPERCHANNEL, 16);
   dcamprop_setvalue( gCam, DCAM_IDPROP_BINNING, 1);
   dcamprop_setvalue( gCam, DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF);
@@ -997,6 +1082,17 @@ INT disable_trigger()
 
 #endif 
 
+#ifdef HAVE_CAMERA
+  run_camera = false;
+  pthread_join(&th0, NULL);
+
+  ///// Stop pulser /////
+#ifdef HAVE_CAEN_BRD
+  CAENVME_StopPulser(gVme->handle,cvPulserA);
+#endif
+  
+#endif
+
   return 0;
   
 }
@@ -1010,6 +1106,17 @@ INT enable_trigger()
   for(int i=0;i<nboard;i++){
     CAEN_DGTZ_SWStartAcquisition(gDGTZ[i]);
   }
+#endif
+
+#ifdef HAVE_CAMERA
+  pthread_create(&th0, NULL, FrameLoop,0);
+  run_camera = true;
+
+#ifdef HAVE_CAEN_BRD
+  ///// Start pulser /////
+  CAENVME_StartPulser(gVme->handle,cvPulserA);
+#endif
+  
 #endif
 
   return 0;
@@ -1032,12 +1139,23 @@ INT ClearDevice()
 
   //SET OUT_1 to 1 (not busy)
   CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
-
-  //Reset GATE (pulser B)
-  CAENVME_StopPulser(gVme->handle,cvPulserB);
+  CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);  
 
 #endif
 
+#ifdef HAVE_CAMERA
+
+  ////// Release data ready flag //////
+  DataReadyFlag = 0;
+
+#ifdef HAVE_CAEN_BRD
+  ////// Release veto //////
+  CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);  
+  CAENVME_StopPulser(gVme->handle,cvPulserA);
+#endif
+  
+#endif
+  
   return 0;
   
 }
@@ -1252,95 +1370,39 @@ int read_dgtz(char* pevent){
 INT read_camera(char *pevent)
 {
 
-  DCAMBUF_FRAME bufframe;
-  memset( &bufframe, 0, sizeof(bufframe) );
-  bufframe.size= sizeof(bufframe);
-  bufframe.iFrame = -1;
+  for(int ic=0;ic<2;ic++){
 
-  //////Read the data
-  dcambuf_lockframe( gCam, &bufframe );
+    //////Create the bank
+    WORD* pdata = NULL;
+    char name[10];
+    sprintf(name,"CAM%d",ic);
+    bk_create(pevent, name, TID_WORD, &pdata);
 
-  //////Create the bank
-  WORD* pdata = NULL;
-  bk_create(pevent, "CAM0", TID_WORD, &pdata);
-
-  //////Copy data into the bank
-  /*
-  WORD* pSrc = (WORD*)bufframe.buf;
-  WORD* pDst = new WORD[bufframe.width*bufframe.height];
-  
-  for( y = 0; y < bufframe.height; y++ ){
+    const char* pSrc = (const char*)bufframe[ic].buf;
     
-    //Copy one row
-    memcpy_s( _secure_ptr( pDst, bufframe.rowbytes ), pSrc, bufframe.rowbytes );
-    
-    //go through the row
-    for( x = 0; x < bufframe.width; x++ ){
+    //////FULL MATRIX
+    for(int y = 0; y < bufframe[ic].height; y++ ){
       
-      WORD tmpData = *pDst++;
-      *pdata++ = tmpData;
+      //Copy one row
+      const unsigned short* pDst = (const unsigned short*)pSrc;
       
-    }
-    
-    pSrc += bufframe.rowbytes;
-    
-  }
-  */
-
-  const char* pSrc = (const char*)bufframe.buf;
-
-  //////FULL MATRIX
-  for(int y = 0; y < bufframe.height; y++ ){
-
-    //Copy one row
-    const unsigned short* pDst = (const unsigned short*)pSrc;
-
-    //go through the row
-    for(int x = 0; x < bufframe.width; x++ ){
-
-      WORD tmpData = *pDst++; 
-
-      *pdata++ = tmpData;
-
-    }
-
-    pSrc += bufframe.rowbytes;
-
-  }
-
-  /*
-  unsigned short int threshold = 0;
-  
-  //////SPARSE MATRIX
-  for(unsigned short int y = 0; y < bufframe.height; y++ ){
-
-    //Copy one row
-    const unsigned short* pDst = (const unsigned short*)pSrc;
-    
-    //go through the row
-    for(unsigned short int x = 0; x < bufframe.width; x++ ){
-
-      WORD tmpData = *pDst++; 
-      
-      if(tmpData > threshold){
+      //go through the row
+      for(int x = 0; x < bufframe[ic].width; x++ ){
 	
-	*pdata++ = x;
-	*pdata++ = y;
+	WORD tmpData = *pDst++; 
+	
 	*pdata++ = tmpData;
 	
       }
       
+      pSrc += bufframe[ic].rowbytes;
+      
     }
-
-    pSrc += bufframe.rowbytes;
+    
+    bk_close(pevent, pdata);
 
   }
-  */
   
-  bk_close(pevent, pdata);
-
-  //dcambuf_release( gCam );
-
   return 1;
 
 }
