@@ -109,6 +109,7 @@ INT read_tdc(char *pevent);
 INT read_dgtz(char *pevent);
 INT read_camera(char *pevent);
 void ReadDgtzConfig();
+void Free_arrays();
 
 /*-- Equipment list ------------------------------------------------*/
 BOOL equipment_common_overwrite = TRUE;
@@ -265,6 +266,10 @@ INT frontend_exit()
 #ifdef HAVE_CAMERA
   dcamdev_close( gCam );
   dcamapi_uninit();
+#endif
+  
+#ifdef HAVE_CAEN_DGTZ
+  Free_arrays();
 #endif
   
   return SUCCESS;
@@ -730,7 +735,8 @@ INT init_vme_modules(){
 
     }
  ConfigDgtz();
-  
+ 
+ delete[] BoardInfo;
 #endif  
 
   return SUCCESS;
@@ -1346,4 +1352,24 @@ INT read_camera(char *pevent)
 }
 
 
+#endif
+
+#ifdef HAVE_CAEN_DGTZ
+void Free_arrays(){
+
+  delete[] gDGTZ;
+  delete[] gDigBase;
+  delete[] NCHDGTZ;
+  delete[] ndgtz;
+  delete[] SAMPLING;
+  delete[] posttrg;
+  for(int i=0;i<nboard;i++){
+    delete[] BoardName[i];
+    delete[] buffer_dgtz[i];      //This may raise a break for multiple free of memory
+    delete[] DGTZ_OFFSET[i];
+  }
+  delete[]  BoardName;
+  delete[]  buffer_dgtz;
+  delete[]  DGTZ_OFFSET;
+}
 #endif
