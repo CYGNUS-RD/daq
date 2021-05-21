@@ -53,6 +53,9 @@ DEVICE_DRIVER iseg_hps_driver[] = {
   {""}
 };
 */
+
+BOOL equipment_common_overwrite = TRUE;
+
 EQUIPMENT equipment[] = {
 
    {"HV",                       /* equipment name */
