@@ -36,14 +36,13 @@ void DataTreeBaseClass::Loop()
    Long64_t nentries = fChain->GetEntriesFast();
 
    TFile *tfout = new TFile(m_outfile.c_str(),"recreate");
-
+   
    Long64_t nbytes = 0, nb = 0;
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
-   
-      
+
       std::cout << "Processing event # " << jentry << std::endl;
       
       char postfix[500];
@@ -54,33 +53,18 @@ void DataTreeBaseClass::Loop()
       CamPicture.SetName(Form("pic_%s",postfix));
       CamPicture.SetTitle(Form("Camera, timestamp %d",Info_time));
 
-      // get the TGraph of the PMT waveforms
-      int wavetosave=6;
-      int position[wavetosave]={0 , 1 , 2 , 3 , 4 , 5};
+      // get the TGraph of the PMT waveform
+      PMT.SetName(Form("wfm_%s",postfix));
+      PMT.SetTitle(Form("PMT, timestamp %d",Info_time));
 
-      TGraph **g=new TGraph*[wavetosave];
-      double *xaxis;
-      double *yaxis;
-      int npoints;
+      // get the TGraph of the GEM waveform
+      WF1.SetName(Form("gem_%s",postfix));
+      WF1.SetTitle(Form("GEM, timestamp %d",Info_time));
 
-      for(int i=0;i<wavetosave;i++){
-	xaxis=WF_fX[position[i]];
-	yaxis=WF_fY[position[i]];
-	npoints=WF_fNpoints[position[i]];
-	g[i]=new TGraph(npoints,xaxis,yaxis);
-	g[i]->SetName(Form("wfm_%s_ch%d",postfix,position[i]));
-	g[i]->SetTitle(Form("wfm, timestamp %d_ch%d",Info_time,position[i]));
-	g[i]->GetXaxis()->SetTitle("Time [ns]");
-	g[i]->GetYaxis()->SetTitle("Amplitude [mV]");
-      }
-   
       // write to the output ROOT file
       CamPicture.Write();
-      for(int i=0;i<wavetosave;i++){
-	g[i]->Write();
-	delete g[i];
-      }
-      delete[] g;
+      PMT.Write();
+      WF1.Write();
    }
    tfout->Close();
 }

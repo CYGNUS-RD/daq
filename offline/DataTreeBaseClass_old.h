@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Fri May 21 14:15:16 2021 by ROOT version 6.22/03
+// Tue Oct 29 11:59:54 2019 by ROOT version 6.19/01
 // from TTree DataTree/
-// found on file: DataTree00046.root
+// found on file: DataTree01704.root
 //////////////////////////////////////////////////////////
 
 #ifndef DataTreeBaseClass_h
@@ -17,16 +17,8 @@
 #include <TGraph.h>
 
 // Header file for the classes stored in the TTree if any.
-//#include "ROMETreeInfo.h"
 #include "TObject.h"
 #include "TClonesArray.h"
-//#include "CYGLightCluster.h"
-//#include "CYGRawOutput.h"
-#include "TNamed.h"
-#include "TAttLine.h"
-#include "TAttFill.h"
-#include "TAttMarker.h"
-#include "TGraph.h"
 
 class DataTreeBaseClass {
 public :
@@ -36,7 +28,6 @@ public :
 // Fixed size dimensions of array or collections stored in the TTree if any.
    static constexpr Int_t kMaxInfo = 1;
    static constexpr Int_t kMaxlightclusters = 1;
-   static constexpr Int_t kMaxWF = 34;
 
    // Declaration of leaf types
  //ROMETreeInfo    *Info_;
@@ -53,24 +44,8 @@ public :
    UInt_t          fUniqueID;
    UInt_t          fBits;
    TH2F            CamPicture;
-   Int_t           WF_;
-   UInt_t          WF_fUniqueID[kMaxWF];   //[WF_]
-   UInt_t          WF_fBits[kMaxWF];   //[WF_]
-   TString         WF_fName[kMaxWF];
-   TString         WF_fTitle[kMaxWF];
-   Short_t         WF_fLineColor[kMaxWF];   //[WF_]
-   Short_t         WF_fLineStyle[kMaxWF];   //[WF_]
-   Short_t         WF_fLineWidth[kMaxWF];   //[WF_]
-   Short_t         WF_fFillColor[kMaxWF];   //[WF_]
-   Short_t         WF_fFillStyle[kMaxWF];   //[WF_]
-   Short_t         WF_fMarkerColor[kMaxWF];   //[WF_]
-   Short_t         WF_fMarkerStyle[kMaxWF];   //[WF_]
-   Float_t         WF_fMarkerSize[kMaxWF];   //[WF_]
-   Int_t           WF_fNpoints[kMaxWF];   //[WF_]
-   Double_t       *WF_fX[kMaxWF];   //[WF_fNpoints]
-   Double_t       *WF_fY[kMaxWF];   //[WF_fNpoints]
-   Double_t        WF_fMinimum[kMaxWF];   //[WF_]
-   Double_t        WF_fMaximum[kMaxWF];   //[WF_]
+   TGraph          PMT;
+   TGraph          WF1;
 
    // List of branches
    TBranch        *b_Info_TObject_fUniqueID;   //!
@@ -85,27 +60,11 @@ public :
    TBranch        *b_rawoutputs_fUniqueID;   //!
    TBranch        *b_rawoutputs_fBits;   //!
    TBranch        *b_rawoutputs_CamPicture;   //!
-   TBranch        *b_rawoutputs_WF_;   //!
-   TBranch        *b_WF_fUniqueID;   //!
-   TBranch        *b_WF_fBits;   //!
-   TBranch        *b_WF_fName;   //!
-   TBranch        *b_WF_fTitle;   //!
-   TBranch        *b_WF_fLineColor;   //!
-   TBranch        *b_WF_fLineStyle;   //!
-   TBranch        *b_WF_fLineWidth;   //!
-   TBranch        *b_WF_fFillColor;   //!
-   TBranch        *b_WF_fFillStyle;   //!
-   TBranch        *b_WF_fMarkerColor;   //!
-   TBranch        *b_WF_fMarkerStyle;   //!
-   TBranch        *b_WF_fMarkerSize;   //!
-   TBranch        *b_WF_fNpoints;   //!
-   TBranch        *b_WF_fX;   //!
-   TBranch        *b_WF_fY;   //!
-   TBranch        *b_WF_fMinimum;   //!
-   TBranch        *b_WF_fMaximum;   //!
+   TBranch        *b_rawoutputs_PMT;   //!
+   TBranch        *b_rawoutputs_WF1;   //!
 
-  std::string m_outfile;
-  
+   std::string m_outfile;
+   
    DataTreeBaseClass(TTree *tree=0);
    virtual ~DataTreeBaseClass();
    virtual Int_t    Cut(Long64_t entry);
@@ -126,9 +85,9 @@ DataTreeBaseClass::DataTreeBaseClass(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("DataTree00046.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("DataTree02364.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("DataTree00046.root");
+         f = new TFile("DataTree02364.root");
       }
       f->GetObject("DataTree",tree);
 
@@ -171,10 +130,6 @@ void DataTreeBaseClass::Init(TTree *tree)
    // Init() will be called many times when running on PROOF
    // (once per file to be processed).
 
-   // Set array pointer
-   for(int i=0; i<kMaxWF; ++i) WF_fX[i] = 0;
-   for(int i=0; i<kMaxWF; ++i) WF_fY[i] = 0;
-
    // Set branch addresses and branch pointers
    if (!tree) return;
    fChain = tree;
@@ -193,24 +148,8 @@ void DataTreeBaseClass::Init(TTree *tree)
    fChain->SetBranchAddress("fUniqueID", &fUniqueID, &b_rawoutputs_fUniqueID);
    fChain->SetBranchAddress("fBits", &fBits, &b_rawoutputs_fBits);
    fChain->SetBranchAddress("CamPicture", &CamPicture, &b_rawoutputs_CamPicture);
-   fChain->SetBranchAddress("WF", &WF_, &b_rawoutputs_WF_);
-   fChain->SetBranchAddress("WF.fUniqueID", WF_fUniqueID, &b_WF_fUniqueID);
-   fChain->SetBranchAddress("WF.fBits", WF_fBits, &b_WF_fBits);
-   fChain->SetBranchAddress("WF.fName", WF_fName, &b_WF_fName);
-   fChain->SetBranchAddress("WF.fTitle", WF_fTitle, &b_WF_fTitle);
-   fChain->SetBranchAddress("WF.fLineColor", WF_fLineColor, &b_WF_fLineColor);
-   fChain->SetBranchAddress("WF.fLineStyle", WF_fLineStyle, &b_WF_fLineStyle);
-   fChain->SetBranchAddress("WF.fLineWidth", WF_fLineWidth, &b_WF_fLineWidth);
-   fChain->SetBranchAddress("WF.fFillColor", WF_fFillColor, &b_WF_fFillColor);
-   fChain->SetBranchAddress("WF.fFillStyle", WF_fFillStyle, &b_WF_fFillStyle);
-   fChain->SetBranchAddress("WF.fMarkerColor", WF_fMarkerColor, &b_WF_fMarkerColor);
-   fChain->SetBranchAddress("WF.fMarkerStyle", WF_fMarkerStyle, &b_WF_fMarkerStyle);
-   fChain->SetBranchAddress("WF.fMarkerSize", WF_fMarkerSize, &b_WF_fMarkerSize);
-   fChain->SetBranchAddress("WF.fNpoints", WF_fNpoints, &b_WF_fNpoints);
-   fChain->SetBranchAddress("WF.fX", WF_fX, &b_WF_fX);
-   fChain->SetBranchAddress("WF.fY", WF_fY, &b_WF_fY);
-   fChain->SetBranchAddress("WF.fMinimum", WF_fMinimum, &b_WF_fMinimum);
-   fChain->SetBranchAddress("WF.fMaximum", WF_fMaximum, &b_WF_fMaximum);
+   fChain->SetBranchAddress("PMT", &PMT, &b_rawoutputs_PMT);
+   fChain->SetBranchAddress("WF1", &WF1, &b_rawoutputs_WF1);
    Notify();
 }
 

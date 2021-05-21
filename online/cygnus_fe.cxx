@@ -1365,7 +1365,7 @@ void Free_arrays(){
   delete[] posttrg;
   for(int i=0;i<nboard;i++){
     delete[] BoardName[i];
-    delete[] buffer_dgtz[i];      //This may raise a break for multiple free of memory
+    delete[] buffer_dgtz[i];      //This may raise a break for multiple free of memory, in case just comment this line
     delete[] DGTZ_OFFSET[i];
   }
   delete[]  BoardName;
