@@ -1,1 +1,2 @@
+export MIDAS_MAX_EVENT_SIZE=1000000000
 $ROMESYS/bin/romebuilder.exe -i CYG.xml -midas

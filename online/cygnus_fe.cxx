@@ -23,8 +23,9 @@
 
 using namespace std;
 
+
 #define HAVE_CAEN_BRD
-//#define HAVE_CAMERA
+#define HAVE_CAMERA
 
 #ifdef HAVE_CAEN_BRD
 #define HAVE_V895
@@ -602,7 +603,7 @@ void ReadDgtzConfig(){
     char query[100];
     sprintf(query,"/Configurations/Digitizer Base Address[%d]",i);
     db_get_value(hDB, 0, query,&gDigBase[i],&size,TID_INT,TRUE);
-    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,0,0,gDigBase[i],&gDGTZ[i]);
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,2,0,gDigBase[i],&gDGTZ[i]);
     if(ret != CAEN_DGTZ_Success) {
       printf("Can't open digitizer, board number %d\n-- Error %d\n",i,ret);
     }

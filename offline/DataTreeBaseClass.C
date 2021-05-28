@@ -55,8 +55,8 @@ void DataTreeBaseClass::Loop()
       CamPicture.SetTitle(Form("Camera, timestamp %d",Info_time));
 
       // get the TGraph of the PMT waveforms
-      int wavetosave=6;
-      int position[wavetosave]={0 , 1 , 2 , 3 , 4 , 5};
+      int wavetosave=3;
+      int position[wavetosave]={0 , 6 , 8 };
 
       TGraph **g=new TGraph*[wavetosave];
       double *xaxis;
