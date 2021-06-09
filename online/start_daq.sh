@@ -10,7 +10,7 @@ mhttpd -D
 sleep 2
 xterm -e ./cygnus_fe &
 sleep 2
-xterm -e ./scfe &
+#xterm -e ./scfe &
 mlogger -D
 xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
 
