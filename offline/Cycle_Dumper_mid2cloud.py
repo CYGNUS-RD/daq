@@ -54,7 +54,7 @@ def upload_file(file_name, bucket='cygnus', tag='LAB'):
 
 
 
-import os
+import os,sys
 
 begin=int(sys.argv[1])
 end=int(sys.argv[2])+1

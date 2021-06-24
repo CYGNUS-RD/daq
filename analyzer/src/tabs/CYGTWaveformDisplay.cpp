@@ -67,9 +67,9 @@ void CYGTWaveformDisplay::EventHandler()
 {
   CYGEvent *event = gAnalyzer->GetEvent();
 
-  int position[6]={0,1,2,3,4,5};
-  char titles[6][10]={ {"GEM1"} , {"GEM2"} , {"PMT1"} , {"PMT2"} , {"PMT3"} , {"PMT4"} };
-  double yrange[6][2]={ {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} };
+  int position[3]={0,6,8};
+  char titles[3][10]={ {"PMT"} , {"GEM"} , {"MESH"} };
+  double yrange[3][2]={ {-1000.,250.} , {-1000.,250.} , {-1000.,250.} };
 
   if(event->GetDGTZWaveformSize()>0){
     for(int chan=0;chan<6;chan++){
