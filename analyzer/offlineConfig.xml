@@ -70,7 +70,7 @@
         <MaxMemory>100000000</MaxMemory>
         <Tree>
           <TreeName>DataTree</TreeName>
-          <Read>true</Read>
+          <Read>false</Read>
           <Write>true</Write>
           <Fill>true</Fill>
           <CompressionLevel>1</CompressionLevel>

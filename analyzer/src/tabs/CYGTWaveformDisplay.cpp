@@ -46,8 +46,8 @@ void CYGTWaveformDisplay::Init()
   fCanvasDig = new TRootEmbeddedCanvas("fCanvasDig",this,500,600);
   Int_t wfCanvasDig = fCanvasDig->GetCanvasWindowId();
   TCanvas *cDig = new TCanvas("cDig", 480, 150, wfCanvasDig);
-  cDig->Divide(1,6);
-  for(int ic=0;ic<6;ic++){
+  cDig->Divide(1,8);
+  for(int ic=0;ic<8;ic++){
     cDig->cd(ic)->SetBottomMargin(0.17);
   }
   fCanvasDig->AdoptCanvas(cDig);
@@ -67,12 +67,12 @@ void CYGTWaveformDisplay::EventHandler()
 {
   CYGEvent *event = gAnalyzer->GetEvent();
 
-  int position[6]={0,1,2,3,4,5};
-  char titles[6][10]={ {"GEM1"} , {"GEM2"} , {"PMT1"} , {"PMT2"} , {"PMT3"} , {"PMT4"} };
-  double yrange[6][2]={ {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} };
+  int position[8]={0,1,2,3,4,5,6,7};
+  char titles[8][10]={ {"GEM1"} , {"GEM2"} , {"PMT1"} , {"PMT2"} , {"PMT3"} , {"PMT4"}  , {"PMT5"}  , {"PMT6"} };
+  double yrange[8][2]={ {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.} , {-1000.,250.}  , {-1000.,250.}  , {-1000.,250.} };
 
   if(event->GetDGTZWaveformSize()>0){
-    for(int chan=0;chan<6;chan++){
+    for(int chan=0;chan<8;chan++){
       fCanvasDig->GetCanvas()->cd(position[chan]+1);
       event->GetDGTZWaveformAt(position[chan])->GetGraph()->SetTitle(titles[chan]);
       event->GetDGTZWaveformAt(position[chan])->GetGraph()->GetXaxis()->SetTitleSize(0.1);
@@ -85,7 +85,7 @@ void CYGTWaveformDisplay::EventHandler()
       event->GetDGTZWaveformAt(position[chan])->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
       event->GetDGTZWaveformAt(position[chan])->GetGraph()->Draw("AL");
       event->GetDGTZWaveformAt(position[chan])->GetGraph()->GetYaxis()->SetNdivisions(505);
-      event->GetDGTZWaveformAt(position[chan])->GetGraph()->GetYaxis()->SetRangeUser(yrange[chan][0],yrange[chan][1]);
+      //event->GetDGTZWaveformAt(position[chan])->GetGraph()->GetYaxis()->SetRangeUser(yrange[chan][0],yrange[chan][1]);
     }
   }
 

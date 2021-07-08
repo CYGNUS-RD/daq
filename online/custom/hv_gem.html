@@ -31,6 +31,7 @@ input[type=number][disabled]{color:transparent; background-color:transparent; bo
 
 <script>
 
+var d0_ring = 1.2;
 var d_ring = 1.4;
 var n_ring = 35;
 var d_gem = 0.2;
@@ -40,12 +41,12 @@ window.onload = function() {
   mhttpd_init('HV');
   mhistory_init();
 
-  var paths = ["/Equipment/HV/Variables/Demand[0-6]",
-               "/Equipment/HV/Settings/Ramp Up Speed[0]",
-               "/Equipment/HV/Settings/Ramp Down Speed[0]",
-               "/Equipment/HV/Settings/Current Limit[0]",
-               "/Equipment/HV/Settings/Trip Time[0]",
-               "/Equipment/HV/Settings/Current Hot Spot[0]",
+  var paths = ["/Equipment/HV/Variables/Demand[50-56]",
+               "/Equipment/HV/Settings/Ramp Up Speed[50]",
+               "/Equipment/HV/Settings/Ramp Down Speed[50]",
+               "/Equipment/HV/Settings/Current Limit[50]",
+               "/Equipment/HV/Settings/Trip Time[50]",
+               "/Equipment/HV/Settings/Current Hot Spot[50]",
                "/Equipment/CATHODE/Variables/Demand[0]"
               ];
 
@@ -57,7 +58,8 @@ window.onload = function() {
     document.getElementById('txtSetG1').innerHTML = rpc.result.data[0][5];
     document.getElementById('txtSetT2').innerHTML = (rpc.result.data[0][2]/1000./d_gem).toFixed(3);
     document.getElementById('txtSetT1').innerHTML = (rpc.result.data[0][4]/1000./d_gem).toFixed(3);
-    document.getElementById('txtSetD').innerHTML = ((rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring-1.)/d_ring).toFixed(3);
+    //document.getElementById('txtSetD').innerHTML = ((rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring-1.)/d_ring).toFixed(3);
+      document.getElementById('txtSetD').innerHTML = rpc.result.data[0][6]/1000./d0_ring;
 
     document.getElementById('txtRequestOffset').value = rpc.result.data[0][0];
     document.getElementById('txtRequestG3').value = rpc.result.data[0][1];
@@ -65,7 +67,9 @@ window.onload = function() {
     document.getElementById('txtRequestG1').value = rpc.result.data[0][5];
     document.getElementById('txtRequestT2').value = rpc.result.data[0][2]/1000./d_gem;
     document.getElementById('txtRequestT1').value = rpc.result.data[0][4]/1000./d_gem;
-    document.getElementById('txtRequestD').value = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring*d_ring);
+    //document.getElementById('txtRequestD').value = (rpc.result.data[6] - (rpc.result.data[0][0] + rpc.result.data[0][1]+rpc.result.data[0][2]+rpc.result.data[0][3]+rpc.result.data[0][4]+rpc.result.data[0][5]+rpc.result.data[0][6]))/1000./(n_ring*d_ring);
+    document.getElementById('txtRequestD').value = rpc.result.data[0][6]/1000./d0_ring;
+
 
     var ch = 0;
     document.getElementById('rhv0').checked = true;
@@ -131,16 +135,16 @@ function applySetAll() {
   txt = document.getElementById('txtRequestD');
   value = parseFloat(txt.value);
   document.getElementById('txtSetD').innerHTML = value.toFixed(3);
-  var setHV6 = value*1000*d_ring;
+  var setHV6 = value*1000*d0_ring;
   var setHV7 = setHV0 + setHV1 + setHV2 + setHV3 + setHV4 + setHV5 + setHV6 + value*1000*(n_ring-1)*d_ring;
 
-  var paths = ["/Equipment/HV/Variables/Demand[0]",
-               "/Equipment/HV/Variables/Demand[1]",
-               "/Equipment/HV/Variables/Demand[2]",
-               "/Equipment/HV/Variables/Demand[3]",
-               "/Equipment/HV/Variables/Demand[4]",
-               "/Equipment/HV/Variables/Demand[5]",
-               "/Equipment/HV/Variables/Demand[6]",
+  var paths = ["/Equipment/HV/Variables/Demand[50]",
+               "/Equipment/HV/Variables/Demand[51]",
+               "/Equipment/HV/Variables/Demand[52]",
+               "/Equipment/HV/Variables/Demand[53]",
+               "/Equipment/HV/Variables/Demand[54]",
+               "/Equipment/HV/Variables/Demand[55]",
+               "/Equipment/HV/Variables/Demand[56]",
                "/Equipment/CATHODE/Variables/Demand[0]"
               ];
   var sets = [setHV0,setHV1,setHV2,setHV3,setHV4,setHV5,setHV6,setHV7];
@@ -162,7 +166,7 @@ function applySetZero() {
   document.getElementById('txtSetG3').innerHTML = 0;
   document.getElementById('txtSetOffset').innerHTML = 0;
 
-  var paths = ["/Equipment/HV/Variables/Demand[0-6]",
+  var paths = ["/Equipment/HV/Variables/Demand[50-56]",
                "/Equipment/CATHODE/Variables/Demand[0]"
               ];
 
@@ -175,11 +179,11 @@ function applySetZero() {
 
 function selectChannel(id){
 
-  var paths = ["/Equipment/HV/Settings/Ramp Up Speed[0-6]",
-               "/Equipment/HV/Settings/Ramp Down Speed[0-6]",
-               "/Equipment/HV/Settings/Current Limit[0-6]",
-               "/Equipment/HV/Settings/Trip Time[0-6]",
-               "/Equipment/HV/Settings/Current Hot Spot[0-6]",
+  var paths = ["/Equipment/HV/Settings/Ramp Up Speed[50-56]",
+               "/Equipment/HV/Settings/Ramp Down Speed[50-56]",
+               "/Equipment/HV/Settings/Current Limit[50-56]",
+               "/Equipment/HV/Settings/Trip Time[50-56]",
+               "/Equipment/HV/Settings/Current Hot Spot[50-56]",
                "/Equipment/CATHODE/Settings/Ramp Up Speed[0]",
                "/Equipment/CATHODE/Settings/Ramp Down Speed[0]",
                "/Equipment/CATHODE/Settings/Current Limit[0]",
@@ -219,14 +223,14 @@ function selectChannel(id){
 
 function applyRUP(){
 
-  var ch = "0-6";
-  if(document.getElementById('rhv0').checked) ch="0";
-  else if(document.getElementById('rhv1').checked) ch="1";
-  else if(document.getElementById('rhv2').checked) ch="2";
-  else if(document.getElementById('rhv3').checked) ch="3";
-  else if(document.getElementById('rhv4').checked) ch="4";
-  else if(document.getElementById('rhv5').checked) ch="5";
-  else if(document.getElementById('rhv6').checked) ch="6";
+  var ch = "50-56";
+  if(document.getElementById('rhv0').checked) ch="50";
+  else if(document.getElementById('rhv1').checked) ch="51";
+  else if(document.getElementById('rhv2').checked) ch="52";
+  else if(document.getElementById('rhv3').checked) ch="53";
+  else if(document.getElementById('rhv4').checked) ch="54";
+  else if(document.getElementById('rhv5').checked) ch="55";
+  else if(document.getElementById('rhv6').checked) ch="56";
 
   var paths;
   if(document.getElementById('rhv7').checked){
@@ -246,14 +250,14 @@ function applyRUP(){
 
 function applyRDW(){
 
-  var ch = "0-6";
-  if(document.getElementById('rhv0').checked) ch="0";
-  else if(document.getElementById('rhv1').checked) ch="1";
-  else if(document.getElementById('rhv2').checked) ch="2";
-  else if(document.getElementById('rhv3').checked) ch="3";
-  else if(document.getElementById('rhv4').checked) ch="4";
-  else if(document.getElementById('rhv5').checked) ch="5";
-  else if(document.getElementById('rhv6').checked) ch="6";
+  var ch = "50-56";
+  if(document.getElementById('rhv0').checked) ch="50";
+  else if(document.getElementById('rhv1').checked) ch="51";
+  else if(document.getElementById('rhv2').checked) ch="52";
+  else if(document.getElementById('rhv3').checked) ch="53";
+  else if(document.getElementById('rhv4').checked) ch="54";
+  else if(document.getElementById('rhv5').checked) ch="55";
+  else if(document.getElementById('rhv6').checked) ch="56";
 
   var paths;
   if(document.getElementById('rhv7').checked){
@@ -274,14 +278,14 @@ function applyRDW(){
 
 function applyTrip(){
 
-  var ch = "0-6";
-  if(document.getElementById('rhv0').checked) ch="0";
-  else if(document.getElementById('rhv1').checked) ch="1";
-  else if(document.getElementById('rhv2').checked) ch="2";
-  else if(document.getElementById('rhv3').checked) ch="3";
-  else if(document.getElementById('rhv4').checked) ch="4";
-  else if(document.getElementById('rhv5').checked) ch="5";
-  else if(document.getElementById('rhv6').checked) ch="6";
+  var ch = "50-56";
+  if(document.getElementById('rhv0').checked) ch="50";
+  else if(document.getElementById('rhv1').checked) ch="51";
+  else if(document.getElementById('rhv2').checked) ch="52";
+  else if(document.getElementById('rhv3').checked) ch="53";
+  else if(document.getElementById('rhv4').checked) ch="54";
+  else if(document.getElementById('rhv5').checked) ch="55";
+  else if(document.getElementById('rhv6').checked) ch="56";
 
   var paths;
   if(document.getElementById('rhv7').checked){
@@ -302,14 +306,14 @@ function applyTrip(){
 
 function applyTripT(){
 
-  var ch = "0-6";
-  if(document.getElementById('rhv0').checked) ch="0";
-  else if(document.getElementById('rhv1').checked) ch="1";
-  else if(document.getElementById('rhv2').checked) ch="2";
-  else if(document.getElementById('rhv3').checked) ch="3";
-  else if(document.getElementById('rhv4').checked) ch="4";
-  else if(document.getElementById('rhv5').checked) ch="5";
-  else if(document.getElementById('rhv6').checked) ch="6";
+  var ch = "50-56";
+  if(document.getElementById('rhv0').checked) ch="50";
+  else if(document.getElementById('rhv1').checked) ch="51";
+  else if(document.getElementById('rhv2').checked) ch="52";
+  else if(document.getElementById('rhv3').checked) ch="53";
+  else if(document.getElementById('rhv4').checked) ch="54";
+  else if(document.getElementById('rhv5').checked) ch="55";
+  else if(document.getElementById('rhv6').checked) ch="56";
 
   var paths = ["/Equipment/HV/Settings/Trip Time["+ch+"]"];
 
@@ -324,14 +328,14 @@ function applyTripT(){
 
 function applyHot(){
 
-  var ch = "0-6";
-  if(document.getElementById('rhv0').checked) ch="0";
-  else if(document.getElementById('rhv1').checked) ch="1";
-  else if(document.getElementById('rhv2').checked) ch="2";
-  else if(document.getElementById('rhv3').checked) ch="3";
-  else if(document.getElementById('rhv4').checked) ch="4";
-  else if(document.getElementById('rhv5').checked) ch="5";
-  else if(document.getElementById('rhv6').checked) ch="6";
+  var ch = "50-56";
+  if(document.getElementById('rhv0').checked) ch="50";
+  else if(document.getElementById('rhv1').checked) ch="51";
+  else if(document.getElementById('rhv2').checked) ch="52";
+  else if(document.getElementById('rhv3').checked) ch="53";
+  else if(document.getElementById('rhv4').checked) ch="54";
+  else if(document.getElementById('rhv5').checked) ch="55";
+  else if(document.getElementById('rhv6').checked) ch="56";
 
   var paths = ["/Equipment/HV/Settings/Current Hot Spot["+ch+"]"];
 
@@ -346,7 +350,7 @@ function applyHot(){
 
 function applyOffAll(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[0-6]",
+  var paths = ["/Equipment/HV/Variables/ChState[50-56]",
                "/Equipment/CATHODE/Variables/ChState[0]"
               ];
 
@@ -359,7 +363,7 @@ function applyOffAll(){
 
 function applyOnAll(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[0-6]",
+  var paths = ["/Equipment/HV/Variables/ChState[50-56]",
                "/Equipment/CATHODE/Variables/ChState[0]"
               ];
 
@@ -372,7 +376,7 @@ function applyOnAll(){
 
 function applyOnDrift(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[6]",
+  var paths = ["/Equipment/HV/Variables/ChState[56]",
                "/Equipment/CATHODE/Variables/ChState[0]"
               ];
 
@@ -385,7 +389,7 @@ function applyOnDrift(){
 
 function applyOffDrift(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[6]",
+  var paths = ["/Equipment/HV/Variables/ChState[56]",
                "/Equipment/CATHODE/Variables/ChState[0]"
               ];
 
@@ -398,7 +402,7 @@ function applyOffDrift(){
 
 function applyOnTr(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[0,2,4]"];
+  var paths = ["/Equipment/HV/Variables/ChState[50,52,54]"];
   mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
   }).catch(function(error) {
           mjsonrpc_error_alert(error);
@@ -408,7 +412,7 @@ function applyOnTr(){
 
 function applyOffTr(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[0,2,4]"];
+  var paths = ["/Equipment/HV/Variables/ChState[50,52,54]"];
 
   mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
   }).catch(function(error) {
@@ -419,7 +423,7 @@ function applyOffTr(){
 
 function applyOnGain(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[1,3,5]"];
+  var paths = ["/Equipment/HV/Variables/ChState[51,53,55]"];
   mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
   }).catch(function(error) {
           mjsonrpc_error_alert(error);
@@ -429,7 +433,7 @@ function applyOnGain(){
 
 function applyOffGain(){
 
-  var paths = ["/Equipment/HV/Variables/ChState[1,3,5]"];
+  var paths = ["/Equipment/HV/Variables/ChState[51,53,55]"];
 
   mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
   }).catch(function(error) {
@@ -468,17 +472,17 @@ padding: 8px;
 	  <tr height="35"><th></th><th style="width:1.5in">Input</th><th style="width:1.5in">Set</th></tr>
 	  <tr height="42">
 	    <td>Drift field [kV/cm]</td>
-	    <td align="center"><input id="txtRequestD" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number"/></td>
+	    <td align="center"><input id="txtRequestD" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number" step="0.01"/></td>
 	    <td align="right"><div id="txtSetD">0</div></td>
 	  </tr>
 	  <tr height="42">
 	    <td>Transfer field 1 [kV/cm]</td>
-	    <td align="center"><input id="txtRequestT1" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number"/></td>
+	    <td align="center"><input id="txtRequestT1" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number" step="0.01"/></td>
 	    <td align="right"><div id="txtSetT1">0</div></td>
 	  </tr>
 	  <tr height="42">
 	    <td>Transfer field 2 [kV/cm] <input type="checkbox" id="lockT" name="lockT" value="lock" onclick="getElementById('txtRequestT2').disabled = !(getElementById('lockT').checked);"></td>
-	    <td align="center"><input id="txtRequestT2" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number" disabled/></td>
+	    <td align="center"><input id="txtRequestT2" onclick="execCommand('selectAll',false,null)" style="width:1in" type="number" step="0.01" disabled/></td>
 	    <td align="right"><div id="txtSetT2">0</div></td>
 	  </tr>
 	  <tr height="42">
@@ -509,59 +513,59 @@ padding: 8px;
 	  <tr><th style="width:1in"></th><th style="width:1in">Demand <br> [V]</th><th style="width:1in">Read <br> [V]</th><th style="width:1in">Current <br> [&mu;A]</th><th style="width:0.3in"><img style="width:0.2in" src="on-off.png" alt=""/></th><th style="width:0.3in"><img style="width:0.27in" src="trip3.png" alt=""/></th></tr>
 	  <tr>
 	    <td>HV0</td>
-	    <td align="right"><div id="txtDemHV0" class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[0]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[0]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[0]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[0]" data-formula="x & 0x200" data-color="#00FF00" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div id="txtDemHV0" class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[50]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[50]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[50]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[50]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[50]" data-formula="x & 0x200" data-color="#00FF00" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV1</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[1]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[1]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[1]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[1]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[1]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[51]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[51]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[51]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[51]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[51]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV2</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[2]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[2]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[2]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[2]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[2]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[52]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[52]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[52]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[52]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[52]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV3</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[3]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[3]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[3]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[3]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[3]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[53]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[53]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[53]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[53]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[53]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV4</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[4]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[4]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[4]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[4]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[4]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[54]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[54]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[54]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[54]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[54]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV5</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[5]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[5]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[5]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[5]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[5]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[55]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[55]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[55]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[55]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[55]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV6</td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[6]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[6]"></div></td>
-	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[6]"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[6]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
-	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[6]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Demand[56]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Measured[56]"></div></td>
+	    <td align="right"><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/HV/Variables/Current[56]"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[56]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px"></div></td>
+	    <td align="center"><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[56]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 	  </tr>
 	  <tr>
 	    <td>HV7</td>

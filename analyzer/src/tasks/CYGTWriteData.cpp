@@ -58,6 +58,8 @@ void CYGTWriteData::Event()
   CYGRawOutput *output = gAnalyzer->GetRawOutput();
 
   Int_t nwf = event->GetDGTZWaveformSize();
+
+  std::cout << nwf << std::endl;
   
   output->SetWFSize(nwf);
   

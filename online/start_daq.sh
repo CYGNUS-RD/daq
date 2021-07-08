@@ -10,9 +10,10 @@ mhttpd -D
 sleep 2
 xterm -e ./cygnus_fe &
 sleep 2
-#xterm -e ./scfe &
+xterm -e ./scfe &
 mlogger -D
 xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
+#xterm -e python3 event_receiver.py &
 
 echo Please point your web browser to http://localhost:8081
 echo Or run: mozilla http://localhost:8081 &

@@ -145,9 +145,10 @@ void CYGTReadData::Event()
 
   event->SetNTrigger(NumEvents[0]);
   event->SetNChannelDgtz(nchtot);
-  
+
+  cout << nchtot << "  " << NumEvents[0] << endl;
   event->SetDGTZWaveformSize(nchtot*NumEvents[0]);
-    
+  
   for(int ib=0;ib<nboard;ib++){
 
     for(int iev=0;iev<NumEvents[0];iev++){

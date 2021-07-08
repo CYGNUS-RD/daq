@@ -603,7 +603,7 @@ void ReadDgtzConfig(){
     char query[100];
     sprintf(query,"/Configurations/Digitizer Base Address[%d]",i);
     db_get_value(hDB, 0, query,&gDigBase[i],&size,TID_INT,TRUE);
-    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,2,0,gDigBase[i],&gDGTZ[i]);
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,0,0,gDigBase[i],&gDGTZ[i]);
     if(ret != CAEN_DGTZ_Success) {
       printf("Can't open digitizer, board number %d\n-- Error %d\n",i,ret);
     }
@@ -973,6 +973,13 @@ INT ConfigCamera()
 
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, exposure);
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
+
+  int mode;
+  size = sizeof(int);
+  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+  if(mode==1) err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__GLOBALRESET); 
+  else if(mode==2) err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__EMULATE); 
+  else err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__DELAYED);
 
   dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
   dcamprop_setvalue( gCam, DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);

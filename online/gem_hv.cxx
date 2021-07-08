@@ -19,7 +19,7 @@
 typedef struct {
 
    /* ODB keys */
-   HNDLE hKeyRoot, hKeyDemand, hKeyMeasured, hKeyCurrent, hKeyChStatus, hKeyTemperature;
+   HNDLE hKeyRoot, hKeyDemand, hKeyMeasured, hKeyCurrent, hKeyChStatus, hKeyChState, hKeyTemperature;
 
    /* globals */
    INT num_channels;
@@ -587,7 +587,7 @@ void gem_hv_validate_odb_array(HNDLE hDB, GEM_HV_INFO *hv_info, const char *path
                   callback, pequipment);
 }
 
-void gem_hv_validate_odb_array_bool(HNDLE hDB, GEM_HV_INFO *hv_info, const char *path, double default_value, int cmd,
+void gem_hv_validate_odb_array_dword(HNDLE hDB, GEM_HV_INFO *hv_info, const char *path, DWORD default_value, int cmd,
                         DWORD *array, void (*callback)(INT,INT,void *) ,EQUIPMENT *pequipment)
 {
    int i;
@@ -607,7 +607,7 @@ void gem_hv_validate_odb_array_bool(HNDLE hDB, GEM_HV_INFO *hv_info, const char 
                   callback, pequipment);
 }
 
-void gem_hv_validate_odb_int(HNDLE hDB, GEM_HV_INFO *hv_info, const char *path, double default_value, int cmd,
+void gem_hv_validate_odb_int(HNDLE hDB, GEM_HV_INFO *hv_info, const char *path, int default_value, int cmd,
                         int *target, void (*callback)(INT,INT,void *) ,EQUIPMENT *pequipment)
 {
    int i;
@@ -905,10 +905,11 @@ INT gem_hv_init(EQUIPMENT * pequipment)
           hv_info->num_channels * sizeof(float));
 
    /* Channel State */
-   if (hv_info->driver[0]->flags & DF_REPORT_CHSTATE)
-      gem_hv_validate_odb_array_bool(hDB, hv_info, "Variables/ChState", 'n', CMD_GET_CHSTATE,
-                         hv_info->chState, gem_hv_set_chState, pequipment);
-
+   if (hv_info->driver[0]->flags & DF_REPORT_CHSTATE){
+     gem_hv_validate_odb_array_dword(hDB, hv_info, "Variables/ChState", 0, CMD_GET_CHSTATE,
+				     hv_info->chState, gem_hv_set_chState, pequipment);
+   }
+   
    /* Status */
    if (hv_info->driver[0]->flags & DF_REPORT_STATUS){
       db_merge_data(hDB, hv_info->hKeyRoot, "Variables/ChStatus",
@@ -993,7 +994,7 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    db_set_record(hDB, hKey, hv_info->rampdown_speed, hv_info->num_channels * sizeof(float), 0);
    if (hv_info->driver[0]->flags & DF_REPORT_CHSTATE){
       db_find_key(hDB, hv_info->hKeyRoot, "Variables/ChState", &hKey);
-      db_set_record(hDB, hKey, hv_info->chState, hv_info->num_channels * sizeof(DWORD), 'n');
+      db_set_record(hDB, hKey, hv_info->chState, hv_info->num_channels * sizeof(DWORD), 0);
    }
    db_find_key(hDB, hv_info->hKeyRoot, "Variables/Recovery", &hKey);
    db_set_record(hDB, hKey, &hv_info->recovery, sizeof(INT), 0);
@@ -1185,7 +1186,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      }
      if(ss_millitime() - hv_info->t_recovery > 1000000. || all_off){
        for (i = 7*hv_info->group_recovery+1; i < 7*hv_info->group_recovery+7; i+=2){
-	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/ChState", &val, sizeof(val), i, TID_BOOL, FALSE);
+	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/ChState", &val, sizeof(val), i, TID_UINT32, FALSE);
        }
        hv_info->recovery=0;
        int32_t rval = 0;
