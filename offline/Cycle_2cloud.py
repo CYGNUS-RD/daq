@@ -31,10 +31,6 @@ def upload_file(file_name, bucket='cygnus', tag='LAB'):
         response=s3.head_object(Bucket=bucket,Key=key+file_name)
         print("The file already exists and has a dimension of "+str(response['ContentLength']/1024./1024.)+' MB')
         return True
-    
-    except (botocore.exceptions.ConnectionError, requests.exceptions.ConnectionError):
-              print("There was a connection error or failed")
-              return False
 
     except botocore.exceptions.ClientError:
         print('No file with this name was found on the cloud, it will be uploaded')
@@ -48,13 +44,17 @@ def upload_file(file_name, bucket='cygnus', tag='LAB'):
                    return False
         return True
 
+    except (Exception,botocore.exceptions.ConnectionError, requests.exceptions.ConnectionError):
+              print("There was a connection error or failed")
+              return False
+
 
 
 
 
 ####MAIN####
 
-import os
+import os, sys
 
 begin=int(sys.argv[1])
 end=int(sys.argv[2])+1

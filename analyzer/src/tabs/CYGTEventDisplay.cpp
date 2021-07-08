@@ -153,7 +153,7 @@ void CYGTEventDisplay::EventHandler()
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetTitle("Amp [mV]");
     event->GetDGTZWaveformAt(0)->GetGraph()->Draw("AL");
     event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetNdivisions(505);
-    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-1000.,1000.);
+    event->GetDGTZWaveformAt(0)->GetGraph()->GetYaxis()->SetRangeUser(-50.,200.);
     fCanvasDig->GetCanvas()->cd(2);
     event->GetDGTZWaveformAt(6)->GetGraph()->SetTitle("");
     event->GetDGTZWaveformAt(6)->GetGraph()->GetXaxis()->SetTitleSize(0.1);
