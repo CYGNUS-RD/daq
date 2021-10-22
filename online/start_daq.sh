@@ -12,6 +12,7 @@ xterm -e ./cygnus_fe &
 sleep 2
 xterm -e ./scfe &
 mlogger -D
+msequencer -D
 xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
 #xterm -e python3 event_receiver.py &
 

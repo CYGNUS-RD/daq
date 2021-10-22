@@ -58,8 +58,7 @@ void CYGTWriteData::Event()
   CYGRawOutput *output = gAnalyzer->GetRawOutput();
 
   Int_t nwf = event->GetDGTZWaveformSize();
-
-  std::cout << nwf << std::endl;
+  if(nwf>32*9) nwf=32*9;
   
   output->SetWFSize(nwf);
   
@@ -74,10 +73,11 @@ void CYGTWriteData::Event()
       TGraph *gr = (TGraph*)wf->GetGraph()->Clone(Form("Event%d_wf%d",event->GetEventTime(),iwf));
 
       ///Write to file
-      output->SetCamPicture(*th2);
       *output->GetWFAt(iwf) = *gr;
 
     }
+
+    output->SetCamPicture(*th2);
 
   }
 

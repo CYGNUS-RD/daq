@@ -1,6 +1,7 @@
 #!/bin/sh
 
 killall mlogger
+killall msequencer
 killall mhttpd
 killall cygnus_fe
 killall scfe

@@ -30,8 +30,8 @@
     </Online>
 
     <Paths>
-      <InputFilePath>../online/</InputFilePath>
-      <OutputFilePath>./</OutputFilePath>
+      <InputFilePath>/media/cygno/data/</InputFilePath>
+      <OutputFilePath>/media/cygno/hroot/</OutputFilePath>
       <OutputFileOption>RECREATE</OutputFileOption>
       <MakeOutputDirectory>false</MakeOutputDirectory>
     </Paths>

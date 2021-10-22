@@ -57,11 +57,11 @@ void CYGTEventDisplay::Init()
   }
   gStyle->SetPalette(50,colors);
   */
-  TGVerticalFrame *fVerticalFrame = new TGVerticalFrame(this,800,700,kVerticalFrame);
+  TGVerticalFrame *fVerticalFrame = new TGVerticalFrame(this,1400,1400,kVerticalFrame);
 
-  TGVerticalFrame *fVerticalFramePic = new TGVerticalFrame(fVerticalFrame,800,400,kVerticalFrame);
+  TGVerticalFrame *fVerticalFramePic = new TGVerticalFrame(fVerticalFrame,1400,900,kVerticalFrame);
 
-  TGHorizontalFrame *fHorizontalFrameRange = new TGHorizontalFrame(fVerticalFramePic,100,200,kHorizontalFrame);
+  TGHorizontalFrame *fHorizontalFrameRange = new TGHorizontalFrame(fVerticalFramePic,150,300,kHorizontalFrame);
 
   TGLabel *fLabelLow = new TGLabel(fHorizontalFrameRange, "Low");
   fHorizontalFrameRange->AddFrame(fLabelLow, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,5));
@@ -85,18 +85,18 @@ void CYGTEventDisplay::Init()
 
   fVerticalFramePic->AddFrame(fHorizontalFrameRange, new TGLayoutHints(kLHintsRight | kLHintsTop,2,2,2,2));
 
-  fCanvas = new TRootEmbeddedCanvas("fCanvas",this,500,400);
+  fCanvas = new TRootEmbeddedCanvas("fCanvas",this,1100,900);
   Int_t camCanvas = fCanvas->GetCanvasWindowId();
-  TCanvas *c123 = new TCanvas("c123", 480, 380,camCanvas);
+  TCanvas *c123 = new TCanvas("c123", 1080, 880,camCanvas);
   c123->SetRightMargin(0.15);
   fCanvas->AdoptCanvas(c123);
   fVerticalFramePic->AddFrame(fCanvas, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
 
   fVerticalFrame->AddFrame(fVerticalFramePic, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));  
   
-  fCanvasDig = new TRootEmbeddedCanvas("fCanvasDig",this,500,170);
+  fCanvasDig = new TRootEmbeddedCanvas("fCanvasDig",this,1100,300);
   Int_t wfCanvasDig = fCanvasDig->GetCanvasWindowId();
-  TCanvas *cDig = new TCanvas("cDig", 480, 150, wfCanvasDig);
+  TCanvas *cDig = new TCanvas("cDig", 1080, 280, wfCanvasDig);
   cDig->Divide(1,2);
   cDig->cd(1)->SetBottomMargin(0.18);
   cDig->cd(2)->SetBottomMargin(0.18);

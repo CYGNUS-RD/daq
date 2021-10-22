@@ -1180,12 +1180,12 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
      BOOL all_off = true;
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
-     bool val;
      for (i = 7*hv_info->group_recovery+1; i < 7*hv_info->group_recovery+7; i+=2){
        if(hv_info->chState[i] == 1) all_off = false;
      }
      if(ss_millitime() - hv_info->t_recovery > 1000000. || all_off){
        for (i = 7*hv_info->group_recovery+1; i < 7*hv_info->group_recovery+7; i+=2){
+	 DWORD val = 0;
 	 db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/ChState", &val, sizeof(val), i, TID_UINT32, FALSE);
        }
        hv_info->recovery=0;
