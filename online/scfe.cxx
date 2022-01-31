@@ -71,7 +71,7 @@ EQUIPMENT equipment[] = {
      "SYSTEM",                  /* event buffer */
      EQ_SLOW,                   /* equipment type */
      0,                         /* event source */
-     "FIXED",                   /* format */
+     "MIDAS",                   /* format */
      TRUE,                      /* enabled */
      RO_ALWAYS,        /* read when running and on transitions */
      60000,                     /* read every 60 sec */
