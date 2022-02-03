@@ -78,7 +78,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
    set(LIBS ${LIBS} -lpthread -lutil -lrt) 
 endif() 
 
-set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi -lcaenhvwrapper)
+set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi -lcaenhvwrapper -lopen62541)
 
 file(GLOB vme_SRC
   "${CMAKE_SOURCE_DIR}/mydrivers/vme/*.h"
@@ -103,13 +103,20 @@ target_link_libraries(cygnus_fe mfe midas vme camera ${LIBS})
 set(DRIVERS
   $ENV{MIDASSYS}/drivers/class/hv
   $ENV{MIDASSYS}/drivers/class/multi
+  $ENV{MIDASSYS}/drivers/class/generic
   $ENV{MIDASSYS}/drivers/bus/null
   $ENV{MIDASSYS}/drivers/device/mscbdev
   $ENV{MIDASSYS}/mscb/src/mscb
   gem_hv
   gem_dd_sy4527.cxx
   iseg_hps
+  opc
   )
+
+find_package(open62541 REQUIRED COMPONENTS Events FullNamespace)
+if (open62541_FOUND)
+  message(STATUS "MIDAS: Found open62541")
+endif()
 
 add_executable(scfe scfe.cxx ${DRIVERS})
 target_include_directories(scfe PRIVATE ${INC_PATH})
