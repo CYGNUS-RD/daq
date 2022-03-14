@@ -16,9 +16,14 @@ $Id: iseg_hps.c 2780 2005-10-19 13:20:29Z ritt $
 #include <stdbool.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <map>
 #include "mfe.h"
 #include "msystem.h"
+#include <iostream>
 #define ALARM XALARM
 #include "midas.h"
 #undef ALARM
@@ -90,16 +95,17 @@ static INT tcp_connect(char *host, int port, int *sock)
   memset(&sockaddr_in, 0, sizeof(sockaddr_in));
   sockaddr_in.sin_family = AF_INET; // UDP, TCP
   sockaddr_in.sin_port = htons((short) port); // remote Port
-  inet_pton(AF_INET, host, &(sockaddr_in.sin_addr));
+  //inet_pton(AF_INET, host, &(sockaddr_in.sin_addr));
+  sockaddr_in.sin_addr.s_addr = inet_addr(host);
 
   // connect to server (three way handshake)
   do {
 
-    status = connect(*sock, (const sockaddr *)&sockaddr_in, sizeof(sockaddr_in));
+    status = connect(*sock, (const struct sockaddr *)&sockaddr_in, sizeof(sockaddr_in));
     
     /* don't return if an alarm signal was cought */
   } while (status == -1 && errno == EINTR);
-
+  
   if (status != 0) {
     closesocket(*sock);
     *sock = -1;
@@ -107,7 +113,7 @@ static INT tcp_connect(char *host, int port, int *sock)
     mfe_error(str);
     return FE_ERR_HW;
   }
-  
+
   return FE_SUCCESS;
   
 }
@@ -116,26 +122,29 @@ static INT tcp_connect(char *host, int port, int *sock)
 INT iseg_hps_read (ISEGHPS_INFO * info, char *cmd, char *ans){
 
   int retcode;
+  char answ[255];
   char buf[255];
+  memset(buf,'\0',255);
+  memset(answ,'\0',255);
   char *crlf;
 
   int tot_ret = 0;
   
-  ////SERVE???
   //tcp_connect(info->iseg_hps_settings.ip,info->iseg_hps_settings.port,&info->sock);
 
   send(info->sock, cmd, strlen(cmd), 0);
 
   do {
 
-    retcode = recv(info->sock, buf, sizeof(ans), 0);
+    retcode = recv(info->sock, buf, sizeof(answ), 0);
+
     if (retcode > 0) {
       buf[retcode] = 0;
-      strcat(ans, buf);
+      strcat(answ, buf);
       tot_ret += retcode;
     }
     
-    crlf = strstr(ans, "\r\n");
+    crlf = strstr(answ, "\r\n");
 
   } while ( (retcode > 0) && (crlf == 0) );
   
@@ -143,19 +152,24 @@ INT iseg_hps_read (ISEGHPS_INFO * info, char *cmd, char *ans){
     *crlf = 0;
   }
 
+  strcpy(ans,answ);
+  
+  //closesocket(info->sock);
+
   return (tot_ret > 0) ? FE_SUCCESS : 0;
   
 }
 
 INT iseg_hps_write (ISEGHPS_INFO * info, char *cmd){
 
-  ////SERVE???
   //tcp_connect(info->iseg_hps_settings.ip,info->iseg_hps_settings.port,&info->sock);
 
   int stat = send(info->sock, cmd, strlen(cmd), 0);
 
+  //closesocket(info->sock);
+
   if(stat > 0) return FE_SUCCESS;
-  
+
   return 0;
   
 }
@@ -185,21 +199,24 @@ INT iseg_hps_init (HNDLE hkey, void **pinfo, WORD channels,
   
   //  Connect to device
   status = tcp_connect(info->iseg_hps_settings.ip,info->iseg_hps_settings.port,&info->sock);
+  status = FE_SUCCESS;
   if(status == FE_SUCCESS)
     cm_msg (MINFO, "iseg_hps", "Connected to IP: %s", info->iseg_hps_settings.ip);
   else return 0;
-			     
+
   info->num_channels = 1;
   info->array = (float *) calloc (channels, sizeof (float));
   info->hkey = hkey;
 
+  iseg_hps_label[info->handle] = new char[8];
   sprintf(iseg_hps_label[info->handle],"ISEG_HPS");
 
   //KILL ENABLE MODE
-  char scmd[255] = ":CONF:KILL 1";
-  int ret = iseg_hps_write(info,scmd);
+  //char scmd[255] = ":CONF:KILL 1";
 
-  return ret;
+  //int ret = iseg_hps_write(info,scmd);
+  
+  return FE_SUCCESS;
   
 }
 
@@ -249,12 +266,13 @@ INT iseg_hps_Label_get (ISEGHPS_INFO * info, WORD channel, char *label)
 INT iseg_hps_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":MEAS:VOLT?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans);
+    char *val = strtok(ans,"E");
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
 
@@ -266,12 +284,13 @@ INT iseg_hps_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 INT iseg_hps_demand_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:VOLT?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans);
+    char *val = strtok(ans,"E");
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
 
@@ -283,12 +302,14 @@ INT iseg_hps_demand_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 INT iseg_hps_current_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":MEAS:CURR?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
+
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans)*1.e6;
+    char *val = strtok(ans,"E");
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
   
@@ -300,12 +321,13 @@ INT iseg_hps_current_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 INT iseg_hps_current_limit_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:CURR?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans)*1.e6;
+    char *val = strtok(ans,"E");
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
 
@@ -344,9 +366,9 @@ INT iseg_hps_chState_set (ISEGHPS_INFO * info, WORD channel, DWORD *pvalue)
 
   char cmd[255];
   if(*pvalue)
-    sprintf(cmd,":VOLT:ON\r\n");
+    sprintf(cmd,":VOLT ON\r\n");
   else
-    sprintf(cmd,":VOLT:OFF\r\n");
+    sprintf(cmd,":VOLT OFF\r\n");
 
   return iseg_hps_write(info,cmd);
 
@@ -356,7 +378,7 @@ INT iseg_hps_chState_set (ISEGHPS_INFO * info, WORD channel, DWORD *pvalue)
 INT iseg_hps_chState_get (ISEGHPS_INFO * info, WORD channel, DWORD *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:CHAN:STAT?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
@@ -376,7 +398,7 @@ INT iseg_hps_chStatus_get (ISEGHPS_INFO * info, WORD channel, DWORD *pvalue)
 {
  
   int ret;
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:CHAN:STAT?\r\n";
   int mask = 0b1110001000100110;
   
@@ -397,12 +419,13 @@ INT iseg_hps_chStatus_get (ISEGHPS_INFO * info, WORD channel, DWORD *pvalue)
 INT iseg_hps_temperature_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:MOD:TEMP?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans);
+    char *val = strtok(ans,"C");
+    *pvalue = atof(val);
     return FE_SUCCESS;
   }
 
@@ -430,7 +453,7 @@ INT iseg_hps_ramp_set (ISEGHPS_INFO * info, INT cmd, WORD channel, float *pvalue
 INT iseg_hps_ramp_get (ISEGHPS_INFO * info, INT cmd, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char scmd[255];
 
   if (cmd == CMD_GET_RAMPUP)
@@ -440,7 +463,9 @@ INT iseg_hps_ramp_get (ISEGHPS_INFO * info, INT cmd, WORD channel, float *pvalue
 
   int ret = iseg_hps_read(info,scmd,ans);
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans);
+    char *val = strtok(ans,"E");
+    printf(".....%s\n",val);
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
 
@@ -464,12 +489,14 @@ INT iseg_hps_voltage_limit_set (ISEGHPS_INFO * info, WORD channel, float *pvalue
 INT iseg_hps_voltage_limit_get (ISEGHPS_INFO * info, WORD channel, float *pvalue)
 {
 
-  char ans[255] = "";  
+  char ans[255];  
   char cmd[255] = ":READ:VOLT:LIM?\r\n";
 
   int ret = iseg_hps_read(info,cmd,ans);
+
   if(ret == FE_SUCCESS){
-    *pvalue = atof(ans);
+    char *val = strtok(ans,"E");
+    *pvalue = atof(val)*1.e3;
     return FE_SUCCESS;
   }
 
@@ -520,6 +547,7 @@ INT iseg_hps (INT cmd, ...)
     flags = va_arg (argptr, DWORD);
     bd =  va_arg (argptr, INT (*)(INT, ...));
     status = iseg_hps_init (hKey, (void **)info, channel, bd);
+    printf("Status %d\n",status);
     break;
 
   case CMD_EXIT:

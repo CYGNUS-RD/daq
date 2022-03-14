@@ -24,17 +24,17 @@
 using namespace std;
 
 
-//#define HAVE_CAEN_BRD
+#define HAVE_CAEN_BRD
 #define HAVE_CAMERA
 
 #ifdef HAVE_CAEN_BRD
-#define HAVE_V895
+//#define HAVE_V895
 //#define HAVE_V1190
 #define HAVE_CAEN_DGTZ
-//#ifdef HAVE_CAEN_DGTZ
-//#define HAVE_V1761 
-//#define HAVE_V1742
-//#endif
+#ifdef HAVE_CAEN_DGTZ
+#define HAVE_V1761 
+#define HAVE_V1742
+#endif
 #endif
 
 #ifdef HAVE_CAEN_BRD
@@ -180,6 +180,7 @@ uint32_t *NCHDGTZ;        // = 40000;
 uint32_t *ndgtz;          //= 1024;
 uint32_t *SAMPLING;    //250;
 uint32_t *gDigBase;     //0x22220000;
+uint32_t *gDigLink;     //1
 char **BoardName;
 #endif
 
@@ -195,6 +196,7 @@ int rec_ev = 0;
 
 INT frontend_init()
 {
+
   /* put any hardware initialization here */
 #ifdef HAVE_CAEN_DGTZ
   ReadDgtzConfig();
@@ -235,7 +237,7 @@ INT frontend_init()
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERPOLARITY, DCAMPROP_TRIGGERPOLARITY__POSITIVE );
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERPOLARITY" << endl;
   */
-  
+
   //Software trigger
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE ); 
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
@@ -252,7 +254,7 @@ INT frontend_init()
 #endif
   
   disable_trigger();
-  
+
   /* print message and return FE_ERR_HW if frontend should not be started */
 
   return SUCCESS;
@@ -289,8 +291,10 @@ INT begin_of_run(INT run_number, char *error)
 #ifdef HAVE_CAEN_BRD
 
   ConfigBridge();
+  //TO BE CHECKED FOR V3718
   CAENVME_StartPulser(gVme->handle,cvPulserA);
 
+  //WRONG FOR V3718
   ////Set LED off
   CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);  
 
@@ -334,6 +338,7 @@ INT end_of_run(INT run_number, char *error)
   disable_trigger();
 
 #ifdef HAVE_CAEN_BRD
+  //WRONG FOR V3718
   CAENVME_StopPulser(gVme->handle,cvPulserA);
 #endif
 
@@ -427,11 +432,13 @@ INT poll_event(INT source, INT count, BOOL test)
     //////Sync test
     if(rec_ev == 4){
       //Switch LED on through OUT_3
+      //WRONG FOR V3718
       CAENVME_SetOutputRegister(gVme->handle,cvOut3Bit|cvOut1Bit);  
       sleep(1);
     }
     else if(rec_ev == 5){
       //Switch LED off through OUT_3
+      //WRONG FOR V3718
       CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);
       sleep(1);
     }
@@ -478,7 +485,7 @@ INT poll_event(INT source, INT count, BOOL test)
       //  outfile.close();
       //}    
       //if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
-#ifdef HAVE_CAEN_BRD    
+#ifdef HAVE_CAEN_DGTZ   
       if(pics==2 && i==1) CAEN_DGTZ_ClearData(gDGTZ[i]);
 #endif
       lamCAM = 1;
@@ -506,6 +513,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
 #ifdef HAVE_CAEN_BRD	
 	//SET OUT_1 to 0 (busy)
+	//WRONG FOR V3718
 	CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 #endif
 	
@@ -546,6 +554,7 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
     
     //Reset GATE (pulser B)
+    //WRONG FOR V3718
     CAENVME_StopPulser(gVme->handle,cvPulserB);
     
 #endif
@@ -626,7 +635,7 @@ void ReadDgtzConfig(){
   db_get_value(hDB, 0, "/Configurations/Number of Digitizers",&nboard,&size,TID_INT,TRUE);
 
   gDGTZ = new int[nboard];
-  gDigBase = new int[nboard];     //0x22220000;
+  gDigLink = new int[nboard];     //0x22220000;
   BoardName = new char*[nboard];
   buffer_dgtz = new char*[nboard];
   NCHDGTZ = new int[nboard];        // = 40000;
@@ -644,9 +653,11 @@ void ReadDgtzConfig(){
     char query[100];
     sprintf(query,"/Configurations/Digitizer Base Address[%d]",i);
     db_get_value(hDB, 0, query,&gDigBase[i],&size,TID_INT,TRUE);
-    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,0,0,gDigBase[i],&gDGTZ[i]);
+    sprintf(query,"/Configurations/Digitizer Link Number[%d]",i);
+    db_get_value(hDB, 0, query,&gDigLink[i],&size,TID_INT,TRUE);
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,gDigLink[i],0,gDigBase[i],&gDGTZ[i]);
     if(ret != CAEN_DGTZ_Success) {
-      printf("Can't open digitizer, board number %d\n-- Error %d\n",i,ret);
+      printf("Can't open digitizer, board number %d %d\n-- Error %d\n",i,gDigBase[i],ret);
     }
 
     ////Board name
@@ -681,8 +692,10 @@ INT init_vme_modules(){
   unsigned int data;
 
   //SET POSITIVE POLARITIES OF LEDS AND SIGNALS
+  //TO BE CHECKED FOR V3718
   data = 0x7F;
   CAENVME_WriteRegister(gVme->handle,cvLedPolRegClear,data);
+  //WRONG FOR V3718
   data = 0x3E0;
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegClear,data);
 
@@ -690,12 +703,15 @@ INT init_vme_modules(){
   //data = 0xCC;
   //CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
 
+  //TO BE CHECKED FOR V3718
   //Set OUT_0 as pulser A for periodic trigger to the camera
   CAENVME_SetOutputConf(gVme->handle,cvOutput0,cvDirect,cvActiveHigh,cvMiscSignals);
   
+  //TO BE CHECKED FOR V3718
   //Set OUT_2 as pulser B for a single gate
   CAENVME_SetOutputConf(gVme->handle,cvOutput2,cvInverted,cvActiveHigh,cvMiscSignals);
 
+  //WRONG FOR V3718
   //USE OUT_1 as VME VETO
   data = 0xC;
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
@@ -703,10 +719,11 @@ INT init_vme_modules(){
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
   
   ConfigBridge();
-
+  
+  //WRONG FOR V3718
   CAENVME_StopPulser(gVme->handle,cvPulserA);
   CAENVME_StopPulser(gVme->handle,cvPulserB);
-  
+
 #ifdef HAVE_V895
 
   /* DISCRIMINATOR INITIALIZATION */
@@ -796,6 +813,7 @@ INT init_vme_modules(){
 #ifdef HAVE_CAEN_BRD
 INT ConfigBridge(){
 
+  //TO BE CHECKD FOR V3718
   //Configure pulser A for camera trigger
   //---Start and reset from SW
   CVTimeUnits unit = cvUnit410us;
@@ -803,6 +821,7 @@ INT ConfigBridge(){
   DWORD width = 10; //in units of 410 us
   CAENVME_SetPulserConf(gVme->handle,cvPulserA,period,width,unit,0,cvManualSW,cvManualSW);
 
+  //TO BE CHECKD FOR V3718
   //Configure pulser B for a single gate
   //---Start from IN_0, reset from SW, infinite length
   unit = cvUnit25ns;
@@ -889,7 +908,6 @@ INT ConfigDgtz(){
     CAEN_DGTZ_SetPostTriggerSize(gDGTZ[i],posttrg[i]);                               /* Trigger position */
     
     size = sizeof(double);
-    
     for(int ich=0;ich<NCHDGTZ[i];ich++){
       
       sprintf(query,"/Configurations/DigitizerOffset[%d]",i*32+ich);      
@@ -1047,6 +1065,7 @@ INT disable_trigger()
 
 #ifdef HAVE_CAEN_BRD
 
+  //WRONG FOR V3718
   //SET OUT_1 to 0 (busy)
   CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);  
 
@@ -1091,9 +1110,11 @@ INT ClearDevice()
   }
 #endif
 
+  //WRONG FOR V3718
   //SET OUT_1 to 1 (not busy)
   CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
 
+  //TO BE CHECKD FOR V3718
   //Reset GATE (pulser B)
   CAENVME_StopPulser(gVme->handle,cvPulserB);
 
