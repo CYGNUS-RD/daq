@@ -23,7 +23,6 @@
 
 using namespace std;
 
-
 #define HAVE_CAEN_BRD
 #define HAVE_CAMERA
 
@@ -398,6 +397,7 @@ INT poll_event(INT source, INT count, BOOL test)
 {
 
   int maxevents;
+  bool freerun;
   int size = sizeof(int);
   HNDLE hDB;
 
@@ -413,7 +413,10 @@ INT poll_event(INT source, INT count, BOOL test)
   size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
   
-  if(events >= maxevents) return 0;
+  if(maxevents > 0 && events >= maxevents) return 0;
+
+  size = 4*sizeof(bool);
+  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
 
   int i;
   DWORD flag;
@@ -495,14 +498,18 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
 
 #ifdef HAVE_V1190
-    lamTDC = v1190_DataReady(gVme,gTdcBase);
+    if(!freerun){
+      lamTDC = v1190_DataReady(gVme,gTdcBase);
+    }
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
-    uint32_t status;
-    for(int i=0;i<nboard;i++){
-      CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-      lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+    if(!freerun){
+      uint32_t status;
+      for(int i=0;i<nboard;i++){
+	CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+	lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+      }
     }
 #endif
 
@@ -602,7 +609,16 @@ INT read_event(char *pevent, INT off)
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
-  read_dgtz(pevent);
+  HNDLE hDB;
+
+  cm_get_experiment_database(&hDB, NULL);
+
+  bool freerun;
+  int size = 4*sizeof(bool);
+
+  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
+  if(!freerun) read_dgtz(pevent);
+
 #endif
 
 #endif
@@ -635,7 +651,8 @@ void ReadDgtzConfig(){
   db_get_value(hDB, 0, "/Configurations/Number of Digitizers",&nboard,&size,TID_INT,TRUE);
 
   gDGTZ = new int[nboard];
-  gDigLink = new int[nboard];     //0x22220000;
+  gDigBase = new int[nboard];     //0x22220000;
+  gDigLink = new int[nboard];     //1;
   BoardName = new char*[nboard];
   buffer_dgtz = new char*[nboard];
   NCHDGTZ = new int[nboard];        // = 40000;

@@ -103,6 +103,8 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
    bReq.nodesToBrowse[0].resultMask = UA_BROWSERESULTMASK_ALL; /* return everything */
    
    UA_BrowseResponse bResp = UA_Client_Service_browse(info->client, bReq);
+
+   printf("---- OPC variables ----\n");
    
    for(size_t i = 0; i < bResp.resultsSize; ++i) {
 
@@ -116,6 +118,7 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
 	   UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, ref->nodeId.nodeId.identifier.string.data), &dataType);
 	   (info->channel_type).push_back(dataType.identifier.numeric-1);
 	   (info->channel_name).push_back((char*)(ref->nodeId.nodeId.identifier.string.data));
+	   printf("[%d] %s\n",(info->channel_name).size()-1,ref->nodeId.nodeId.identifier.string.data);
 	 }
 
        }
@@ -153,6 +156,7 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
 	     UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, ref->nodeId.nodeId.identifier.string.data), &dataType);
 	     (info->channel_type).push_back(dataType.identifier.numeric-1);
 	     (info->channel_name).push_back((char*)(ref->nodeId.nodeId.identifier.string.data));
+	     printf("[%d] %s\n",(info->channel_name).size()-1,ref->nodeId.nodeId.identifier.string.data);
 	   }
 	   
 	 }
@@ -165,6 +169,8 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
      bNextReq.continuationPointsSize = 1;
      
    } while(hasRef);
+
+   printf("-----------------------\n");
 
    info->num_channels = info->channel_name.size();
    
