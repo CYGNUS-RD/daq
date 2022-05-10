@@ -431,6 +431,7 @@ INT poll_event(INT source, INT count, BOOL test)
   
   for (i = 0; i < count; i++) {
 
+    /*
 #ifdef HAVE_CAEN_BRD    
     //////Sync test
     if(rec_ev == 4){
@@ -446,6 +447,7 @@ INT poll_event(INT source, INT count, BOOL test)
       sleep(1);
     }
 #endif
+    */
     
     /* poll hardware and set flag to TRUE if new event is available */
 #ifdef HAVE_CAMERA
@@ -473,6 +475,8 @@ INT poll_event(INT source, INT count, BOOL test)
     if(rec_ev==0) pics = 2;
     for(int i=0;i<pics;i++){
 
+      if(pics ==2 && i==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+
       //send a trigger to the camera
       dcamcap_firetrigger(gCam,0);
       
@@ -488,9 +492,9 @@ INT poll_event(INT source, INT count, BOOL test)
       //  outfile.close();
       //}    
       //if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
-#ifdef HAVE_CAEN_DGTZ   
-      if(pics==2 && i==1) CAEN_DGTZ_ClearData(gDGTZ[i]);
-#endif
+
+      if(pics ==2 && i==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+
       lamCAM = 1;
 
     }
@@ -507,7 +511,7 @@ INT poll_event(INT source, INT count, BOOL test)
     if(!freerun){
       uint32_t status;
       for(int i=0;i<nboard;i++){
-	CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
 	lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
       }
     }
@@ -734,12 +738,12 @@ INT init_vme_modules(){
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
   data = 0xC0;
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
-  
+
   ConfigBridge();
   
   //WRONG FOR V3718
-  CAENVME_StopPulser(gVme->handle,cvPulserA);
-  CAENVME_StopPulser(gVme->handle,cvPulserB);
+  //CAENVME_StopPulser(gVme->handle,cvPulserA);
+  //CAENVME_StopPulser(gVme->handle,cvPulserB);
 
 #ifdef HAVE_V895
 
@@ -787,15 +791,22 @@ INT init_vme_modules(){
 
       printf("\nConnected to CAEN Digitizer Model %s %d -- %d channels\n", BoardInfo[i].ModelName,BoardInfo[i].FamilyCode,NCHDGTZ[i]);
 
-  
+      if(NCHDGTZ[i] > 32) {
+	printf("Error in NCHDGTZ %d\n",NCHDGTZ[i]);
+	exit(EXIT_FAILURE);
+      }
+      
       ////Reset the board
       ret |= CAEN_DGTZ_Reset(gDGTZ[i]);                                               /* Reset Digitizer */
       ret |= CAEN_DGTZ_ClearData(gDGTZ[i]);
 
       //#ifdef HAVE_V1761
       ////Waveform Setup
-      if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720")==0)
-	ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ[i],0x3);                        /* Enable channel 0 and 1*/
+      if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720E")==0){
+	ret |= CAEN_DGTZ_SetChannelEnableMask(gDGTZ[i],(int)(pow(2,NCHDGTZ[i]))-1);                        /* Enabl
+e channel 0 and 1*/
+	cout << "enable " << (int)(pow(2,NCHDGTZ[i]))-1 << endl;
+      }
       else if(strcmp(BoardName[i],"V1742")==0)
 	CAEN_DGTZ_SetGroupEnableMask(gDGTZ[i],0xF); 
       //#endif
@@ -805,7 +816,7 @@ INT init_vme_modules(){
    
       ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_DISABLED);
       //ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,???); //TO BE FIXED 
-      ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+      ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_ACQ_ONLY);
       ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i],128);                                /* Set the max number of events to transfer in a sigle readout */
   
       //Acquisition mode
@@ -836,6 +847,7 @@ INT ConfigBridge(){
   CVTimeUnits unit = cvUnit410us;
   DWORD period = 100000/410; //in units of 410 us
   DWORD width = 10; //in units of 410 us
+  
   CAENVME_SetPulserConf(gVme->handle,cvPulserA,period,width,unit,0,cvManualSW,cvManualSW);
 
   //TO BE CHECKD FOR V3718
@@ -854,8 +866,6 @@ INT ConfigBridge(){
 #ifdef HAVE_CAEN_DGTZ
 INT ConfigDgtz(){
 
-  CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_Success;
-
   int size = sizeof(int);
 
   HNDLE hDB;
@@ -864,9 +874,11 @@ INT ConfigDgtz(){
   cm_get_experiment_database(&hDB, NULL);
   
   db_get_value(hDB, 0,"/Configurations/MultiTriggerMaxSize",&maxtriggersize,&size,TID_INT,TRUE);
-  
+
   //for_V1761
   for(int i=0;i<nboard;i++){
+
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_Success;
 
     sprintf(query,"/Configurations/DigitizerSamples[%d]",i);
     db_get_value(hDB, 0, query,&ndgtz[i],&size,TID_INT,TRUE);
@@ -876,15 +888,15 @@ INT ConfigDgtz(){
     if(strcmp(BoardName[i],"V1761")==0)   
       {
 	if(ndgtz[i] > (7.2e6/maxtriggersize) ) ndgtz[i] = (int)(7.2e6/maxtriggersize);
-	CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
-	SAMPLING[i] = 250;
+	ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+	SAMPLING[i] = 4000;
       }
-     //for_V1720
-    else if(strcmp(BoardName[i],"V1720")==0)   
+     //for_V1720E
+    else if(strcmp(BoardName[i],"V1720E")==0)   
       {
 	if(ndgtz[i] > (1.25e6/maxtriggersize) ) ndgtz[i] = (int)(1.25e6/maxtriggersize);                                         
-	CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
-	SAMPLING[i] = 4000;
+	ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+	SAMPLING[i] = 250;
       }
     //#ifdef HAVE_V1742
     else if(strcmp(BoardName[i],"V1742")==0)     
@@ -919,10 +931,10 @@ INT ConfigDgtz(){
       }
     
     //#endif
-    
+
     sprintf(query,"/Configurations/DigitizerPostTrg[%d]",i);
     db_get_value(hDB, 0, query,&posttrg[i],&size,TID_INT,TRUE);
-    CAEN_DGTZ_SetPostTriggerSize(gDGTZ[i],posttrg[i]);                               /* Trigger position */
+    ret |= CAEN_DGTZ_SetPostTriggerSize(gDGTZ[i],posttrg[i]);                               /* Trigger position */
     
     size = sizeof(double);
     for(int ich=0;ich<NCHDGTZ[i];ich++){
@@ -933,19 +945,18 @@ INT ConfigDgtz(){
       if(DGTZ_OFFSET[i][ich] > 0.5) DGTZ_OFFSET[i][ich] = 0.5;
       else if(DGTZ_OFFSET[i][ich] < -0.5) DGTZ_OFFSET[i][ich] = -0.5;
       
-      if( (strcmp(BoardName[i],"V1761")==0) || (strcmp(BoardName[i],"V1720")==0) )    
-	CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
+      if( (strcmp(BoardName[i],"V1761")==0) || (strcmp(BoardName[i],"V1720E")==0) )    
+	ret |= CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
       else if(strcmp(BoardName[i],"V1742")==0){      //da decidere
 	int grreg = 0x1098 | (ich/8 << 8);
 	int data = (ich%8<<16) | (int)(DGTZ_OFFSET[i][ich]/2.*65536 + 32767);
 	//CAEN_DGTZ_SetGroupDCOffset(gDGTZ[i],ich/8,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
-	CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
+	ret |= CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
       }
 	
     }
     
     //Uploading and enabling the automatic correction for the 1742 digitizer
-    // #ifdef HAVE_V1742
 
     if(strcmp(BoardName[i],"V1742")==0)      //da decidere
       {
@@ -960,16 +971,18 @@ INT ConfigDgtz(){
 	    exit(EXIT_FAILURE);
           }
       }
-    //  #endif
-    
 
-    //Calibration
-    CAEN_DGTZ_Calibrate(gDGTZ[i]);
-    
+    else{
+
+      //Calibration
+      //ret |= CAEN_DGTZ_Calibrate(gDGTZ[i]);
+
+    }
+
     //Buffer allocation
     uint32_t bsize;
-    ret = CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i],&buffer_dgtz[i],&bsize);
-    
+    ret |= CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i],&buffer_dgtz[i],&bsize);
+
     if(ret != CAEN_DGTZ_Success) {  
       printf("Errors during Digitizer Configuration.\n");
     }
@@ -1222,20 +1235,20 @@ int read_dgtz(char* pevent){
   char * evtptr = NULL;
   uint32_t NumEvents;
   CAEN_DGTZ_EventInfo_t eventInfo;
-  
+
   WORD* pdata16 = NULL;
   bk_create(pevent, "DIG0", TID_WORD, &pdata16);
-  
+
   for(int i=0;i<nboard;i++){
     
     CAEN_DGTZ_ReadData(gDGTZ[i],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz[i],&bsize);
     CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);    
-    
+
     //if(NumEvents != 1) cout << "---------- ERROR!!!!! DGTZ > 1 event!!! ----------" << endl;
     //cout << "NumEvents = " << NumEvents << endl;
     
     //#ifdef HAVE_V1761
-    if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720")==0){
+    if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720E")==0){
       
       CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
     
@@ -1262,7 +1275,7 @@ int read_dgtz(char* pevent){
       }
 
     }
-    
+
     //#ifdef HAVE_V1742
     else if(strcmp(BoardName[i],"V1742")==0){
 
@@ -1270,10 +1283,12 @@ int read_dgtz(char* pevent){
       CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
 
       for(int iev=0;iev<NumEvents;iev++){
-      
+
 	CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);					
+
 	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
-	CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+
+	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
 
 	for(int j=0;j<NCHDGTZ[i];j++){
 
@@ -1293,6 +1308,7 @@ int read_dgtz(char* pevent){
       
       }
     } 
+
       //#endif  
     
     bk_close(pevent, pdata16);
@@ -1340,6 +1356,7 @@ int read_dgtz(char* pevent){
     }
     
     bk_close(pevent, hdata);
+
   }//end for on boards for header
   
   return 0;
