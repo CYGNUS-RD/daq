@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html class="mcss" lang="en">
+
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="midas.css">
+<script src="controls.js"></script>
+<script src="midas.js"></script>
+<script src="mhttpd.js"></script>
+<script src="mhistory.js"></script>
+
+<style>
+
+.mydiv {
+cursor: pointer;
+color:#0000FF;
+}
+.mydiv:link { color:#0000FF; text-decoration:none }
+.mydiv:visited { color:#800080; text-decoration:none }
+.mydiv:hover { color:#0000FF; text-decoration:underline }
+.mydiv:active { color:#0000FF; text-decoration:underline }
+.mydiv:focus { color:#0000FF; text-decoration:none; }
+
+input[type=number] {
+   font-size: 100%;
+}
+
+input[type=number][disabled]{color:transparent; background-color:transparent; border-width: 0px;}
+
+</style>
+
+<script>
+
+window.onload = function() {
+
+  mhttpd_init('PMT HV');
+  mhistory_init();
+
+}
+
+</script>
+
+<title>PMT HV</title>
+
+<style>
+.mtable td {
+padding: 8px;
+}
+</style>
+
+</head>
+
+<body class="mcss">
+
+<!-- header and side navigation will be filled in mhttpd_init -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+  <table class="mtable" style="font-size:18px">
+    <tr>
+      <th class="mtableheader" id="page_title" colspan="8">PMT High Voltage Control Page</th>
+    </tr>
+    <tr>
+      <th></th><th>Set point</th><th>Measured</th><th>Current</th><th style="width:0.3in"><img style="width:0.2in" src="on-off.png" alt=""/></th><th style="width:0.3in"><img style="width:0.27in" src="trip3.png" alt=""/></th><th colspan=2>Control</th>
+    </tr>
+    <tr>
+      <td>PMT1</td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Demand[14]" data-odb-editable="1"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Measured[14]" data-odb-editable="0"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Current[14]" data-odb-editable="0"></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[14]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[14]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[14]" data-odb-value="1" style="padding: 7px 20px;font-size:18px;margin:5px">ON</button>
+      </td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[14]" data-odb-value="0" style="padding: 7px 20px;font-size:18px;margin:5px">OFF</button>
+      </td>
+    </tr>
+    <tr>
+      <td>PMT2</td>
+      <td><div class="modbvalue" data-format="f1" data-format="f1" data-odb-path="/Equipment/HV/Variables/Demand[15]" data-odb-editable="1"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Measured[15]" data-odb-editable="0"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Current[15]" data-odb-editable="0"></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[15]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[15]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[15]" data-odb-value="1" style="padding: 7px 20px;font-size:18px;margin:5px">ON</button>
+      </td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[15]" data-odb-value="0" style="padding: 7px 20px;font-size:18px;margin:5px">OFF</button>
+      </td>
+    </tr>
+    <tr>
+      <td>PMT3</td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Demand[16]" data-odb-editable="1"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Measured[16]" data-odb-editable="0"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Current[16]" data-odb-editable="0"></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[16]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[16]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[16]" data-odb-value="1" style="padding: 7px 20px;font-size:18px;margin:5px">ON</button>
+      </td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[16]" data-odb-value="0" style="padding: 7px 20px;font-size:18px;margin:5px">OFF</button>
+      </td>
+    </tr>
+    <tr>
+      <td>PMT4</td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Demand[18]" data-odb-editable="1"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Measured[18]" data-odb-editable="0"></div></td>
+      <td><div class="modbvalue" data-format="f1" data-odb-path="/Equipment/HV/Variables/Current[18]" data-odb-editable="0"></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChState[18]" data-color="#00FF00" data-background-color="red" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td><div class="modbbox" data-odb-path="/Equipment/HV/Variables/ChStatus[18]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px" ></div></td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[18]" data-odb-value="1" style="padding: 7px 20px;font-size:18px;margin:5px">ON</button>
+      </td>
+      <td>
+	<button class="modbbutton" class="mbutton" data-odb-path="/Equipment/HV/Variables/ChState[18]" data-odb-value="0" style="padding: 7px 20px;font-size:18px;margin:5px">OFF</button>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

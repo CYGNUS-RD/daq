@@ -1,0 +1,1 @@
+/usr/bin/c++    -std=c++14 -pipe -fsigned-char -pthread -O2 -g -DNDEBUG  -rdynamic CMakeFiles/cygnus_fe.dir/cygnus_fe.cxx.o  -o cygnus_fe   -L/home/software/midas/lib  -Wl,-rpath,/home/software/midas/lib -lmfe -lmidas libvme.a libcamera.a -lz -lpthread -lutil -lrt -lCAENVME -lCAENDigitizer -ldcamapi 

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="mcss" lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="midas.css">
+    <script src="controls.js"></script>
+    <script src="midas.js"></script>
+    <script src="mhttpd.js"></script>
+    <script src="mhistory.js"></script>
+
+    <style>
+      .mtable td {
+	  padding: 8px;
+      }
+    </style>
+
+    <script>
+
+      window.onload = function() {
+	  
+	  mhttpd_init('GasSystem');
+	  mhistory_init();
+
+      }
+
+      var buttonTimerId = 0;
+
+      function clear_button(){
+	  
+	  var paths =  ["/Equipment/GasSystem/Variables/Demand[94-95]"];
+
+	  mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
+  }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+  });
+
+      }
+
+      function press_button(id){
+
+	  clearTimeout(buttonTimerId);
+	  
+	  var paths;
+	  if(id===0) {
+	      paths = ["/Equipment/GasSystem/Variables/Demand[94]"];
+	  }
+	  else if(id===1) {
+	      paths = ["/Equipment/GasSystem/Variables/Demand[95]"];
+	  }
+	  
+	  mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
+	  }).catch(function(error) {
+              mjsonrpc_error_alert(error);
+	  });
+
+	  buttonTimerId = setTimeout('clear_button()',1000);
+	  
+      }
+     
+    </script>
+
+    <title>Gas System</title>
+
+    
+</head>
+
+<body class="mcss">
+
+<!--<body class="mcss" onload="mhttpd_init('GasSystem'); mhistory_init();"> -->
+  <div id="mheader"></div>
+  <div id="msidenav"></div>
+
+  <div id="mmain">
+
+    <table class="mtable">
+      <tr>
+	<th class="mtableheader" id="page_title" colspan="2">Gas System Control Page</th>
+      </tr>
+
+
+      <tr>
+	<td>
+	  <table class="mtable" style="float:center;width:10in">
+	    <tr><th class="mtableheader" style="background-color:green" colspan="30"><b>Alarms</b></tr>      
+	    <tr>
+	      <td width="100px">He Pressure</td>
+	      <td width="100px">CF<sub>4</sub> Pressure</td>
+	      <td width="100px">SF<sub>6</sub> Pressure</td>
+	      <td width="100px">He Flow</td>
+	      <td width="100px">CF<sub>4</sub> Flow</td>
+	      <td width="100px">SF<sub>6</sub> Flow</td>
+	      <td width="100px">Chamber Pressure</td>
+	      <td width="100px">Recover Bottle Pressure</td>
+	      <td width="100px">Recycling Bottle Pressure</td>
+	      <td width="100px">Recycling Flow</td>
+	    <tr>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[135]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[157]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[179]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[48]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[58]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[68]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[232]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[221]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[199]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Input[78]" data-formula="x & 0x200" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+
+
+      <tr>
+	<td>
+	  <table class="mtable" style="float:left;width:10in">
+	    <tr><th class="mtableheader" style="background-color:green" colspan="4"><b>Settings</b></tr>
+	    <tr><td>
+		<table class="mtable" style="float:center">
+		  <tr><th class="mtableheader" style="background-color:lightblue;color:black" colspan="4"><b>Control</b></tr>
+		  <tr>
+		    <td>
+		      <button class="modbbutton" class="mbutton" onclick="press_button(0)"  style="padding: 7px 20px;font-size:18px;margin:5px">START</button>
+		    </td>
+		    <td>
+		      <button class="modbbutton" class="mbutton" onclick="press_button(1)" style="padding: 7px 20px;font-size:18px;margin:5px">STOP</button>
+		    </td>
+		  </tr>
+		</table>
+		
+	    </td></tr> 
+
+	    <tr><td>
+		<table class="mtable" colspan="3" style="float:center">
+		  <tr height="35" style="background-color:lightblue"><th></th><th style="width:2in"><b>Demand</b></th><th style="width:2in"><b>Read</b></th></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Total Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[107]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[255]" data-format="f3" ></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Chamber Pressure [bar(a)]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[115]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[14]" data-format="f4"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Recirculation Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[91]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[263]" data-format="f3"></div></td></tr>
+		</table>
+	    </td></tr>
+
+	    <tr><td>
+		<table class="mtable" style="float:center;width:100%">
+		  <tr height="35" style="background-color:lightblue"><th></th><th colspan="2">He</th><th colspan="2">CF<sub>4</sub></th><th colspan="2">SF<sub>6</sub></th></tr>
+		  <tr><td style="background-color:lightblue" rowspan="2"><b>Pressure</b></td>
+		    <td align="center"><b>Bottle</b></td><td align="center"><b>Reducer</b></td><td align="center"><b>Bottle</b></td><td align="center"><b>Reducer</b></td><td align="center"><b>Bottle</b></td><td align="center"><b>Reducer</b></td></tr>
+		  <tr>
+
+		    <td align="center" style="vertical-align:top">
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[265]" data-min-value="0" data-max-value="250" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[265]" data-format="f1" data-formula="x"></span></td>
+
+		    <td align="center" style="vertical-align:top">
+		        <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[267]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[267]" data-format="f1" data-formula="x"></span></td>
+		   
+		    <td align="center" style="vertical-align:top">
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-min-value="0" data-max-value="170" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-format="f1" data-formula="x"></span></td>
+
+		    <td align="center" style="vertical-align:top">
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-format="f1" data-formula="x"></span></td>
+
+		    <td align="center" style="vertical-align:top">
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-min-value="0" data-max-value="40" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-format="f1" data-formula="x"></span></td>
+
+		    <td align="center" style="vertical-align:top">
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[275]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[275]" data-format="f1" data-formula="x"></span></td>
+
+
+		  </tr>
+	  
+		  <tr><td style="background-color:lightblue"><b>Flow</b></td>
+		    <td align="center" style="vertical-align:top" colspan="2">
+		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="100"></span>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[257]" data-min-value="0" data-max-value="100"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[100]" data-odb-editable="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[257]" data-format="f1"></span></td>
+		    
+		    <td align="center" style="vertical-align:top" colspan="2">
+		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="10"></span>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[259]" data-min-value="0" data-max-value="10"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[102]" data-odb-editable="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[259]" data-format="f1"></span></td>
+
+
+		    <td align="center" style="vertical-align:top" colspan="2">
+		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="100"></span>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[261]" data-min-value="0" data-max-value="10"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[104]" data-odb-editable="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[259]" data-format="f1"></span></td>
+
+		  </tr>
+		  
+
+		</table>
+	    </td></tr>
+	    
+
+	   
+	    </table>
+
+      <tr>
+	<td>
+	  <table class="mtable" style="float:center;width:10in">
+	    <tr><th class="mtableheader" style="background-color:green" colspan="3"><b>Readings</b></tr>      
+	    <tr>
+	      <td>
+		<!Chamber information>
+		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue">
+		    <th style="width:1.5in" colspan=2><b>Chamber Pressure [bar(a)]</b></th>
+		  </tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT401</td><td style="color:blue"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[277]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT402</td><td style="color:blue"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[279]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr heigh="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT403</td><td style="color:blue"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[281]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td>PID</td><td style="color:blue"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[14]" data-format="f4" data-formula="x"></div></td></tr>
+		  </tr>
+		</table>
+		
+		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Recovery Bottle Pressure<br>[bar(g)]</b></th>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[287]" data-format="f1" data-formula="x"></div></td></tr>
+		</table>
+		
+		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Recirculation Buffer Pressure<br>[bar(g)]</b></th>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[285]" data-format="f3" data-formula="x"></div></td></tr>
+		</table>
+		
+		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Recirculation Flow<br>[sl/h]</b></th>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[263]" data-format="f3" data-formula="x"></div></td></tr>
+		</table>
+	      </td>
+	    </tr>
+	    
+	    <tr>
+	      <td>
+      		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Oxygen Analyzer<br>[ppm]</b></th>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[251]" data-format="f1" data-formula="x"></div></td></tr>
+		</table>
+		<table class="mtable" style="float:left;width:2.4in">
+		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Humidity Analyzer<br>[ppm]</b></th>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[253]" data-format="f1" data-formula="x"></div></td></tr>
+		</table>
+	      </td>
+	    </tr>
+      </table>
+
+
+
+
+	  <!--
+	      <tr>
+		<td colspan="3">
+		  <table class="mtable">
+		    <tr>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Pressure" style="width:300px; height:300px;"></div></td>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Pressure" style="width:300px; height:300px;"></div></td>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Pressure" style="width:300px; height:300px;"></div></td>
+		    </tr>
+		    <tr>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Temperature" style="width:300px; height:300px;"></div></td>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Temperature" style="width:300px; height:300px;"></div></td>
+		      <td><div class="mjshistory" data-group="GasSystem" data-panel="Temperature" style="width:300px; height:300px;"></div></td>
+		    </tr>
+		  </table>
+		  
+		</td>
+	      </tr>
+-->
+</body>
+
+
+</html>

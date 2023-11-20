@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/cygno01/daq/online/mydrivers/vme/caenBridge.cxx
+stdlib.h
+-
+stdio.h
+-
+string.h
+-
+caenBridge.h
+/home/cygno01/daq/online/mydrivers/vme/caenBridge.h
+
+/home/cygno01/daq/online/mydrivers/vme/caenBridge.h
+stdio.h
+-
+string.h
+-
+mvmestd.h
+/home/cygno01/daq/online/mydrivers/vme/mvmestd.h
+CAENVMElib.h
+/home/cygno01/daq/online/mydrivers/vme/CAENVMElib.h
+
+/home/software/midas/include/mvmestd.h
+vmicvme.h
+/home/software/midas/include/vmicvme.h
+

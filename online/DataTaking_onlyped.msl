@@ -1,0 +1,21 @@
+COMMENT "Data Taking"
+
+ODBSET "/Configurations/Exposure", "0.5"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "1"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/ChState[0]", "0"
+
+WAIT seconds, 5
+
+LOOP 1
+
+    RUNDESCRIPTION "Pedestal_Test_Quest"
+  
+    TRANSITION START
+    WAIT events, 200
+    TRANSITION STOP
+
+
+ENDLOOP
