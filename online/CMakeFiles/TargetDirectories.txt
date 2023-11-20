@@ -1,0 +1,5 @@
+/home/cygno01/daq/online/CMakeFiles/rebuild_cache.dir
+/home/cygno01/daq/online/CMakeFiles/edit_cache.dir
+/home/cygno01/daq/online/CMakeFiles/camera.dir
+/home/cygno01/daq/online/CMakeFiles/cygnus_fe.dir
+/home/cygno01/daq/online/CMakeFiles/vme.dir

@@ -43,7 +43,7 @@
 #endif
 
 //#if	defined( LINUX )
-#include			"dcamapi.h"
+#include			"dcamapi4.h"
 #include			"dcamprop.h"
 //#else
 //#include			"../../inc/dcamapi.h"

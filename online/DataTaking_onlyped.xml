@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">Data Taking</Comment>
+<ODBSet l="3" path="/Configurations/Exposure">0.5</ODBSet>
+<ODBSet l="4" path="/Configurations/FreeRunning">1</ODBSet>
+<ODBSet l="5" path="/Configurations/Pedestal">1</ODBSet>
+<ODBSet l="6" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="8" path="/Equipment/HV/Variables/ChState[0]">0</ODBSet>
+<Wait l="10" for="seconds">5</Wait>
+<Loop l="12" le="21" n="1">
+<RunDescription l="14">Pedestal_Test_Quest</RunDescription>
+<Transition l="16">START</Transition>
+<Wait l="17" for="events">200</Wait>
+<Transition l="18">STOP</Transition>
+</Loop>
+</RunSequence>

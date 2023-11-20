@@ -1,0 +1,19 @@
+COMMENT "TEST v0.1"
+
+ODBSET "/Configurations/Exposure", "0.1"
+ODBSET "/Configurations/FreeRunning", "0"
+ODBSET "/Configurations/Pedesral", "0"
+ODBSET "/Logger/Write data", "1"
+
+LOOP 20
+
+    RUNDESCRIPTION "Multisource, 25cm, Cu"
+  
+    TRANSITION START
+    WAIT events, 400
+    TRANSITION STOP
+
+    WAIT seconds 30
+
+
+ENDLOOP

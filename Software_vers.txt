@@ -1,0 +1,14 @@
+MIDAS:
+version number: unknown
+git hash:	6dbcfc0ec5eca096c4702ede12b304957b81381f
+ 
+CAMERA lib:
+dcamsdk4: required (no installation needed)
+Camera libraries: DCAM-API_for_Linux_v4.0.6269b
+
+CAEN lib:
+CAENComm: 	1.5.0
+CAENDigitizer:	2.17.0
+CAENUpgrader:	1.7.2
+CAENUSBdrvB:	1.5.4
+CAENVMELib:	3.99.4

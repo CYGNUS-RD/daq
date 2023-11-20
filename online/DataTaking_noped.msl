@@ -1,0 +1,21 @@
+COMMENT "Data Taking"
+
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+
+WAIT seconds, 10
+
+ODBSET "/Configurations/Exposure", "0.5"
+ODBSET "/Configurations/FreeRunning", "0"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Logger/Write data", "1"
+
+LOOP 2
+
+    RUNDESCRIPTION "He:CF4:60:40"
+  
+    TRANSITION START
+    WAIT events, 100
+    TRANSITION STOP
+
+
+ENDLOOP
