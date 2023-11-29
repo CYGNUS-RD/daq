@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html class="mcss" lang="en">
+<head>
+   <meta charset="UTF-8">
+   <link rel="stylesheet" href="midas.css">
+   <script src="controls.js"></script>
+   <script src="midas.js"></script>
+   <script src="mhttpd.js"></script>
+   <script src="mhistory.js"></script>
+
+<style>
+
+.mydiv {
+cursor: pointer;
+color:#0000FF;
+}
+.mydiv:link { color:#0000FF; text-decoration:none }
+.mydiv:visited { color:#800080; text-decoration:none }
+.mydiv:hover { color:#0000FF; text-decoration:underline }
+.mydiv:active { color:#0000FF; text-decoration:underline }
+.mydiv:focus { color:#0000FF; text-decoration:none; }
+
+input[type=number] {
+   font-size: 100%;
+}
+
+input[type=number][disabled]{color:transparent; background-color:transparent; border-width: 0px;}
+
+</style>
+
+<script>
+
+  window.onload = function() {
+      
+      mhttpd_init('Source Monitor');
+      mhistory_init();
+
+      document.getElementById('target').value = 0;
+      
+      update_slot();
+
+  }
+
+  function update_slot() {
+      
+      var paths = ["/Equipment/SourceMotor/Variables/Input[0-10]"];
+      
+      mjsonrpc_db_get_values(paths).then(function(rpc) {
+
+	  var done = 0;
+	  for (let is = 0; is < 10; is++) {
+	      if(Math.abs(rpc.result.data[0][0]-rpc.result.data[0][is+1])<3) {
+		  done = 1;
+		  document.getElementById('slot').innerHTML = is;
+	      }
+	  }
+	  if(done == 0) document.getElementById('slot').innerHTML = "Out of slot";
+	  
+      }).catch(function(error) {
+	  mjsonrpc_error_alert(error);
+      });
+      
+  }
+
+  var cmdTimerId = 0;
+
+  function clear_command(){
+      
+      var paths = ["/Equipment/SourceMotor/Variables/Output[0-1]"];
+      
+      mjsonrpc_db_paste(paths,[-1]).then(function(rpc) {
+      }).catch(function(error) {
+          mjsonrpc_error_alert(error);
+      });
+      
+  }
+
+  function command(cmd){
+
+      clearTimeout(cmdTimerId);
+      
+      if(cmd==0){
+	  
+	  var paths = ["/Equipment/SourceMotor/Variables/Output[0]"];
+	  var sets = [parseFloat(document.getElementById('target').value)];
+	  
+	  mjsonrpc_db_paste(paths,sets).then(function(rpc) {
+	  }).catch(function(error) {
+              mjsonrpc_error_alert(error);
+	  });
+
+      }
+      else if(cmd==1){
+
+	  var paths = ["/Equipment/SourceMotor/Variables/Output[1]"];
+
+	  mjsonrpc_db_paste(paths,[0]).then(function(rpc) {
+	  }).catch(function(error) {
+              mjsonrpc_error_alert(error);
+	  });
+
+      }
+      else if(cmd==2){
+
+	  var paths = ["/Equipment/SourceMotor/Variables/Output[1]"];
+
+	  mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
+	  }).catch(function(error) {
+              mjsonrpc_error_alert(error);
+	  });
+
+      }
+
+      cmdTimerId = setTimeout('clear_command()', 1000);
+
+  }
+  
+</script>
+
+   <title>Source Motor</title>
+
+   <style>
+     .mtable td {
+	 padding: 8px;
+     }
+   </style>
+   
+</head>
+
+<body class="mcss">
+
+<!-- header and side navigation will be filled automatically in mhttpd_start -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+   <table class="mtable" style="float:center;width:100%">
+      <tr>
+         <th class="mtableheader">Source Motor</th> 
+      </tr>
+      <tr>
+	<td>
+	  <table style="font-size:15px" align="center">
+            <tr>
+	      <td style="width:70%">
+		<div class="mhaxis" style="width:95%;height:22px;float:center" data-min-value="0" data-max-value="660"></div>
+		<div class="modbhbar" style="width:95%; height:22px;color:lightgreen" data-odb-path="/Equipment/SourceMotor/Variables/Input[0]"
+                     data-min-value="0" data-max-value="660"></div>
+              </td>
+              <td style="height:150px" align="center">
+		<b>Current Position [steps]</b><div class="modbvalue" style="font-size:30px;font-weight:bold;color:darkorange" align="center" data-odb-path="/Equipment/SourceMotor/Variables/Input[0]" onchange="update_slot()"></div>
+		<p></p>
+		<b>Current Position [slot]</b><div id="slot" style="font-size:30px;font-weight:bold;color:darkorange" align="center">Unavailable</div>
+              </td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+      <tr>
+	<td>
+	  <table class="mtable" align="center" style="float:center;width:50%">
+	    <tr>
+              <th class="mtableheader" colspan="2">Commands</th> 
+	    </tr>
+	    <tr align="center">
+	      <td colspan="2" style="font-size:22px">
+		<b>Target position [slot]:</b>
+		<input id="target" onclick="execCommand('selectAll',false,null)" style="width:1in;text-align:center" type="number" step="1"/>
+		<button class="mbutton" style="width:150px;height:30px; margin:10px; font-size:18px" onclick="command(0)">APPLY</button><br><br>
+	      </td>
+	    </tr>
+	    <tr align="center">
+	      <td>
+		<button class="mbutton" style="width:150px;height:30px; margin:5px; font-size:18px" onclick="command(1)">- 10 STEPS</button><br><br>
+	      </td>
+	      <td>
+		<button class="mbutton" style="width:150px;height:30px; margin:5px; font-size:18px" onclick="command(2)">+ 10 STEPS</button><br><br>
+	      </td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+   </table>
+</div>
+
+</body>
+</html>

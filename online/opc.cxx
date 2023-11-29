@@ -9,9 +9,11 @@
 
 \********************************************************************/
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <regex>
 #include "midas.h"
 #include "msystem.h"
 #include <open62541/client_config_default.h>
@@ -43,7 +45,7 @@ typedef struct {
 
 #define OPC_SETTINGS_STR "\
 System Name = STRING : [32] gassys\n\
-IP = STRING : [32] 172.17.19.70:4870\n\
+IP = STRING : [32] 192.168.0.105:4870\n\
 Namespace Index = INT : 3\n\
 Tags Guid = STRING : [64] ecef81d5-c834-4379-ab79-c8fa3133a311\n\
 "
@@ -54,6 +56,7 @@ typedef struct {
   int num_channels;
   vector<string> channel_name;
   vector<int> channel_type;
+  vector<int> channel_size;  
 } OPC_INFO;
 
 /*---- device driver routines --------------------------------------*/
@@ -104,7 +107,7 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
    
    UA_BrowseResponse bResp = UA_Client_Service_browse(info->client, bReq);
 
-   printf("---- OPC variables ----\n");
+   printf("---- OPC variables ---- %d\n",bResp.resultsSize);
    
    for(size_t i = 0; i < bResp.resultsSize; ++i) {
 
@@ -114,11 +117,47 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
        if ((ref->nodeClass == UA_NODECLASS_OBJECT || ref->nodeClass == UA_NODECLASS_VARIABLE||ref->nodeClass == UA_NODECLASS_METHOD)) {
 
 	 if(ref->nodeId.nodeId.identifierType == UA_NODEIDTYPE_STRING) {
+
 	   UA_NodeId dataType;
-	   UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, ref->nodeId.nodeId.identifier.string.data), &dataType);
-	   (info->channel_type).push_back(dataType.identifier.numeric-1);
-	   (info->channel_name).push_back((char*)(ref->nodeId.nodeId.identifier.string.data));
-	   printf("[%d] %s\n",(info->channel_name).size()-1,ref->nodeId.nodeId.identifier.string.data);
+
+	   char name[256];
+	   strcpy(name,ref->nodeId.nodeId.identifier.string.data);
+	   
+	   UA_StatusCode retval = UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, name), &dataType);
+
+	   if (retval != UA_STATUSCODE_GOOD){ // Try to remove the last character, that sometimes is wrongly added
+
+	     char newname[256];
+	     strcpy(newname,name);
+	     newname[strlen(name)-1] = '\0';	     
+	     retval = UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, newname), &dataType);
+	     
+	     if(retval == UA_STATUSCODE_GOOD) strcpy(name,newname);
+
+	   }
+
+	   UA_Variant *val = UA_Variant_new();
+	   retval = UA_Client_readValueAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex,name), val);
+
+	   if(UA_Variant_isScalar(val)){
+	     (info->channel_type).push_back(dataType.identifier.numeric-1);
+	     (info->channel_name).push_back((char*)(name));
+	     (info->channel_size).push_back(1);
+	     printf("[%d] %s\n",(info->channel_name).size()-1,name);
+	   }
+	   else{
+	     for(int ia=0;ia<val->arrayLength;ia++){
+	       (info->channel_type).push_back(dataType.identifier.numeric-1);
+	       char newname[256];
+	       sprintf(newname,"a%d_%s",ia,(char*)(name));
+	       (info->channel_name).push_back(newname);
+	       (info->channel_size).push_back(val->arrayLength);
+	       printf("[%d] %s\n",(info->channel_name).size()-1,ref->nodeId.nodeId.identifier.string.data);
+	     }
+	   }
+
+	   UA_Variant_delete(val);
+
 	 }
 
        }
@@ -144,6 +183,7 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
      bNextResp = UA_Client_Service_browseNext(info->client, bNextReq);
      
      for (size_t i = 0; i < bNextResp.resultsSize; i++) {
+
        for (size_t j = 0; j < bNextResp.results[i].referencesSize; j++) {
 	     
 	 hasRef = true;
@@ -153,10 +193,45 @@ INT opc_init(HNDLE hKey, void **pinfo, INT channels, INT(*bd) (INT cmd, ...))
 	   
 	   if(ref->nodeId.nodeId.identifierType == UA_NODEIDTYPE_STRING) {
 	     UA_NodeId dataType;
-	     UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, ref->nodeId.nodeId.identifier.string.data), &dataType);
-	     (info->channel_type).push_back(dataType.identifier.numeric-1);
-	     (info->channel_name).push_back((char*)(ref->nodeId.nodeId.identifier.string.data));
-	     printf("[%d] %s\n",(info->channel_name).size()-1,ref->nodeId.nodeId.identifier.string.data);
+
+	     char name[256];
+	     strcpy(name,ref->nodeId.nodeId.identifier.string.data);
+
+	     UA_StatusCode retval = UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, name), &dataType);
+	     
+	     if (retval != UA_STATUSCODE_GOOD){ // Try to remove the last character, that sometimes is wrongly added
+	       
+	       char newname[256];
+	       strcpy(newname,name);
+	       newname[strlen(name)-1] = '\0';	     
+	       retval = UA_Client_readDataTypeAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, newname), &dataType);
+	       
+	       if(retval == UA_STATUSCODE_GOOD) strcpy(name,newname);
+	       
+	     }
+	     
+	     UA_Variant *val = UA_Variant_new();
+	     retval = UA_Client_readValueAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex,name), val);
+	     
+	     if(UA_Variant_isScalar(val)){
+	       (info->channel_type).push_back(dataType.identifier.numeric-1);
+	       (info->channel_name).push_back((char*)(name));
+	       (info->channel_size).push_back(1);
+	       printf("[%d] %s\n",(info->channel_name).size()-1,name);
+	     }
+	     else{
+	       for(int ia=0;ia<val->arrayLength;ia++){
+		 (info->channel_type).push_back(dataType.identifier.numeric-1);
+		 char newname[256];
+		 sprintf(newname,"a%d_%s",ia,(char*)(name));
+		 (info->channel_name).push_back(newname);
+		 (info->channel_size).push_back(val->arrayLength);
+		 printf("[%d] %s\n",(info->channel_name).size()-1,newname);
+	       }
+	     }
+	     
+	     UA_Variant_delete(val);
+	     
 	   }
 	   
 	 }
@@ -203,44 +278,75 @@ INT opc_exit(OPC_INFO * info)
 
 INT opc_get(OPC_INFO * info, INT channel, float *pvalue)
 {
+ 
 
-  ////Read value
   UA_Variant *val = UA_Variant_new();
-  UA_StatusCode retval = UA_Client_readValueAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, info->channel_name[channel].c_str()), val);
-  if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val) &&
-      val->type == &UA_TYPES[info->channel_type[channel]]
-      ) {
+  string newname;
+ 
+  ////Read value
+  if(info->channel_size[channel] == 1){
 
-    if(info->channel_type[channel] == UA_TYPES_FLOAT){
-      *pvalue = *(UA_Float*)val->data;
+    UA_StatusCode retval = UA_Client_readValueAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, info->channel_name[channel].c_str()), val);
+
+    if (retval == UA_STATUSCODE_GOOD && UA_Variant_isScalar(val) &&
+	val->type == &UA_TYPES[info->channel_type[channel]]
+	) {
+      
+      if(info->channel_type[channel] == UA_TYPES_FLOAT){
+	*pvalue = *(UA_Float*)val->data;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_DOUBLE){
+	*pvalue = *(UA_Double*)val->data;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_INT16){
+	*pvalue = *(UA_Int16*)val->data;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_INT32){
+	*pvalue = *(UA_Int32*)val->data;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_INT64){
+	*pvalue = *(UA_Int64*)val->data;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_BOOLEAN){
+	*pvalue = (*(UA_Boolean*)val->data) ? 1.0 : 0.0;
+      }
+      
+      else if(info->channel_type[channel] == UA_TYPES_BYTE){
+	*pvalue = *(UA_Byte*)val->data;
+      }
+      
+      else {
+	*pvalue = 0.;
+      }
+
     }
 
-    else if(info->channel_type[channel] == UA_TYPES_DOUBLE){
-      *pvalue = *(UA_Double*)val->data;
-    }
+  }
 
-    else if(info->channel_type[channel] == UA_TYPES_INT16){
-      *pvalue = *(UA_Int16*)val->data;
-    }
+  else{
+
+    char name[256];
+    strcpy(name,info->channel_name[channel].c_str());
+    char *ptr = strchr(name,'_');
     
-    else if(info->channel_type[channel] == UA_TYPES_INT32){
-      *pvalue = *(UA_Int32*)val->data;
-    }
-    
-    else if(info->channel_type[channel] == UA_TYPES_INT64){
-      *pvalue = *(UA_Int64*)val->data;
-    }
-    
-    else if(info->channel_type[channel] == UA_TYPES_BOOLEAN){
-      *pvalue = (*(UA_Boolean*)val->data) ? 1.0 : 0.0;
-    }
+    //printf("name: %s\n",&ptr[1]);
 
-    else if(info->channel_type[channel] == UA_TYPES_BYTE){
-      *pvalue = *(UA_Byte*)val->data;
-    }
+    UA_StatusCode retval = UA_Client_readValueAttribute(info->client, UA_NODEID_STRING(info->opc_settings.nsIndex, &ptr[1]), val);
 
-    else {
-      *pvalue = 0.;
+    //ptr[0] = '\0';
+
+    //printf("index %s:",name);
+    
+    int ia = atof(&name[1]);
+        
+    if(info->channel_type[channel] == UA_TYPES_UINT16){
+    
+      *pvalue = ((UA_UInt16*)(val->data))[ia];
     }
 
   }
@@ -313,7 +419,9 @@ INT opc(INT cmd, ...)
    float value, *pvalue;
    void *info, *bd;
    char *name;
-
+   string full_name;
+   regex e;
+   
    va_start(argptr, cmd);
    status = FE_SUCCESS;
 
@@ -351,7 +459,24 @@ INT opc(INT cmd, ...)
       info = va_arg(argptr, void *);
       channel = va_arg(argptr, INT);
       name = va_arg(argptr, char *);
-      strncpy(name, ((OPC_INFO*)info)->channel_name[channel].c_str(),20);      
+      full_name = ((OPC_INFO*)info)->channel_name[channel]; 
+      e = regex("DB_");   
+      full_name = regex_replace (full_name,e,"");   
+      e = regex("VIS_");   
+      full_name = regex_replace (full_name,e,"");   
+      e = regex("Pressure");   
+      full_name = regex_replace (full_name,e,"Press");   
+      e = regex("Flowrate");   
+      full_name = regex_replace (full_name,e,"Flow");   
+      e = regex("Ricircolo");   
+      full_name = regex_replace (full_name,e,"Rec");   
+      e = regex("Purificazione");   
+      full_name = regex_replace (full_name,e,"Pur");   
+      e = regex("Analisi");   
+      full_name = regex_replace (full_name,e,"Ana");   
+      e = regex("Miscelazione");   
+      full_name = regex_replace (full_name,e,"Mix");   
+      strncpy(name, full_name.c_str(),20);
       status = FE_SUCCESS;
       break;
 

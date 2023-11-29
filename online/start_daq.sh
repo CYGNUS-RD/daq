@@ -8,16 +8,18 @@ odbedit -c clean
 
 mhttpd -D
 sleep 2
-xterm -e ./cygnus_fe &
+#xterm -e ./cygnus_fe &
+#./cygnus_fe &
 sleep 2
-xterm -e ./scfe &
+#xterm -e ./scfe &
+#./scfe &
 mlogger -D
 msequencer -D
-xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
+#xterm -e ../analyzer/cyganalyzer.exe -i ../analyzer/romeConfig.xml &
 #xterm -e python3 event_receiver.py &
 
-echo Please point your web browser to http://localhost:8081
-echo Or run: mozilla http://localhost:8081 &
+echo Please point your web browser to http://localhost:8080
+echo Or run: mozilla http://localhost:8080 &
 echo To look at live histograms, run: roody -Hlocalhost
 
 #end file

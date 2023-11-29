@@ -75,7 +75,7 @@ endif (NO_ZLIB)
 
 # ass required linux libraries
 if (${CMAKE_SYSTEM_NAME} MATCHES Linux) 
-   set(LIBS ${LIBS} -lpthread -lutil -lrt) 
+   set(LIBS ${LIBS} -lpthread -lutil -lrt -ldl) 
 endif() 
 
 set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi -lcaenhvwrapper -lopen62541)
@@ -111,6 +111,7 @@ set(DRIVERS
   gem_dd_sy4527.cxx
   iseg_hps
   opc
+  arduino_motor
   )
 
 find_package(open62541 REQUIRED COMPONENTS Events FullNamespace)

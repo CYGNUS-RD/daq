@@ -1134,6 +1134,7 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
    }
    */
 
+   /*
    ////Hot spot handling
    ////Start recovery procedure by lowering the HV by 100 V
    if(hotspot_current==1){
@@ -1193,7 +1194,8 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
        db_set_value(hDB, hv_info->hKeyRoot, "Variables/Recovery", &rval, sizeof(rval), 1, TID_INT);
      }
    }
-
+*/
+   
    /* additionally read channel recently updated if not multithreaded */
    if (!(hv_info->driver[hv_info->last_channel]->flags & DF_MULTITHREAD)) {
 

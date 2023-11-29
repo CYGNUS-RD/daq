@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html class="mcss" lang="en">
+
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="midas.css">
+<script src="controls.js"></script>
+<script src="midas.js"></script>
+<script src="mhttpd.js"></script>
+<script src="mhistory.js"></script>
+<meta http-Equiv="Cache-Control" Content="no-cache">
+<meta http-Equiv="Pragma" Content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<style>
+
+.mydiv {
+cursor: pointer;
+color:#0000FF;
+}
+.mydiv:link { color:#0000FF; text-decoration:none }
+.mydiv:visited { color:#800080; text-decoration:none }
+.mydiv:hover { color:#0000FF; text-decoration:underline }
+.mydiv:active { color:#0000FF; text-decoration:underline }
+.mydiv:focus { color:#0000FF; text-decoration:none; }
+
+input[type=number] {
+   font-size: 100%;
+}
+
+input[type=number][disabled]{color:transparent; background-color:transparent; border-width: 0px;}
+
+</style>
+
+<script>
+
+window.onload = function() {
+
+  mhttpd_init('Online Monitor');
+  mhistory_init();
+
+}
+
+</script>
+
+<title>Online Monitor</title>
+
+<style>
+.mtable td {
+padding: 8px;
+}
+</style>
+
+
+
+<meta http-Equiv="Cache-Control" Content="no-cache">
+<meta http-Equiv="Pragma" Content="no-cache">
+<meta http-equiv="Expires" content="-1">
+
+</head>
+
+<body class="mcss">
+
+    <script>
+        function autoRefresh() {
+            window.location = window.location.href;
+        }
+        setInterval('autoRefresh()', 10000);
+    </script>
+
+<!-- header and side navigation will be filled in mhttpd_init -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+  <table class="mtable" style="font-size:18px">
+    <tr>
+      <th class="mtableheader" id="page_title" colspan="8">Online Monitor</th>
+    </tr>
+    <tr>
+	<th><img class="NO-CACHE" src="tmp.png" alt="Image" class="center"></th>
+    </tr>
+    <tr>
+      <?php
+       echo 'My username is ' .$_ENV["USER"] . '!';
+       ?>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

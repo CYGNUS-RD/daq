@@ -10,10 +10,13 @@
 \********************************************************************/
 
 #include <stdio.h>
+#include <math.h>
 #include "midas.h"
 #include "mfe.h"
 #include "mscb.h"
+#include "odbxx.h"
 #include "device/mscbdev.h"
+#include "device/mdevice.h"
 #include "class/hv.h"
 #include "class/multi.h"
 #include "class/generic.h"
@@ -21,7 +24,10 @@
 #include "gem_dd_sy4527.h"
 #include "iseg_hps.h"
 #include "opc.h"
+#include "arduino_motor.h"
 #include "bus/null.h"
+
+using namespace std;
 
 /*-- Globals -------------------------------------------------------*/
 
@@ -31,7 +37,7 @@ const char *frontend_name = "SC Frontend";
 const char *frontend_file_name = __FILE__;
 
 /* frontend_loop is called periodically if this variable is TRUE    */
-BOOL frontend_call_loop = FALSE;
+BOOL frontend_call_loop = TRUE;
 
 /* a frontend status page is displayed with this frequency in ms    */
 INT display_period = 1000;
@@ -65,9 +71,14 @@ DEVICE_DRIVER environment_driver[] = {
 };
 
 DEVICE_DRIVER gassystem_driver[] = {
-  {"gassystem", opc, 323, null, DF_PRIO_DEVICE },
+  {"gassystem", opc, 330, null, DF_PRIO_DEVICE },
   {""}
 };
+
+//DEVICE_DRIVER sourcemotor_driver[] = {
+//  {"sourcemotor", arduino_motor, 3, null, DF_PRIO_DEVICE },
+//  {""}
+//};
 
 
 
@@ -149,6 +160,23 @@ EQUIPMENT equipment[] = {
     cd_gen,                      /* class driver main routine */
     gassystem_driver,                  /* device driver list */
     NULL,                       /* init string */
+   },
+
+   {"SourceMotor",                       /* equipment name */
+    {9, 0,                       /* event ID, trigger mask */
+     "SYSTEM",                  /* event buffer */
+     EQ_SLOW,                   /* equipment type */
+     0,                         /* event source */
+     "MIDAS",                   /* format */
+     TRUE,                      /* enabled */
+     RO_ALWAYS,        /* read when running and on transitions */
+     60000,                     /* read every 60 sec */
+     0,                         /* stop run after this event limit */
+     0,                         /* number of sub events */
+     1,                         /* log history every event */
+     "", "", ""} ,
+    cd_multi_read,                 /* readout routine */
+    cd_multi,                      /* class driver main routine */
    },
 
    {""}
@@ -237,12 +265,33 @@ INT frontend_init()
 
   int i=0;
 
-  for(i=0;i<27;i++){
-    mscb_define("mscb399","Environment","Input",environment_driver,0xFFFF,i, NULL, -1);
+  for(i=0;i<24;i++){
+    mscb_define("mscb416","Environment","Input",environment_driver,0xFFFF,i, NULL, -1);
   }
   for(i=0;i<0;i++){
-    mscb_define("mscb399","Environment","Output",environment_driver,0XFFFF,i, NULL, -1);
+    mscb_define("mscb416","Environment","Output",environment_driver,0XFFFF,i, NULL, -1);
   }
+
+  midas::odb gas_control = {
+			    {"Upper Delta Pressure", 0.008},
+			    {"Lower Delta Pressure", 0.004},
+			    {"Sensor Correction", 1.01111 },
+  };
+
+  gas_control.connect("/Equipment/GasSystem/Settings");
+
+  ////Source motor
+  mdevice motor_in("SourceMotor", "Input", DF_INPUT | DF_MULTITHREAD, arduino_motor);
+  motor_in.define_var("Current position", 0.1);
+  for(int i=0;i<11;i++){
+    char name[256];
+    sprintf(name,"Reference position %d",i);
+    motor_in.define_var(name, 0.1);
+  }
+  
+  mdevice motor_out("SourceMotor", "Output", DF_OUTPUT | DF_MULTITHREAD, arduino_motor);
+  motor_out.define_var("Target position",0.1);
+  motor_out.define_var("Command",0.5);
   
   return CM_SUCCESS;
 
@@ -259,7 +308,36 @@ INT frontend_exit()
 
 INT frontend_loop()
 {
-   return CM_SUCCESS;
+
+    HNDLE hDB;
+
+    cm_get_experiment_database(&hDB, NULL);
+
+    int size = sizeof(double);
+
+    double upper_dp;
+    db_get_value(hDB, 0, "/Equipment/GasSystem/Settings/Upper Delta Pressure",&upper_dp,&size,TID_DOUBLE,TRUE);
+
+    double lower_dp;
+    db_get_value(hDB, 0, "/Equipment/GasSystem/Settings/Lower Delta Pressure",&lower_dp,&size,TID_DOUBLE,TRUE);
+
+    double pcorr;
+    db_get_value(hDB, 0, "/Equipment/GasSystem/Settings/Sensor Correction",&pcorr,&size,TID_DOUBLE,TRUE);
+
+    float p_atm;
+    db_get_value(hDB, 0, "/Equipment/Environment/Variables/Input[3]",&p_atm,&size,TID_FLOAT,TRUE);
+    p_atm = (p_atm-4.)/16. * 1.6 * pcorr;
+    
+    float setpoint;
+    db_get_value(hDB, 0, "/Equipment/GasSystem/Variables/Demand[115]",&setpoint,&size,TID_FLOAT,TRUE);
+
+    if(setpoint < p_atm + lower_dp || setpoint > p_atm + upper_dp)
+      setpoint = round((p_atm + (lower_dp + upper_dp)/2.) * 1000.0) / 1000.; 
+    
+    midas::odb gas_var("/Equipment/GasSystem/Variables/Demand");
+    //gas_var[115] = setpoint; // DISABLE GAS PRESSURE CONTROL
+  
+    return CM_SUCCESS;
 }
 
 /*-- Begin of Run --------------------------------------------------*/
