@@ -532,14 +532,18 @@ INT dd_sy4527_current_get (DDSY4527_INFO * info, WORD channel, float *pvalue)
 
   //do the normal thing for 12 and 24 channel cards and channel 0 of 48 chan cards;
   //return an error code for non-primary channels of 48 chan cards.
-  if(nChan == 12 || nChan == 24 /*|| isPrimary == 1 */){
-    ret = dd_sy4527_fParam_get (info, 1, channel, "IMon", pvalue);
+  
+
+  
+  
+  if(nChan == 12 || nChan == 24 || nChan == 14 || isPrimary == 1 ){
+    if((strcmp (info->slot[islot].Model, "A1515TG")) == 0){
+      ret = dd_sy4527_fParam_get (info, 1, channel, "IMonDet", pvalue);
+    } else{
+      ret = dd_sy4527_fParam_get (info, 1, channel, "IMon", pvalue);
+    }
     return ret == 0 ? FE_SUCCESS : 0;
-  } else if( nChan == 14 ) {
-    ret = dd_sy4527_fParam_get (info, 1, channel, "IMonDet", pvalue);
-    return ret == 0 ? FE_SUCCESS : 0;
-  }
-  else {
+  } else {
     *pvalue = -9999;
     return FE_SUCCESS;
   }
