@@ -163,7 +163,7 @@ EQUIPMENT equipment[] = {
       10000,               /* read every sec */
       0,                  /* stop run after this event limit */
       0,                  /* number of sub events */
-      0,                 /* log history every ten seconds*/
+      1,                 /* log history every ten seconds*/
       "", "", "",},
     read_camera_status,   /* readout routine */
   },
@@ -896,6 +896,9 @@ INT read_camera_status(char *pevent, INT off) {
     err = dcamprop_getvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORTEMPERATURE" << endl;
 
+    // DEBUG
+    //std::cout<<cam_temperature<<" C degree"<<std::endl;
+    
     //db_set_value(hDB, 0, "/Equipment/CameraStatus/Variables/Sensor Temperature", &cam_temperature, sizeof(double), 1, TID_DOUBLE);
     
     *pdata++ = cam_temperature;
