@@ -30,7 +30,7 @@
 
       function clear_button(){
 	  
-	  var paths =  ["/Equipment/GasSystem/Variables/Demand[16]","/Equipment/GasSystem/Variables/Demand[94-95]"];
+	  var paths =  ["/Equipment/GasSystem/Variables/Demand[29]","/Equipment/GasSystem/Variables/Demand[107-108]"];
 
 	  mjsonrpc_db_paste(paths,[0,0]).then(function(rpc) {
   }).catch(function(error) {
@@ -47,13 +47,13 @@
 	      
 	      var paths;
 	      if(id===0) {
-		  paths = ["/Equipment/GasSystem/Variables/Demand[94]"];
+		  paths = ["/Equipment/GasSystem/Variables/Demand[107]"];
 	      }
 	      else if(id===1) {
-		  paths = ["/Equipment/GasSystem/Variables/Demand[95]"];
+		  paths = ["/Equipment/GasSystem/Variables/Demand[108]"];
 	      }
 	      else if(id===2) {
-		  paths = ["/Equipment/GasSystem/Variables/Demand[16]"];
+		  paths = ["/Equipment/GasSystem/Variables/Demand[29]"];
 	      }
 	      
 	      mjsonrpc_db_paste(paths,[1]).then(function(rpc) {
@@ -102,7 +102,7 @@
       var sum_al = 0
       window.setInterval("try_out()",10000);      
       function try_out(){
-	  mjsonrpc_db_get_values(["/Equipment/GasSystem/Variables/Measured[298-305]"]).then(function(rpc){
+	  mjsonrpc_db_get_values(["/Equipment/GasSystem/Variables/Measured[311-318]"]).then(function(rpc){
 	      var i_val = 0
 	      var j_val = 0
 	      
@@ -151,28 +151,29 @@
 	  <table class="mtable" style="float:center;width:10in">
 	    <tr><th class="mtableheader" style="background-color:green" colspan="30"><b>Alarms</b></tr>      
 	    <tr>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[298]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[299]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[300]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[301]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[302]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[303]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[304]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[305]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
-	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[305]" data-formula="sum_al > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[311]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[312]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[313]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[314]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[315]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[316]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[317]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[318]" data-formula="x > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
+	      <td align="center"><div class="modbbox" data-odb-path="/Equipment/GasSystem/Variables/Measured[311-318]" data-formula="sum_al > 0" data-color="red" data-background-color="#00FF00" style="width:20px;height:20px;border-radius:20px"></div></td>
 
 	      
 	    </tr>
 
 	     <tr>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[298]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[299]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[300]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[301]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[302]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[303]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[304]" onchange="try_out"></div></td>
-	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[305]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[311]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[312]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[313]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[314]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[315]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[316]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[317]" onchange="try_out"></div></td>
+	      <td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[318]" onchange="try_out"></div></td>
+
 	      <td align="center">
 		<p id="sum">sum : unknown</p>
 		<script> try_out() </script> 
@@ -210,9 +211,9 @@
 	    <tr><td>
 		<table class="mtable" colspan="3" style="float:center">
 		  <tr height="35" style="background-color:lightblue"><th></th><th style="width:2in"><b>Demand</b></th><th style="width:2in"><b>Read</b></th></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Total Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[107]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[255]" data-format="f3" ></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Chamber Pressure [bar(a)]</b></td><td align="center" style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[115]" data-odb-editable="0" data-format="f3"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[14]" data-format="f4"></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Recirculation Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[91]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[254]" data-format="f3"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Total Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[120]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[267]" data-format="f3" ></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Chamber Pressure [bar(a)]</b></td><td align="center" style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[16]" data-odb-editable="0" data-format="f3"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[15]" data-format="f4"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td style="background-color:lightblue"><b>Recirculation Flow [sl/h]</b></td><td align="center"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[104]" data-odb-editable="1"></div></td><td align="right"><div class="modbvalue"  style="font-weight:bold;color:green" data-odb-path="/Equipment/GasSystem/Variables/Measured[266]" data-format="f3"></div></td></tr>
 		</table>
 	    </td></tr>
 
@@ -224,46 +225,46 @@
 		  <tr>
 
 		    <td align="center" style="vertical-align:top">
-		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[265]" data-min-value="0" data-max-value="250" data-color="darkorange" onchange="col_fn(id)" id="He_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[265]" data-format="f1" data-formula="x"></span></td>
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[277]" data-min-value="0" data-max-value="250" data-color="darkorange" onchange="col_fn(id)" id="He_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[277]" data-format="f1" data-formula="x"></span></td>
 
 		    <td align="center" style="vertical-align:top">
-		        <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[267]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[267]" data-format="f1" data-formula="x"></span></td>
+		        <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[279]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[279]" data-format="f1" data-formula="x"></span></td>
 		   
 		    <td align="center" style="vertical-align:top">
-		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-min-value="0" data-max-value="170" data-color="darkorange" onchange="col_fn(id)" id="CF4_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-format="f1" data-formula="x"></span></td>
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[281]" data-min-value="0" data-max-value="170" data-color="darkorange" onchange="col_fn(id)" id="CF4_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[281]" data-format="f1" data-formula="x"></span></td>
 
 		    <td align="center" style="vertical-align:top">
-		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-format="f1" data-formula="x"></span></td>
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[283]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[283]" data-format="f1" data-formula="x"></span></td>
 
 		    <td align="center" style="vertical-align:top">
-		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-min-value="0" data-max-value="40" data-color="darkorange" onchange="col_fn(id)" id="SF6_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-format="f1" data-formula="x"></span></td>
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[285]" data-min-value="0" data-max-value="40" data-color="darkorange" onchange="col_fn(id)" id="SF6_pres" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[285]" data-format="f1" data-formula="x"></span></td>
 
 		    <td align="center" style="vertical-align:top">
-		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[275]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[275]" data-format="f1" data-formula="x"></span></td>
+		      <span class="modbgauge" style="width:100px;height:65px;" data-odb-path="/Equipment/GasSystem/Variables/Measured[287]" data-min-value="0" data-max-value="10" data-color="darkorange" data-scale="1"></span><br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[287]" data-format="f1" data-formula="x"></span></td>
 
 
 		  </tr>
 	  
 		  <tr>
 		    <td style="background-color:lightblue"><b>Concentration [%]</b></td>
-		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[102]" data-odb-editable="1"></span></td>
-		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[100]" data-odb-editable="1"></span></td>
-		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[104]" data-odb-editable="1"></span></td>
+		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[115]" data-odb-editable="1"></span></td>
+		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[113]" data-odb-editable="1"></span></td>
+		    <td align="center" colspan=2><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Demand[117]" data-odb-editable="1"></span></td>
 		  </tr>
 		  <tr><td style="background-color:lightblue"><b>Flow [sl/h]</b></td>
 		    <td align="center" style="vertical-align:top" colspan="2">
 		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="20"></span>
-		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[257]" data-min-value="0" data-max-value="20"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[257]" data-format="f1"></span></td>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-min-value="0" data-max-value="20"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[269]" data-format="f1"></span></td>
 		    
 		    <td align="center" style="vertical-align:top" colspan="2">
 		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="20"></span>
-		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[259]" data-min-value="0" data-max-value="20"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[259]" data-format="f1"></span></td>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-min-value="0" data-max-value="20"></span>		      <br><span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[271]" data-format="f1"></span></td>
 
 
 		    <td align="center" style="vertical-align:top" colspan="2">
 		      <span class="mvaxis" style="width:40px;height:200px;text-align:right;" data-min-value="0" data-max-value="20"></span>
-		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[261]" data-min-value="0" data-max-value="20"></span>		      <br>
-		      <span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[261]" data-format="f1"></span></td>
+		      <span class="modbvbar" style="width:30px;height:200px;color:darkorange;" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-min-value="0" data-max-value="20"></span>		      <br>
+		      <span class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[273]" data-format="f1"></span></td>
 
 		  </tr>
 		  
@@ -290,23 +291,23 @@
 		  <tr height="35" style="background-color:lightblue">
 		    <th style="width:1.5in" colspan=2><b>Chamber Pressure [bar(a)]</b></th>
 		  </tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT401</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[277]" data-format="f4" data-formula="x"></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT402</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[279]" data-format="f4" data-formula="x"></div></td></tr>
-		  <tr heigh="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT403</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[281]" data-format="f4" data-formula="x"></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td>PID</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[14]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT401</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[289]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT402</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[291]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr heigh="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>PT403</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[293]" data-format="f4" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td>PID</td><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[15]" data-format="f4" data-formula="x"></div></td></tr>
 		  </tr>
 		</table>
 		
 		<table class="mtable" style="float:left;width:2.4in">
 		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in" colspan=2><b>Buffers Pressure<br>[bar(g)]</b></th>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Vacuum</td><td style="color:green;font-weight:bold" ><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[283]" data-format="f2" data-formula="x-1."></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Recirculation</td><td style="color:green;font-weight:bold"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[285]" data-format="f2" data-formula="x"></div></td></tr>
-		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Recovery</td><td style="color:green;font-weight:bold"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[287]" data-format="f1" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Vacuum</td><td style="color:green;font-weight:bold" ><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[295]" data-format="f2" data-formula="x-1."></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Recirculation</td><td style="color:green;font-weight:bold"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[297]" data-format="f2" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:normal;text-align:center"><td>Recovery</td><td style="color:green;font-weight:bold"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[299]" data-format="f1" data-formula="x"></div></td></tr>
 		</table>
 		
 		<table class="mtable" style="float:left;width:2.4in">
 		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Recirculation Flow<br>[sl/h]</b></th>
-		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[254]" data-format="f3" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:green"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[266]" data-format="f3" data-formula="x"></div></td></tr>
 
 
 		</table>
@@ -318,11 +319,11 @@
 	      <td>
       		<table class="mtable" style="float:left;width:2.4in">
 		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Humidity Analyzer<br>[ppm]</b></th>
-		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[251]" data-format="f1" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[263]" data-format="f1" data-formula="x"></div></td></tr>
 		</table>
 		<table class="mtable" style="float:left;width:2.4in">
 		  <tr height="35" style="background-color:lightblue"><th style="width:1.5in"><b>Oxygen Analyzer<br>[ppm]</b></th>
-		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[253]" data-format="f1" data-formula="x"></div></td></tr>
+		  <tr height="35" style="font-size:\30px;font-weight:bold;text-align:center"><td style="color:darkorange"><div class="modbvalue" data-odb-path="/Equipment/GasSystem/Variables/Measured[265]" data-format="f1" data-formula="x"></div></td></tr>
 		</table>
 	      </td>
 	    </tr>

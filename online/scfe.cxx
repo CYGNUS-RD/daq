@@ -71,7 +71,7 @@ DEVICE_DRIVER environment_driver[] = {
 };
 
 DEVICE_DRIVER gassystem_driver[] = {
-  {"gassystem", opc, 330, null, DF_PRIO_DEVICE },
+  {"gassystem", opc, 344, null, DF_PRIO_DEVICE },
   {""}
 };
 
