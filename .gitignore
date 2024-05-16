@@ -48,6 +48,8 @@ online/log/TM*
 online/log/daq_stored.log
 online/log/fcom*
 online/other_sequences
+online/Seq_*
+online/odb_*.json
 
 online/bck
 online/*.log
