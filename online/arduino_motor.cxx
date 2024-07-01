@@ -145,19 +145,18 @@ INT arduino_motor_exit(ARDUINO_INFO * info)
 INT arduino_motor_set(ARDUINO_INFO * info, INT channel, float value)
 {
 
-  printf("arduino set\n");
-
   char cmd[80];
 
   if(channel == 0) {
     if(roundf(value) > -0.5 && roundf(value) < 9.5) sprintf(cmd, "R%d", (int)roundf(value));
+    else if(roundf(value) > 99.5 && roundf(value) < 100.5) sprintf(cmd, "C");
     else return FE_SUCCESS;
   }
-  else if(channel == 1){
-    if(roundf(value) == 0) sprintf(cmd, "F");
-    else if(roundf(value) == 1) sprintf(cmd, "B");
-    else return FE_SUCCESS;
-  }
+  //else if(channel == 1){
+  //  if(roundf(value) == 0) sprintf(cmd, "F");
+  //  else if(roundf(value) == 1) sprintf(cmd, "B");
+  //  else return FE_SUCCESS;
+  //}
 
   int len = strlen(cmd);
   int n = write(info->fd, cmd, len);
@@ -183,7 +182,7 @@ INT arduino_motor_get(ARDUINO_INFO * info, INT channel, float *pvalue)
 
   /* read value from channel, something like ... */
   if(channel == 0) sprintf(cmd, "A");
-  else if(channel < 11) sprintf(cmd, "P%d", channel-1);
+  //else if(channel < 11) sprintf(cmd, "P%d", channel-1);
   else {
     *pvalue = (float)ss_nan();
     return FE_SUCCESS;
@@ -208,18 +207,18 @@ INT arduino_motor_get(ARDUINO_INFO * info, INT channel, float *pvalue)
   while(1) { 
 
     n = read(info->fd, b, 1);  // read a char at a time
-
+    
     if( n==-1) {
       i = 0;
       break;    // couldn't read
     }
-    if( n==0 ) {
-      printf("sleep\n");
-      usleep( 100 * 1000 ); // wait 10 msec try again
-      continue;
-    }
+    //if( n==0 ) {
+    //  printf("sleep\n");
+    //  usleep( 100 * 1000 ); // wait 10 msec try again
+    //  continue;
+    //}
 
-    if(b[0] == '\n') break;
+    if(n == 0 || b[0] == '\n') break; 
     if(ss_time() > t0 + timeout) {
       printf("timeout\n");
       i=0;
@@ -231,11 +230,12 @@ INT arduino_motor_get(ARDUINO_INFO * info, INT channel, float *pvalue)
 
   }
   
-  printf("%s %s\n",cmd,buf);
   tcflush(info->fd,TCIOFLUSH);
-
-  if(i>0){
+  buf[i]='\0';
+  
+  if(i>0){ 
     *pvalue = atof(buf);
+    if(*pvalue < 0) *pvalue = (float)ss_nan();
     return FE_SUCCESS;
   }
   else{

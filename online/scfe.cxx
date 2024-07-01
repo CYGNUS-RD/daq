@@ -75,12 +75,11 @@ DEVICE_DRIVER gassystem_driver[] = {
   {""}
 };
 
-//DEVICE_DRIVER sourcemotor_driver[] = {
-//  {"sourcemotor", arduino_motor, 3, null, DF_PRIO_DEVICE },
-//  {""}
-//};
-
-
+DEVICE_DRIVER sourcemotor_driver[] = {
+  {"Input", arduino_motor, 1, null, DF_INPUT | DF_MULTITHREAD },
+  {"Output", arduino_motor, 1, null, DF_OUTPUT | DF_MULTITHREAD },
+  {""}
+};
 
 BOOL equipment_common_overwrite = TRUE;
 
@@ -177,6 +176,8 @@ EQUIPMENT equipment[] = {
      "", "", ""} ,
     cd_multi_read,                 /* readout routine */
     cd_multi,                      /* class driver main routine */
+    sourcemotor_driver,
+    NULL,
    },
 
    {""}
@@ -264,6 +265,9 @@ INT frontend_init()
 {
 
   int i=0;
+  std::string str;
+  float val = -1;
+  HNDLE hDB;
 
   for(i=0;i<24;i++){
     mscb_define("mscb416","Environment","Input",environment_driver,0xFFFF,i, NULL, -1);
@@ -280,18 +284,9 @@ INT frontend_init()
 
   gas_control.connect("/Equipment/GasSystem/Settings");
 
-  ////Source motor
-  mdevice motor_in("SourceMotor", "Input", DF_INPUT | DF_MULTITHREAD, arduino_motor);
-  motor_in.define_var("Current position", 0.1);
-  for(int i=0;i<11;i++){
-    char name[256];
-    sprintf(name,"Reference position %d",i);
-    motor_in.define_var(name, 0.1);
-  }
-  
-  mdevice motor_out("SourceMotor", "Output", DF_OUTPUT | DF_MULTITHREAD, arduino_motor);
-  motor_out.define_var("Target position",0.1);
-  motor_out.define_var("Command",0.5);
+  cm_get_experiment_database(&hDB, NULL);
+
+  db_set_value_index(hDB, 0, "/Equipment/SourceMotor/Variables/Output", &val, sizeof(float), 0, TID_FLOAT, TRUE);
   
   return CM_SUCCESS;
 
