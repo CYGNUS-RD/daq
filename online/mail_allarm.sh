@@ -9,12 +9,12 @@ export discord_webhook_URL='https://discord.com/api/webhooks/1076820494310981662
 tail -10 /data01/data/midas.log >  /home/standard/daq/online/log/attach.txt
 if [ "$#" -eq  "0" ]
     then
-        subject="Generic_ALLARM"
+        subject="Generic_ALARM"
     else
-        subject=$1"_ALLARM"     
+        subject=$1"_ALARM"     
 fi
  
-if [ "$1" = "Software" ]
+if [ "$1" = "Software" ] || [ "$1" = "Warning" ]
     then
         mess=`tail -n 2 /home/standard/daq/online/log/attach.txt`
         /home/standard/daq/middleware/dev/discord.py "**$subject**\n$mess"
