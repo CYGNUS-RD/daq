@@ -88,6 +88,9 @@ INT max_event_size_frag = 5 * 1024 * 1024;
 /* buffer size to hold events */
 INT event_buffer_size = 100000000; //2000000000
 
+int      picIndex = 0;
+DWORD    timeZero = 0;
+
 /*-- Function declarations -----------------------------------------*/
 
 INT frontend_init();
@@ -395,7 +398,7 @@ INT begin_of_run(INT run_number, char *error)
 {
 
   rec_ev = 0;
-  
+  picIndex = 0;
   
   if(DEBUG) {
 	  ofstream myfile;
@@ -1781,11 +1784,32 @@ INT read_camera(char *pevent)
   //////Read the data
   dcambuf_lockframe( gCam, &bufframe );
 
-  //////Create the bank
+
+  /////Create the bank                                                                                                                                                                                                                                                       
   WORD* pdata = NULL;
+
+  uint64_t timetot = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
+  if (picIndex == 0) {
+    timeZero = (DWORD)(timetot/1000);
+  }
+  timetot -= (uint64_t)timeZero*(uint64_t)1000;
+
+  TIME_STAMP(pevent) = (unsigned int)timetot;
+
+  //cout<<"DEBUG"<<picIndex<<"---"<<timeZero<<","<<timetot<<","<<(unsigned int)timetot<<endl;
+  if (picIndex==0) {
+    DWORD *ptime =NULL;
+    bk_create(pevent, "TIME", TID_DWORD, &ptime);
+    *ptime++ = timeZero;
+    bk_close(pevent, ptime);
+  }
+
+  picIndex++;
+
+  //std::cout<<"DEBUG: "<<(std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count()<<std::endl;
   bk_create(pevent, "CAM0", TID_WORD, &pdata);
-    
-    
+
+  
   std::vector<int> picture(10);
 
   //////Copy data into the bank
