@@ -1,0 +1,2 @@
+/usr/bin/ar qc libvme.a  CMakeFiles/vme.dir/mydrivers/vme/caenBridge.cxx.o CMakeFiles/vme.dir/mydrivers/vme/v1190.cxx.o
+/usr/bin/ranlib libvme.a

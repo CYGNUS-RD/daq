@@ -1,0 +1,45 @@
+COMMENT "INAF - GEM scan - 430/440/450/460/430 - Field 1kV/cm"
+
+
+############################################################
+###############  DATA TAKING  ##############################
+
+
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+
+ODBSET "/Configurations/Exposure", "0.22"
+ODBSET "/Configurations/FreeRunning", "0"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Logger/Write data", "1"
+
+WAIT seconds, 3
+
+############################################################
+
+WAIT seconds, 3
+
+#############  Infinite loop   #############
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "1.0"
+
+SCRIPT "python3 ./ArduinoServerManager/rpcClient_setField_MANGOlino.py -f 1.0 -gem 450 450 450"
+
+WAIT seconds, 15
+
+LOOP Infinite
+    SCRIPT "python3 ./ArduinoServerManager/rpcClient_GetInfoMANGOlino.py -m 1"
+    WAIT seconds, 5
+    RUNDESCRIPTION "INAF - ED - 40/60 - 1Atm - Cd/Sr"
+    TRANSITION START
+    WAIT events, 250
+    TRANSITION STOP
+ENDLOOP
+
+############################################################
+

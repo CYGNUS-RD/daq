@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">Data Taking - ED 900mbar He/CF4 60/40 - FUSION - Schenider</Comment>
+<ODBSet l="4" path="/Equipment/HV/Variables/ChState[0]">1</ODBSet>
+<ODBSet l="5" path="/Configurations/Exposure">0.2</ODBSet>
+<ODBSet l="6" path="/Configurations/FreeRunning">0</ODBSet>
+<ODBSet l="7" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="8" path="/Configurations/pmt_acquisition">1</ODBSet>
+<ODBSet l="9" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[1]">350</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[3]">350</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[5]">350</ODBSet>
+<Script l="20">python3 ./ArduinoServerManager/rpcClient_setSourceMIDAS.py -p 0</Script>
+<Wait l="21" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Wait l="22" for="seconds">30</Wait>
+<Wait l="23" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Wait l="24" for="seconds">7</Wait>
+<Script l="27">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 350 350 350</Script>
+<ODBSet l="28" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<Wait l="29" for="seconds">15</Wait>
+<Loop l="31" le="37" n="4">
+<Wait l="32" for="seconds">20</Wait>
+<RunDescription l="33">ED - 60/40 - 900mbar - HOLE 12</RunDescription>
+<Transition l="34">START</Transition>
+<Wait l="35" for="events">250</Wait>
+<Transition l="36">STOP</Transition>
+</Loop>
+<Script l="40">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 350 350 350</Script>
+<ODBSet l="41" path="/Equipment/HV/Variables/Demand[6]">0.6</ODBSet>
+<Wait l="42" for="seconds">15</Wait>
+<Loop l="44" le="50" n="4">
+<Wait l="45" for="seconds">20</Wait>
+<RunDescription l="46">ED - 60/40 - 900mbar - HOLE 12</RunDescription>
+<Transition l="47">START</Transition>
+<Wait l="48" for="events">250</Wait>
+<Transition l="49">STOP</Transition>
+</Loop>
+<Script l="53">python3 ./ArduinoServerManager/rpcClient_setSourceMIDAS.py -p 42.5</Script>
+<Wait l="54" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Wait l="55" for="seconds">30</Wait>
+<Wait l="56" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Wait l="57" for="seconds">7</Wait>
+<Script l="60">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 350 350 350</Script>
+<ODBSet l="61" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<Wait l="62" for="seconds">15</Wait>
+<Loop l="64" le="70" n="4">
+<Wait l="65" for="seconds">20</Wait>
+<RunDescription l="66">ED - 60/40 - 900mbar - HOLE 8</RunDescription>
+<Transition l="67">START</Transition>
+<Wait l="68" for="events">250</Wait>
+<Transition l="69">STOP</Transition>
+</Loop>
+<Script l="73">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 350 350 350</Script>
+<ODBSet l="74" path="/Equipment/HV/Variables/Demand[6]">0.6</ODBSet>
+<Wait l="75" for="seconds">15</Wait>
+<Loop l="77" le="83" n="4">
+<Wait l="78" for="seconds">20</Wait>
+<RunDescription l="79">ED - 60/40 - 900mbar - HOLE 8</RunDescription>
+<Transition l="80">START</Transition>
+<Wait l="81" for="events">250</Wait>
+<Transition l="82">STOP</Transition>
+</Loop>
+<Script l="86">python3 ./ArduinoServerManager/rpcClient_setSourceMIDAS.py -p 106.5</Script>
+<Wait l="87" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Wait l="88" for="seconds">10</Wait>
+<Wait l="89" for="ODBvalue" path="/Equipment/MANGOSensors/Settings/SerialBusy" op="==">n</Wait>
+<Script l="94">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 350 350 350</Script>
+<ODBSet l="95" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<Wait l="96" for="seconds">15</Wait>
+<Loop l="98" le="104" n="4">
+<Wait l="99" for="seconds">20</Wait>
+<RunDescription l="100">ED - 60/40 - 900mbar - HOLE 2</RunDescription>
+<Transition l="101">START</Transition>
+<Wait l="102" for="events">250</Wait>
+<Transition l="103">STOP</Transition>
+</Loop>
+<Script l="107">python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 350 350 350</Script>
+<ODBSet l="108" path="/Equipment/HV/Variables/Demand[6]">0.6</ODBSet>
+<Wait l="109" for="seconds">15</Wait>
+<Loop l="111" le="117" n="4">
+<Wait l="112" for="seconds">20</Wait>
+<RunDescription l="113">ED - 60/40 - 900mbar - HOLE 2</RunDescription>
+<Transition l="114">START</Transition>
+<Wait l="115" for="events">250</Wait>
+<Transition l="116">STOP</Transition>
+</Loop>
+</RunSequence>

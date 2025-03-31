@@ -42,7 +42,10 @@ message(STATUS "MIDAS cygnus_fe: MIDASSYS set to " $ENV{MIDASSYS})
 if (NOT EXISTS $ENV{MIDASSYS})
   message(FATAL_ERROR "Environment variable $MIDASSYS not defined, aborting.")
 endif()
+#set(INC_PATH $ENV{MIDASSYS}/mscb/include $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR} $ENV{TRGMOD_INCDIR1} $ENV{TRGMOD_INCDIR2})
 set(INC_PATH $ENV{MIDASSYS}/mscb/include $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR})
+#link_directories($ENV{MIDASSYS}/lib /home/software/paho.mqtt.c-install/lib /home/software/paho.mqtt.cpp-install/lib)
+#link_directories($ENV{MIDASSYS}/lib $ENV{TRGMOD_LIBDIR1} $ENV{TRGMOD_LIBDIR2})
 link_directories($ENV{MIDASSYS}/lib)
 
 # default build type
@@ -78,7 +81,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
    set(LIBS ${LIBS} -lpthread -lutil -lrt) 
 endif() 
 
-set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi -lcaenhvwrapper -lopen62541)
+
+#set(INC_PATH ${INC_PATH} /home/software/paho.mqtt.c-install/include /home/software/paho.mqtt.cpp-install/include)
+
+#set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi)
+set(LIBS ${LIBS} -lCAENVME -lCAENDigitizer -ldcamapi -lcaenhvwrapper)# -lopen62541 -lpaho-mqttpp3 -lpaho-mqtt3as)
 
 file(GLOB vme_SRC
   "${CMAKE_SOURCE_DIR}/mydrivers/vme/*.h"
@@ -96,8 +103,19 @@ add_library(camera STATIC ${camera_SRC})
 target_include_directories(camera PRIVATE ${INC_PATH})
 target_link_libraries(camera ${LIBS})
 
+#file(GLOB trgmod_SRC
+#  "${CMAKE_SOURCE_DIR}/mydrivers/trgmod/*.h"
+#  "${CMAKE_SOURCE_DIR}/mydrivers/trgmod/*.cxx"
+#  )
+#add_library(trgmod STATIC ${trgmod_SRC})
+#target_include_directories(trgmod PRIVATE ${INC_PATH})
+#target_link_libraries(trgmod ${LIBS})
+
+
+
 add_executable(cygnus_fe cygnus_fe.cxx)
 target_include_directories(cygnus_fe PRIVATE ${INC_PATH})
+#target_link_libraries(cygnus_fe mfe midas vme camera trgmod ${LIBS})
 target_link_libraries(cygnus_fe mfe midas vme camera ${LIBS})
 
 set(DRIVERS
@@ -110,13 +128,13 @@ set(DRIVERS
   gem_hv
   gem_dd_sy4527.cxx
   iseg_hps
-  opc
+  #opc
   )
 
-find_package(open62541 REQUIRED COMPONENTS Events FullNamespace)
-if (open62541_FOUND)
-  message(STATUS "MIDAS: Found open62541")
-endif()
+#find_package(open62541 REQUIRED COMPONENTS Events FullNamespace)
+#if (open62541_FOUND)
+#  message(STATUS "MIDAS: Found open62541")
+#endif()
 
 add_executable(scfe scfe.cxx ${DRIVERS})
 target_include_directories(scfe PRIVATE ${INC_PATH})

@@ -1,0 +1,12 @@
+11:11:15.181 2024/04/10 [mhttpd,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=16,size=8) returned -1, errno: 32 (Broken pipe)
+11:11:15.181 2024/04/10 [mhttpd,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "cygnus_daq" on "localhost" RPC "id_exit": send_tcp() failed
+16:46:48.735 2024/04/11 [Sequencer,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=9,size=8) returned -1, errno: 32 (Broken pipe)
+16:46:48.735 2024/04/11 [Sequencer,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "cygnus_daq" on "localhost" RPC "id_exit": send_tcp() failed
+09:31:11.709 2024/04/12 [Sequencer,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=9,size=8) returned -1, errno: 32 (Broken pipe)
+09:31:11.709 2024/04/12 [Sequencer,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "cygnus_daq" on "localhost" RPC "id_exit": send_tcp() failed
+10:39:32.921 2024/11/15 [Sequencer,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=10,size=8) returned -1, errno: 32 (Broken pipe)
+10:39:32.921 2024/11/15 [Sequencer,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "cygnus_daq" on "localhost" RPC "id_exit": send_tcp() failed
+17:17:42.182 2024/11/20 [Sequencer,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=9,size=8) returned -1, errno: 32 (Broken pipe)
+17:17:42.185 2024/11/20 [Sequencer,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "cygnus_daq" on "localhost" RPC "id_exit": send_tcp() failed
+22:47:26.444 2025/02/28 [mhttpd,ERROR] [system.cxx:4828:send_tcp,ERROR] send(socket=18,size=8) returned -1, errno: 32 (Broken pipe)
+22:47:26.444 2025/02/28 [mhttpd,ERROR] [midas.cxx:13645:rpc_client_call,ERROR] call to "MANGOSC" on "localhost" RPC "id_exit": send_tcp() failed

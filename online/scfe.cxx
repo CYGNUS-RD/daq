@@ -20,7 +20,7 @@
 #include "gem_hv.h"
 #include "gem_dd_sy4527.h"
 #include "iseg_hps.h"
-#include "opc.h"
+// #include "opc.h"
 #include "bus/null.h"
 
 /*-- Globals -------------------------------------------------------*/
@@ -49,7 +49,7 @@ INT event_buffer_size = 10 * 10000;
 
 /* device driver list */
 DEVICE_DRIVER sy4527_driver[] = {
-  {"sy4527", dd_sy4527, 26, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
+  {"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
 
@@ -64,10 +64,10 @@ DEVICE_DRIVER environment_driver[] = {
   {""}
 };
 
-DEVICE_DRIVER gassystem_driver[] = {
+/*DEVICE_DRIVER gassystem_driver[] = {
   {"gassystem", opc, 323, null, DF_PRIO_DEVICE },
   {""}
-};
+};*/
 
 
 
@@ -132,24 +132,24 @@ EQUIPMENT equipment[] = {
     NULL,                       /* init string */
    },
 
-   {"GasSystem",                       /* equipment name */
-    {6, 0,                       /* event ID, trigger mask */
-     "SYSTEM",                  /* event buffer */
-     EQ_SLOW,                   /* equipment type */
-     0,                         /* event source */
-     "MIDAS",                   /* format */
-     TRUE,                      /* enabled */
-     RO_ALWAYS,        /* read when running and on transitions */
-     60000,                     /* read every 60 sec */
-     0,                         /* stop run after this event limit */
-     0,                         /* number of sub events */
-     1,                         /* log history every event */
-     "", "", ""} ,
-    cd_gen_read,                 /* readout routine */
-    cd_gen,                      /* class driver main routine */
-    gassystem_driver,                  /* device driver list */
-    NULL,                       /* init string */
-   },
+//   {"GasSystem",                       /* equipment name */
+//    {6, 0,                       /* event ID, trigger mask */
+//     "SYSTEM",                  /* event buffer */
+//     EQ_SLOW,                   /* equipment type */
+//     0,                         /* event source */
+//     "MIDAS",                   /* format */
+//     TRUE,                      /* enabled */
+//     RO_ALWAYS,        /* read when running and on transitions */
+//     60000,                     /* read every 60 sec */
+//     0,                         /* stop run after this event limit */
+//     0,                         /* number of sub events */
+//     1,                         /* log history every event */
+//     "", "", ""} ,
+//    cd_gen_read,                 /* readout routine */
+//    cd_gen,                      /* class driver main routine */
+//    gassystem_driver,                  /* device driver list */
+//    NULL,                       /* init string */
+//   },
 
    {""}
    

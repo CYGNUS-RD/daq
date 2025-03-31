@@ -1,0 +1,29 @@
+COMMENT "Data Taking - ED 900mbar He/CF4 60/40 - Quest - EHD"
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.2"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "300"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "300"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "300"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+
+LOOP 5
+#LOOP 4
+    RUNDESCRIPTION "Intensifier 650V - Gate ON - GEM ON - He/CF4 60/40 - Quest - EHD - 300 ccm - 500V/cm"
+    TRANSITION START
+    #WAIT events, 250
+    WAIT events, 400
+    TRANSITION STOP
+    #WAIT seconds, 1200
+ENDLOOP
+
+

@@ -57,7 +57,7 @@ typedef struct
 
 #define DDSY4527_SETTINGS_STR "\
 System Name = STRING : [32] daqhv02\n\
-IP = STRING : [32] 142.90.101.75\n\
+IP = STRING : [32] 172.17.19.152\n\
 LinkType = INT : 0\n\
 First Slot = INT : 0\n\
 crateMap = INT : 0\n\

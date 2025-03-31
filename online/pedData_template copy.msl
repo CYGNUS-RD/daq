@@ -1,0 +1,27 @@
+COMMENT "QUEST - He/CF4 60/40 LNGS - 55Fe"
+
+######################## DATA ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "440"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "440"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "440"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "1.0"
+SCRIPT "python3 ./ArduinoServerManager/rpcClient_setField_MANGOLINO.py -f 1.0 -gem 440 440 440"
+
+WAIT seconds, 30
+
+RUNDESCRIPTION "QUEST - He/CF4 60/40 LNGS - 55Fe"
+TRANSITION START
+WAIT events, 500
+TRANSITION STOP
+
+############################################################
+

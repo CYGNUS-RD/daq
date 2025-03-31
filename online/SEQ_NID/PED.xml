@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<ODBSet l="2" path="/Equipment/HV/Variables/ChState[0]">0</ODBSet>
+<ODBSet l="3" path="/Configurations/Exposure">0.3</ODBSet>
+<ODBSet l="4" path="/Configurations/FreeRunning">1</ODBSet>
+<ODBSet l="5" path="/Configurations/Pedestal">1</ODBSet>
+<ODBSet l="6" path="/Configurations/pmt_acquisition">0</ODBSet>
+<ODBSet l="7" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="9" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="10" path="/Equipment/HV/Variables/Demand[1]">100</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[3]">100</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[5]">100</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<RunDescription l="19">Pedestal- Fusion</RunDescription>
+<Transition l="20">START</Transition>
+<Wait l="21" for="events">200</Wait>
+<Transition l="22">STOP</Transition>
+</RunSequence>

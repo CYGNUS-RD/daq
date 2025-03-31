@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="mcss" lang="en">
+
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="midas.css">
+<script src="controls.js"></script>
+<script src="midas.js"></script>
+<script src="mhttpd.js"></script>
+<script src="mhistory.js"></script>
+
+<style>
+
+.mydiv {
+cursor: pointer;
+color:#0000FF;
+}
+.mydiv:link { color:#0000FF; text-decoration:none }
+.mydiv:visited { color:#800080; text-decoration:none }
+.mydiv:hover { color:#0000FF; text-decoration:underline }
+.mydiv:active { color:#0000FF; text-decoration:underline }
+.mydiv:focus { color:#0000FF; text-decoration:none; }
+
+input[type=number] {
+   font-size: 100%;
+}
+
+input[type=number][disabled]{color:transparent; background-color:transparent; border-width: 0px;}
+
+</style>
+
+<script>
+
+window.onload = function() {
+
+  mhttpd_init('MANGO Source Motor');
+  mhistory_init();
+
+}
+
+
+function startMotor(){
+	ext = ['y']
+	var paths = ["/Configurations/StepperMotor/buttonPressed"];
+	mjsonrpc_db_paste(paths,[ext]).then(function(rpc) {
+	}).catch(function(error) {
+			mjsonrpc_error_alert(error);
+	});  
+}
+
+
+</script>
+
+
+<title>MANGO Source Motor</title>
+
+<style>
+.mtable td {
+padding: 8px;
+}
+</style>
+
+</head>
+
+<body class="mcss">
+
+  <div id="mheader"></div>
+  <div id="msidenav"></div>
+
+  <div id="mmain">
+    <table class="mtable" style="font-size:18px">
+      <tr>
+    	<th class="mtableheader" id="page_title" colspan="7">Source Motor<th/>
+      </tr>
+      <tr>
+	<td colspan="7" style="vertical-align:center">
+	  <table class="mtable" style="font-size:18px">
+		<tr align="center">
+			<td width="200">Serial Busy</td>
+			<td width="200" style="font-weight:bold;color:green">
+
+				<div class="modbbox" data-odb-path="/Equipment/MANGOSensors/Settings/SerialBusy[0]"
+				data-color="red" data-background-color="#00FF00"
+				style="display:inline-block;width:20px;height:20px;border-radius:20px;"></div>
+				
+				<div class="modbvalue" data-format="b0" data-odb-path="/Equipment/MANGOSensors/Settings/SerialBusy[0]"
+				data-odb-editable = "1" 
+				style="display:inline-block;width:60%;margin-right:29px"></div>
+				
+
+
+			</td>
+		  </tr>
+	    <tr align="center">
+	      <td width="200">Current Hole</td>
+	      <td width="200" style="font-weight:bold;color:green">
+		<div class="modbvalue" data-format="f0" data-odb-path="/Configurations/SourceState/source_position[0]"></div>
+	      </td>
+	    </tr>
+		<tr align="center">
+	      <td width="200">Selected Hole</td>
+	      <td width="200" style="font-weight:bold;color:green">
+		<div class="modbvalue" data-format="d0" data-odb-path="/Configurations/StepperMotor/SelectedPosition[0]" data-odb-editable = "1"></div>
+	      </td>
+	    </tr>
+	  </table>
+	</td>
+      </tr>
+      <tr align = "center">
+		 <td><input class="mbutton" id="btnP0" type="button" value="Move the Motor to Selected Position"
+			onclick="startMotor()" style="padding: 7px 20px;font-size:18px;margin:5px"/>
+		<div class="modbbox" data-odb-path="/Configurations/StepperMotor/buttonPressed[0]"
+			data-color="red" data-background-color="#00FF00"
+			style="display:inline-block;width:20px;height:20px;border-radius:20px;"></div>
+		<!--<form action="/setSource-link/">
+			<input type="submit" value="Move the Motor to Selected Position"/>
+		</form>
+		<button> <a href="/setSource-link/"></a></button>-->
+	  </tr>
+    </table>
+
+
+
+
+	<table class="mtable" style="font-size:18px;width:30%">
+		<tr>
+	  <th class="mtableheader" id="position_table" colspan="3" style="width:30%"> Registers configuration</th>
+		</tr>
+		<tr>
+	  <th>Hole</th><th>Stepper Motor Position</th>
+		</tr>
+
+		<tr>
+	  <td align="center">12</td>
+	  <td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[12]"
+		data-odb-editable = "1" id="R12"></div> </td>
+		</tr>
+		<tr></tr>
+		<td align="center">11</td>
+	  <td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[11]"
+		data-odb-editable = "1" id="R11"></div> </td>
+		</tr>
+		<tr>
+		<td align="center">10</td>
+	  <td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[10]"
+		data-odb-editable = "1" id="R10"></div> </td>
+		</tr>
+		<tr>
+		<td align="center">9</td>
+	  <td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[9]"
+		data-odb-editable = "1" id="R9"></div> </td>
+		</tr>
+		<tr>
+		<td align="center">8</td>
+	  <td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[8]"
+		data-odb-editable = "1" id="R8"></div> </td>
+		</tr>
+		<tr>
+		<td align="center">7</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[7]"
+		data-odb-editable = "1" id="R7"></div> </td>
+		</tr>
+
+		<tr>
+		<td align="center">6</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[6]"
+		data-odb-editable = "1" id="R6"></div> </td>
+		</tr>
+
+		<tr>
+		<td align="center">5</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[5]"
+		data-odb-editable = "1" id="R5"></div> </td>
+		</tr>
+
+		<tr>
+		<td align="center">4</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[4]"
+		data-odb-editable = "1" id="R4"></div> </td>
+		</tr>
+		
+		<tr>
+		<td align="center">3</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[3]"
+		data-odb-editable = "1" id="R3"></div> </td>
+		</tr>
+
+		<tr>
+		<td align="center">2</td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Configurations/StepperMotor/Position[2]"
+		data-odb-editable = "1" id="R2"></div> </td>
+		</tr>
+
+	  </table>
+
+
+
+
+
+  </div>
+
+
+</body>
+</html>
+	    

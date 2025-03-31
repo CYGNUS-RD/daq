@@ -1,0 +1,7 @@
+[I 16:21:29.405 NotebookApp] Serving notebooks from local directory: /home/software/daq/online
+[I 16:21:29.405 NotebookApp] Jupyter Notebook 6.4.10 is running at:
+[I 16:21:29.405 NotebookApp] http://cygno-daq-labe:8888/
+[I 16:21:29.405 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[I 16:21:38.983 NotebookApp] 302 GET / (127.0.0.1) 1.300000ms
+[I 16:21:38.987 NotebookApp] 302 GET /tree? (127.0.0.1) 1.220000ms
+[I 16:21:42.390 NotebookApp] 302 POST /login?next=%2Ftree%3F (127.0.0.1) 2.160000ms

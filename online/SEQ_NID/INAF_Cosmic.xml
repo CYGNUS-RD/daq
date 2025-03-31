@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">Data Taking - ED 1000mbar Ar/CF4 60/40 - QUEST - EHD</Comment>
+<ODBSet l="4" path="/Equipment/HV/Variables/ChState[0]">1</ODBSet>
+<ODBSet l="5" path="/Configurations/Exposure">0.3</ODBSet>
+<ODBSet l="6" path="/Configurations/FreeRunning">1</ODBSet>
+<ODBSet l="7" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="8" path="/Configurations/pmt_acquisition">0</ODBSet>
+<ODBSet l="9" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[1]">450</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[3]">450</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[5]">450</ODBSet>
+<ODBSet l="17" path="/Equipment/HV/Variables/Demand[6]">1.0</ODBSet>
+<Loop l="21" le="28" n="INFINITE">
+<RunDescription l="23">INAF - Cosmic - Ar/CF4 60/40 - QUEST - EHD - 300 ccm</RunDescription>
+<Transition l="24">START</Transition>
+<Wait l="25" for="events">400</Wait>
+<Transition l="26">STOP</Transition>
+</Loop>
+</RunSequence>

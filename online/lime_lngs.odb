@@ -1,0 +1,4021 @@
+[/Experiment]
+ODB timeout = INT32 : 10000
+Protect ODB = BOOL : n
+Enable core dumps = BOOL : n
+
+[/Experiment/Security]
+Enable non-localhost RPC = BOOL : n
+
+[/Experiment/Security/RPC ports]
+cygnus_daq = UINT32 : 0
+ODBEdit = UINT32 : 0
+mhttpd = UINT32 : 0
+Logger = UINT32 : 0
+Sequencer = UINT32 : 0
+Analyzer = UINT32 : 0
+SC Frontend = UINT32 : 0
+mhttpd1 = UINT32 : 0
+ODBEdit1 = UINT32 : 0
+ODBEdit2 = UINT32 : 0
+
+[/Experiment/Security/RPC hosts]
+Allowed hosts = STRING[10] :
+[256] localhost
+[256] 
+[256] 
+[256] 
+[256] 
+[256] 
+[256] 
+[256] 
+[256] 
+[256] 
+
+[/Experiment/Security]
+Disable RPC hosts check = BOOL : n
+
+[/Experiment/Buffer sizes]
+SYSMSG = UINT32 : 100000
+SYSTEM = UINT32 : 33554432
+
+[/Experiment]
+MAX_EVENT_SIZE = UINT32 : 4194304
+Name = STRING : [10] CYGNUS_RD
+Pause-Resume Buttons = BOOL : y
+
+[/Experiment/Menu]
+Status = BOOL : y
+Start = BOOL : n
+Transition = BOOL : y
+ODB = BOOL : y
+Messages = BOOL : y
+Chat = BOOL : y
+Elog = BOOL : y
+Alarms = BOOL : y
+Programs = BOOL : y
+Buffers = BOOL : y
+History = BOOL : y
+OldHistory = BOOL : y
+MSCB = BOOL : y
+Sequencer = BOOL : y
+Config = BOOL : y
+Example = BOOL : n
+Help = BOOL : y
+
+[/Experiment]
+Resources = STRING : [1] 
+Prevent start on alarms = BOOL : n
+Prevent start on required progs = BOOL : n
+Transition debug flag = INT32 : 0
+Transition connect timeout = INT32 : 10000
+Transition timeout = INT32 : 120000
+
+[/Experiment/Run Parameters]
+Run description = STRING : [1024] test
+
+[/System/Clients/70711]
+Name = STRING : [32] mhttpd
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 45623
+
+[/System/Clients/70722]
+Name = STRING : [32] Sequencer
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 45843
+
+[/System/Clients/70776]
+Name = STRING : [32] cygnus_daq
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 39571
+Transition START = INT32 : 500
+Transition STOP = INT32 : 500
+Transition PAUSE = INT32 : 500
+Transition RESUME = INT32 : 500
+Run state = INT32 : 3
+
+[/System/Clients/70835]
+Name = STRING : [32] Logger
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 45921
+Transition START = INT32 : 200
+Transition STARTABORT = INT32 : 800
+Transition STOP = INT32 : 800
+Transition PAUSE = INT32 : 800
+Transition RESUME = INT32 : 200
+
+[/System/Clients/71341]
+Name = STRING : [32] SC Frontend
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 44201
+Transition START = INT32 : 500
+Transition STOP = INT32 : 500
+Transition PAUSE = INT32 : 500
+Transition RESUME = INT32 : 500
+Run state = INT32 : 3
+
+[/System/Clients/100170]
+Name = STRING : [32] ODBEdit
+Host = STRING : [256] localhost
+Hardware type = INT32 : 44
+Server Port = INT32 : 40017
+
+[/System]
+Client Notify = INT32 : 0
+
+[/System/Buffers/SYSMSG]
+Size = DOUBLE : 100000
+Write pointer = DOUBLE : 6720
+Read pointer = DOUBLE : 0
+Filled = DOUBLE : 6720
+Filled pct = DOUBLE : 6.72
+
+[/System/Buffers/SYSMSG/Clients/cygnus_daq]
+count_lock = INT32 : 174238
+count_sent = INT32 : 3
+bytes_sent = DOUBLE : 488
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 864
+bytes_used = DOUBLE : 5856
+pct_used = DOUBLE : 5.856
+last_updated = UINT32 : 2893877631
+
+[/System/Buffers/SYSMSG/Clients/ODBEdit]
+count_lock = INT32 : 139
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 6720
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2893877474
+
+[/System/Buffers/SYSMSG/Clients/mhttpd]
+count_lock = INT32 : 416772
+count_sent = INT32 : 18
+bytes_sent = DOUBLE : 2248
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 0
+bytes_used = DOUBLE : 6720
+pct_used = DOUBLE : 6.72
+last_updated = UINT32 : 2893878209
+
+[/System/Buffers/SYSMSG/Clients/Logger]
+count_lock = INT32 : 409401
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 2568
+bytes_used = DOUBLE : 4152
+pct_used = DOUBLE : 4.152
+last_updated = UINT32 : 2893878230
+
+[/System/Buffers/SYSMSG/Clients/Sequencer]
+count_lock = INT32 : 416568
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 256
+bytes_used = DOUBLE : 6464
+pct_used = DOUBLE : 6.464
+last_updated = UINT32 : 2893877295
+
+[/System/Buffers/SYSMSG/Clients/Analyzer]
+count_lock = INT32 : 1343
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 6
+bytes_read = DOUBLE : 580
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 864
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2475556889
+
+[/System/Buffers/SYSMSG/Clients/SC Frontend]
+count_lock = INT32 : 396851
+count_sent = INT32 : 8
+bytes_sent = DOUBLE : 944
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 3912
+bytes_used = DOUBLE : 2808
+pct_used = DOUBLE : 2.808
+last_updated = UINT32 : 2893877766
+
+[/System/Buffers/SYSMSG/Clients/mhttpd1]
+count_lock = INT32 : 3190
+count_sent = INT32 : 18
+bytes_sent = DOUBLE : 2736
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 4952
+bytes_used = DOUBLE : 11816
+pct_used = DOUBLE : 11.816
+last_updated = UINT32 : 2454345028
+
+[/System/Buffers/SYSMSG/Clients/ODBEdit1]
+count_lock = INT32 : 54231
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 2
+bytes_read = DOUBLE : 324
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 6056
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2892416838
+
+[/System/Buffers/SYSMSG/Clients/ODBEdit2]
+count_lock = INT32 : 38213
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 4
+bytes_read = DOUBLE : 652
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 6392
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2892418523
+
+[/System/Buffers/SYSMSG]
+Last updated = UINT32 : 2893878230
+
+[/System/Buffers/SYSTEM]
+Size = DOUBLE : 33554432
+Write pointer = DOUBLE : 24115304
+Read pointer = DOUBLE : 0
+Filled = DOUBLE : 24115304
+Filled pct = DOUBLE : 71.86920642852783
+
+[/System/Buffers/SYSTEM/Clients/cygnus_daq]
+count_lock = INT32 : 174233
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 3464
+bytes_used = DOUBLE : 24111840
+pct_used = DOUBLE : 71.85888290405273
+last_updated = UINT32 : 2893877631
+
+[/System/Buffers/SYSTEM/Clients/ODBEdit]
+count_lock = INT32 : 2
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 0
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2475518562
+
+[/System/Buffers/SYSTEM/Clients/Analyzer]
+count_lock = INT32 : 29
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 0
+bytes_used = DOUBLE : 3464
+pct_used = DOUBLE : 0.01032352447509766
+last_updated = UINT32 : 2475556889
+
+[/System/Buffers/SYSTEM/Clients/SC Frontend]
+count_lock = INT32 : 424343
+count_sent = INT32 : 27502
+bytes_sent = DOUBLE : 23814080
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 0
+bytes_read = DOUBLE : 0
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 301224
+bytes_used = DOUBLE : 23814080
+pct_used = DOUBLE : 70.97148895263672
+last_updated = UINT32 : 2893877766
+
+[/System/Buffers/SYSTEM/Clients/Logger]
+count_lock = INT32 : 97
+count_sent = INT32 : 0
+bytes_sent = DOUBLE : 0
+count_write_wait = INT32 : 0
+time_write_wait = UINT32 : 0
+max_bytes_write_wait = INT32 : 0
+count_read = INT32 : 10
+bytes_read = DOUBLE : 106168680
+get_all_flag = BOOL : n
+read_pointer = DOUBLE : 5505424
+bytes_used = DOUBLE : 0
+pct_used = DOUBLE : 0
+last_updated = UINT32 : 2455530083
+
+[/System/Buffers/SYSTEM]
+Last updated = UINT32 : 2893877766
+
+[/System]
+Prompt = STRING : [256] [%h:%e:%s]%p>
+
+[/System/Transition]
+transition = INT32 : 1
+run_number = INT32 : 16
+start_time = UINT32 : 2553353923
+end_time = UINT32 : 2553355026
+status = INT32 : 1
+error = STRING : [8] Success
+deferred = STRING : [1] 
+
+[/System/Transition/Clients/Logger]
+sequence_number = INT32 : 200
+client_name = STRING : [7] Logger
+host_name = STRING : [10] localhost
+port = INT32 : 45921
+init_time = UINT32 : 2553353924
+waiting_for_client = STRING : [1] 
+connect_timeout = UINT32 : 10000
+connect_start_time = UINT32 : 2553353924
+connect_end_time = UINT32 : 2553353925
+rpc_timeout = UINT32 : 120000
+rpc_start_time = UINT32 : 2553353925
+rpc_end_time = UINT32 : 2553353948
+end_time = UINT32 : 2553353948
+status = INT32 : 1
+error = STRING : [1] 
+last_updated = UINT32 : 2553353948
+
+[/System/Transition/Clients/cygnus_daq]
+sequence_number = INT32 : 500
+client_name = STRING : [11] cygnus_daq
+host_name = STRING : [10] localhost
+port = INT32 : 39571
+init_time = UINT32 : 2553353924
+waiting_for_client = STRING : [1] 
+connect_timeout = UINT32 : 10000
+connect_start_time = UINT32 : 2553354025
+connect_end_time = UINT32 : 2553354025
+rpc_timeout = UINT32 : 120000
+rpc_start_time = UINT32 : 2553354025
+rpc_end_time = UINT32 : 2553354966
+end_time = UINT32 : 2553354966
+status = INT32 : 1
+error = STRING : [1] 
+last_updated = UINT32 : 2553354966
+
+[/System/Transition/Clients/SC Frontend]
+sequence_number = INT32 : 500
+client_name = STRING : [12] SC Frontend
+host_name = STRING : [10] localhost
+port = INT32 : 44201
+init_time = UINT32 : 2553353924
+waiting_for_client = STRING : [1] 
+connect_timeout = UINT32 : 10000
+connect_start_time = UINT32 : 2553354025
+connect_end_time = UINT32 : 2553354025
+rpc_timeout = UINT32 : 120000
+rpc_start_time = UINT32 : 2553354025
+rpc_end_time = UINT32 : 2553354068
+end_time = UINT32 : 2553354068
+status = INT32 : 1
+error = STRING : [1] 
+last_updated = UINT32 : 2553354068
+
+[/Programs/cygnus_daq]
+Required = BOOL : y
+Watchdog timeout = INT32 : 60000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] /home/standard/daq/online/cygnus_fe -D
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs/ODBEdit]
+Required = BOOL : n
+Watchdog timeout = INT32 : 10000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] 
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs/mhttpd]
+Required = BOOL : n
+Watchdog timeout = INT32 : 10000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] 
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs/Logger]
+Required = BOOL : y
+Watchdog timeout = INT32 : 10000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] mlogger -D
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs/Sequencer]
+Required = BOOL : n
+Watchdog timeout = INT32 : 10000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] 
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs/Analyzer]
+Required = BOOL : n
+Watchdog timeout = INT32 : 10000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] 
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 1647448036
+
+[/Programs/SC Frontend]
+Required = BOOL : y
+Watchdog timeout = INT32 : 60000
+Check interval = UINT32 : 180000
+Start command = STRING : [256] /home/standard/daq/online/scfe -D
+Auto start = BOOL : n
+Auto stop = BOOL : n
+Auto restart = BOOL : n
+Alarm class = STRING : [32] 
+First failed = UINT32 : 0
+
+[/Programs]
+Execute on start run = STRING : [256] 
+Execute on start abort = STRING : [256] 
+Execute on stop run = STRING : [256] 
+
+[/Logger]
+Data dir = STRING : [27] /home/standard/daq/online/
+Message file date format = STRING : [1] 
+Message dir = STRING : [1] 
+Write data = BOOL : n
+ODB Dump = BOOL : n
+ODB Dump File = STRING : [256] run%05d.json
+ODB Last Dump File = STRING : [256] last.json
+Auto restart = BOOL : n
+Auto restart delay = INT32 : 0
+Tape message = BOOL : y
+
+[/Logger/Channels/0/Settings]
+Active = BOOL : y
+Type = STRING : [8] Disk
+Filename = STRING : [256] run%05d.mid
+Format = STRING : [8] MIDAS
+Compression = INT32 : 0
+ODB dump = BOOL : y
+ODB dump format = STRING : [32] json
+Log messages = UINT32 : 0
+Buffer = STRING : [32] SYSTEM
+Event ID = INT32 : -1
+Trigger mask = INT32 : -1
+Event limit = DOUBLE : 0
+Byte limit = DOUBLE : 0
+Subrun Byte limit = DOUBLE : 0
+Tape capacity = DOUBLE : 0
+Subdir format = STRING : [32] 
+Current filename = STRING : [256] run00012.mid.gz
+Data checksum = STRING : [256] CRC32C (one of: NONE CRC32C SHA256 SHA512 ZLIB)
+File checksum = STRING : [256] CRC32C (one of: NONE CRC32C SHA256 SHA512 ZLIB)
+Compress = STRING : [256] gzip (one of: none gzip lz4 bzip2 pbzip2)
+Output = STRING : [256] FILE (one of: NULL FILE FTP ROOT PIPE)
+Gzip compression = UINT32 : 0
+Bzip2 compression = UINT32 : 0
+Pbzip2 num cpu = UINT32 : 0
+Pbzip2 compression = UINT32 : 0
+Pbzip2 options = STRING : [256] 
+
+[/Logger/Channels/0/Statistics]
+Events written = DOUBLE : 0
+Bytes written = DOUBLE : 0
+Bytes written uncompressed = DOUBLE : 0
+Bytes written total = DOUBLE : 721792387
+Bytes written subrun = DOUBLE : 0
+Files written = DOUBLE : 11
+Disk level = DOUBLE : 0.08697094837800146
+
+[/Logger/Runlog/SQL]
+Create database = BOOL : n
+Write data = BOOL : y
+Hostname = STRING : [80] 131.154.96.221
+Username = STRING : [80] cygno_producer
+Password = STRING : [80] e3b46beda9650197978b7b7e80464f73
+Database = STRING : [10] cygno_db
+Table = STRING : [80] Runlog
+Logfile = STRING : [80] sql.log
+
+[/Logger/Runlog/SQL/Links BOR]
+run_number = LINK : [20] /Runinfo/Run number
+run_description = LINK : [43] /Experiment/Run Parameters/Run description
+start_time = LINK : [20] /Runinfo/Start time
+exposure_sec = LINK : [25] /Configurations/Exposure
+GEM3_V = LINK : [34] /Equipment/HV/Variables/Demand[1]
+GEM2_V = LINK : [34] /Equipment/HV/Variables/Demand[3]
+GEM1_V = LINK : [34] /Equipment/HV/Variables/Demand[5]
+T2_V = LINK : [34] /Equipment/HV/Variables/Demand[2]
+T1_V = LINK : [34] /Equipment/HV/Variables/Demand[4]
+DRIFT_V = LINK : [34] /Equipment/HV/Variables/Demand[6]
+OFFSET_V = LINK : [34] /Equipment/HV/Variables/Demand[0]
+PMT1_V = LINK : [35] /Equipment/HV/Variables/Demand[14]
+PMT2_V = LINK : [35] /Equipment/HV/Variables/Demand[15]
+PMT3_V = LINK : [35] /Equipment/HV/Variables/Demand[16]
+PMT4_V = LINK : [35] /Equipment/HV/Variables/Demand[18]
+HV_STATE = LINK : [35] /Equipment/HV/Variables/ChState[0]
+
+[/Logger/Runlog/SQL/Links EOR]
+Stop time = LINK : [19] /Runinfo/Stop time
+Number of events = LINK : [42] /Equipment/Trigger/Statistics/Events sent
+
+[/Logger/Runlog/ASCII]
+Write data = BOOL : n
+filename = STRING : [80] runlog.log
+
+[/Logger/Runlog/ASCII/Links BOR]
+Run number = LINK : [20] /Runinfo/Run number
+Start time = LINK : [20] /Runinfo/Start time
+
+[/Logger/Runlog/ASCII/Links EOR]
+Stop time = LINK : [19] /Runinfo/Stop time
+Number of events = LINK : [42] /Equipment/Trigger/Statistics/Events sent
+
+[/Logger/History/MIDAS]
+Type = STRING : [6] MIDAS
+Active = BOOL : y
+Debug = INT32 : 0
+History dir = STRING : [1] 
+PerVariableHistory = INT32 : 0
+
+[/Logger/History/ODBC]
+Type = STRING : [5] ODBC
+Active = BOOL : n
+Debug = INT32 : 0
+Writer_ODBC_DSN = STRING : [15] history_writer
+Reader_ODBC_DSN = STRING : [15] history_reader
+
+[/Logger/History/SQLITE]
+Type = STRING : [7] SQLITE
+Active = BOOL : n
+Debug = INT32 : 0
+History dir = STRING : [1] 
+
+[/Logger/History/MYSQL]
+Type = STRING : [6] MYSQL
+Active = BOOL : n
+Debug = INT32 : 0
+MYSQL Writer = STRING : [17] mysql_writer.txt
+MYSQL Reader = STRING : [17] mysql_reader.txt
+
+[/Logger/History/FILE]
+Type = STRING : [5] FILE
+Active = BOOL : n
+Debug = INT32 : 0
+History dir = STRING : [1] 
+
+[/Logger]
+History dir = STRING : [1] 
+Run duration = UINT32 : 0
+Next subrun = BOOL : n
+Subrun duration = UINT32 : 0
+
+[/Runinfo]
+State = INT32 : 3
+Online Mode = INT32 : 1
+Run number = INT32 : 16
+Transition in progress = INT32 : 0
+Start abort = INT32 : 0
+Requested transition = INT32 : 0
+Start time = STRING : [32] Thu Mar 17 15:03:48 2022
+Start time binary = UINT32 : 1647525828
+Stop time = STRING : [32] Thu Mar 17 14:42:13 2022
+Stop time binary = UINT32 : 0
+
+[/Equipment/Trigger/Common]
+Event ID = UINT16 : 1
+Trigger mask = UINT16 : 0
+Buffer = STRING : [32] SYSTEM
+Type = INT32 : 2
+Source = INT32 : 0
+Format = STRING : [8] MIDAS
+Enabled = BOOL : y
+Read on = INT32 : 1
+Period = INT32 : 100
+Event limit = DOUBLE : 0
+Num subevents = UINT32 : 0
+Log history = INT32 : 0
+Frontend host = STRING : [32] localhost
+Frontend name = STRING : [32] cygnus_daq
+Frontend file name = STRING : [256] /home/standard/daq/online/cygnus_fe.cxx
+Status = STRING : [256] cygnus_daq@localhost
+Status color = STRING : [32] greenLight
+Hidden = BOOL : n
+Write cache size = INT32 : 0
+
+[/Equipment/Trigger/Statistics]
+Events sent = DOUBLE : 0
+Events per sec. = DOUBLE : 0
+kBytes per sec. = DOUBLE : 0
+
+[/Equipment/CATHODE/Common]
+Event ID = UINT16 : 4
+Trigger mask = UINT16 : 0
+Buffer = STRING : [32] SYSTEM
+Type = INT32 : 16
+Source = INT32 : 0
+Format = STRING : [8] MIDAS
+Enabled = BOOL : y
+Read on = INT32 : 255
+Period = INT32 : 60000
+Event limit = DOUBLE : 0
+Num subevents = UINT32 : 0
+Log history = INT32 : 1
+Frontend host = STRING : [32] localhost
+Frontend name = STRING : [32] SC Frontend
+Frontend file name = STRING : [256] /home/standard/daq/online/scfe.cxx
+Status = STRING : [256] Ok
+Status color = STRING : [32] greenLight
+Hidden = BOOL : n
+Write cache size = INT32 : 0
+
+[/Equipment/CATHODE/Variables]
+Demand = FLOAT : 9840
+Measured = FLOAT : -6.1
+Current = FLOAT : 1.49
+ChState = UINT32 : 0
+ChStatus = UINT32 : 0
+
+[/Equipment/CATHODE/Statistics]
+Events sent = DOUBLE : 5670
+Events per sec. = DOUBLE : 0
+kBytes per sec. = DOUBLE : 0
+
+[/Equipment/CATHODE/Settings/Devices/iseg_hps]
+Enabled = BOOL : y
+
+[/Equipment/CATHODE/Settings/Devices/iseg_hps/DD]
+System Name = STRING : [32] iseg_hps
+IP = STRING : [32] 192.168.0.104
+Port = INT32 : 10001
+
+[/Equipment/CATHODE/Settings]
+Editable = STRING[2] :
+[32] Demand
+[32] ChState
+Names = STRING : [32] ISEG_HPS
+Update Threshold Measured = FLOAT : 0.01
+Update Threshold Current = FLOAT : 0.0001
+Zero Threshold = FLOAT : 20
+Voltage Limit = FLOAT : 45000
+Current Limit = FLOAT : 100
+Trip Time = FLOAT : 0
+Ramp Up Speed = FLOAT : 10000
+Ramp Down Speed = FLOAT : 10000
+
+[/Equipment/GasSystem/Common]
+Event ID = UINT16 : 6
+Trigger mask = UINT16 : 0
+Buffer = STRING : [32] SYSTEM
+Type = INT32 : 16
+Source = INT32 : 0
+Format = STRING : [8] MIDAS
+Enabled = BOOL : y
+Read on = INT32 : 255
+Period = INT32 : 60000
+Event limit = DOUBLE : 0
+Num subevents = UINT32 : 0
+Log history = INT32 : 1
+Frontend host = STRING : [32] localhost
+Frontend name = STRING : [32] SC Frontend
+Frontend file name = STRING : [256] /home/standard/daq/online/scfe.cxx
+Status = STRING : [256] Ok
+Status color = STRING : [32] greenLight
+Hidden = BOOL : n
+Write cache size = INT32 : 0
+
+[/Equipment/GasSystem/Variables]
+Demand = FLOAT[323] :
+[0] 0
+[1] 1
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 6
+[9] 4
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] NAN
+[15] 0
+[16] 0
+[17] 0
+[18] 0
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 1000
+[26] 0
+[27] 0
+[28] 0
+[29] 0
+[30] 0
+[31] 0
+[32] 0
+[33] 0
+[34] 0
+[35] 1000
+[36] 0
+[37] 0
+[38] 0
+[39] 0
+[40] 0
+[41] 0
+[42] 0
+[43] 0
+[44] 0
+[45] 0.3
+[46] 0.2
+[47] 0
+[48] 0
+[49] 15.5
+[50] 1
+[51] 0
+[52] 0
+[53] 0
+[54] 0
+[55] 0
+[56] 16
+[57] 0
+[58] 0
+[59] 9
+[60] 1
+[61] 0
+[62] 0
+[63] 0
+[64] 0
+[65] 0
+[66] 10
+[67] 0
+[68] 0
+[69] 0.9
+[70] 0
+[71] 0
+[72] 0
+[73] 0
+[74] 0
+[75] 0
+[76] 1
+[77] 0
+[78] 0
+[79] 0
+[80] 0
+[81] 0
+[82] 0
+[83] 0
+[84] 0
+[85] 0
+[86] 110
+[87] 0
+[88] 0
+[89] 0
+[90] 0
+[91] 75
+[92] 0
+[93] 2
+[94] 0
+[95] 0
+[96] 1
+[97] 1
+[98] 0
+[99] 10
+[100] 40
+[101] 0
+[102] 60
+[103] 0
+[104] 0
+[105] 0
+[106] 15
+[107] 10
+[108] 0
+[109] 0
+[110] 0
+[111] 100
+[112] 20
+[113] 0
+[114] 10
+[115] 0.91
+[116] 0
+[117] 0
+[118] 100
+[119] 1
+[120] 0
+[121] 1
+[122] 0.6
+[123] 1.013
+[124] 0
+[125] 0
+[126] 0
+[127] 0
+[128] 10
+[129] 0
+[130] 1
+[131] 1
+[132] 250
+[133] 0
+[134] 0
+[135] 5
+[136] 0
+[137] 1
+[138] 1
+[139] 2.5
+[140] 0
+[141] 0
+[142] 0
+[143] 10
+[144] 0
+[145] 0
+[146] 0
+[147] 0
+[148] 0
+[149] 0
+[150] 10
+[151] 0
+[152] 1
+[153] 1
+[154] 150
+[155] 0
+[156] 0
+[157] 5
+[158] 0
+[159] 1
+[160] 1
+[161] 1.9
+[162] 0
+[163] 0
+[164] 0
+[165] 10
+[166] 0
+[167] 0
+[168] 0
+[169] 0
+[170] 0
+[171] 0
+[172] 10
+[173] 0
+[174] 0
+[175] 0
+[176] 40
+[177] 0
+[178] 0
+[179] 5
+[180] 0
+[181] 1
+[182] 1
+[183] 2.5
+[184] 0
+[185] 0
+[186] 0
+[187] 10
+[188] 0
+[189] 0
+[190] 1.3
+[191] 0
+[192] 1
+[193] 1.3
+[194] 0
+[195] 1
+[196] 1.3
+[197] 0
+[198] 1
+[199] 0.7
+[200] 0
+[201] 0
+[202] 1
+[203] 0.4
+[204] 0
+[205] 0
+[206] 0
+[207] 1.3
+[208] 0
+[209] 1
+[210] 2
+[211] 0
+[212] 1
+[213] 0
+[214] 1.95
+[215] 0
+[216] 0
+[217] 0
+[218] 5
+[219] 0
+[220] 0
+[221] 100
+[222] 0
+[223] 1
+[224] 0
+[225] 0
+[226] 0
+[227] 0
+[228] 0
+[229] 150
+[230] 0
+[231] 0
+[232] 1.1
+[233] 1.25
+[234] 1
+[235] 0
+[236] 0.8
+[237] 0.7
+[238] 1
+[239] 0
+[240] 1
+[241] 0
+[242] 0
+[243] 0.44
+[244] 1.41
+[245] 0.27
+[246] 10
+[247] 180
+[248] 30
+[249] 1
+[250] 0
+[251] 1000
+[252] 0
+[253] 0.7595486
+[254] 0.006090006
+[255] 0.004087095
+[256] 0
+[257] 0.004050926
+[258] 0
+[259] 0
+[260] 0
+[261] 3.616898e-05
+[262] 0
+[263] 0.007957176
+[264] 2
+[265] 251.013
+[266] 2
+[267] 11.013
+[268] 2
+[269] 151.013
+[270] 2
+[271] 11.013
+[272] 2
+[273] 41.013
+[274] 2
+[275] 11.013
+[276] 2
+[277] 1.3
+[278] 2
+[279] 1.3
+[280] 2
+[281] 1.3
+[282] 0
+[283] 0.8624349
+[284] 0
+[285] 1.013
+[286] 0
+[287] 1.013
+[288] 0
+[289] 0
+[290] 0
+[291] 0
+[292] 0
+[293] 0
+[294] 0
+[295] 0
+[296] 0
+[297] 0
+[298] 0
+[299] 0
+[300] 0
+[301] 0
+[302] 0
+[303] 0
+[304] 0
+[305] 0
+[306] 0
+[307] 0
+[308] 0
+[309] 0
+[310] 0
+[311] 0
+[312] 0
+[313] 0
+[314] 0
+[315] 0
+[316] 0
+[317] 0
+[318] 0
+[319] 0
+[320] 0
+[321] 0
+[322] 0
+Measured = FLOAT[323] :
+[0] 0
+[1] 1
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 6
+[9] 4
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] NAN
+[15] 0
+[16] 0
+[17] 0
+[18] 0
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 1000
+[26] 0
+[27] 0
+[28] 0
+[29] 0
+[30] 0
+[31] 0
+[32] 0
+[33] 0
+[34] 0
+[35] 1000
+[36] 0
+[37] 0
+[38] 0
+[39] 0
+[40] 0
+[41] 0
+[42] 0
+[43] 0
+[44] 0
+[45] 0.3
+[46] 0.2
+[47] 0
+[48] NAN
+[49] 15.5
+[50] 1
+[51] 0
+[52] NAN
+[53] 0
+[54] 0
+[55] 0
+[56] 16
+[57] 0
+[58] NAN
+[59] 9
+[60] 1
+[61] 0
+[62] NAN
+[63] 0
+[64] 0
+[65] 0
+[66] 10
+[67] 0
+[68] NAN
+[69] 0.9
+[70] 0
+[71] 0
+[72] NAN
+[73] 0
+[74] 0
+[75] 0
+[76] 1
+[77] 0
+[78] NAN
+[79] 0
+[80] 0
+[81] 0
+[82] NAN
+[83] 0
+[84] 0
+[85] 0
+[86] 110
+[87] 0
+[88] 0
+[89] 0
+[90] 0
+[91] 75
+[92] 0
+[93] 2
+[94] 0
+[95] 0
+[96] 1
+[97] 1
+[98] NAN
+[99] 10
+[100] 40
+[101] 0
+[102] 60
+[103] 0
+[104] 0
+[105] 0
+[106] 15
+[107] 10
+[108] 0
+[109] 0
+[110] 0
+[111] 100
+[112] 20
+[113] 0
+[114] 10
+[115] 0.92
+[116] 0
+[117] 0
+[118] 100
+[119] 1
+[120] 0
+[121] 1
+[122] 0.6
+[123] 1.013
+[124] 0
+[125] NAN
+[126] 0
+[127] 0
+[128] 10
+[129] NAN
+[130] 1
+[131] 1
+[132] 250
+[133] 0
+[134] 0
+[135] 5
+[136] NAN
+[137] 1
+[138] 1
+[139] 2.5
+[140] NAN
+[141] 0
+[142] 0
+[143] 10
+[144] 0
+[145] 0
+[146] 0
+[147] NAN
+[148] 0
+[149] 0
+[150] 10
+[151] NAN
+[152] 1
+[153] 1
+[154] 150
+[155] 0
+[156] 0
+[157] 5
+[158] NAN
+[159] 1
+[160] 1
+[161] 1.9
+[162] NAN
+[163] 0
+[164] 0
+[165] 10
+[166] 0
+[167] 0
+[168] 0
+[169] NAN
+[170] 0
+[171] 0
+[172] 10
+[173] NAN
+[174] 0
+[175] 0
+[176] 40
+[177] 0
+[178] 0
+[179] 5
+[180] NAN
+[181] 1
+[182] 1
+[183] 2.5
+[184] NAN
+[185] 0
+[186] 0
+[187] 10
+[188] 0
+[189] 0
+[190] 1.3
+[191] 0
+[192] 1
+[193] 1.3
+[194] 0
+[195] 1
+[196] 1.3
+[197] 0
+[198] 1
+[199] 0.7
+[200] NAN
+[201] 0
+[202] 1
+[203] 0.4
+[204] NAN
+[205] 0
+[206] 0
+[207] 1.3
+[208] 0
+[209] 1
+[210] 2
+[211] NAN
+[212] 1
+[213] 0
+[214] 1.95
+[215] NAN
+[216] 0
+[217] 0
+[218] 5
+[219] 0
+[220] 0
+[221] 100
+[222] NAN
+[223] 1
+[224] 0
+[225] 0
+[226] NAN
+[227] 0
+[228] 0
+[229] 150
+[230] 0
+[231] 0
+[232] 1.1
+[233] 1.25
+[234] 1
+[235] 0
+[236] 0.8
+[237] 0.7
+[238] 1
+[239] 0
+[240] 1
+[241] 0
+[242] 0
+[243] 0.44
+[244] 1.41
+[245] 0.27
+[246] 10
+[247] 180
+[248] 30
+[249] 1
+[250] 0
+[251] 1000
+[252] 0
+[253] 0.5787037
+[254] 0.006090006
+[255] 0.004123264
+[256] 0
+[257] 0.004050926
+[258] 0
+[259] 0
+[260] 0
+[261] 7.233796e-05
+[262] 0
+[263] 0.007957176
+[264] 2
+[265] 251.013
+[266] 2
+[267] 11.013
+[268] 2
+[269] 151.013
+[270] 2
+[271] 11.013
+[272] 2
+[273] 41.013
+[274] 2
+[275] 11.013
+[276] 2
+[277] 1.3
+[278] 2
+[279] 1.3
+[280] 2
+[281] 1.3
+[282] 0
+[283] 0.8649739
+[284] 0
+[285] 1.013
+[286] 0
+[287] 1.013
+[288] NAN
+[289] NAN
+[290] NAN
+[291] NAN
+[292] NAN
+[293] NAN
+[294] NAN
+[295] NAN
+[296] NAN
+[297] NAN
+[298] NAN
+[299] 0
+[300] 0
+[301] 0
+[302] 0
+[303] 0
+[304] 0
+[305] 0
+[306] 0
+[307] 0
+[308] 0
+[309] 0
+[310] 0
+[311] 0
+[312] 0
+[313] 0
+[314] 0
+[315] 0
+[316] 0
+[317] 0
+[318] 0
+[319] 0
+[320] 0
+[321] 0
+[322] 0
+
+[/Equipment/GasSystem/Statistics]
+Events sent = DOUBLE : 5669
+Events per sec. = DOUBLE : 0
+kBytes per sec. = DOUBLE : 0
+
+[/Equipment/GasSystem/Settings/Devices/gassystem]
+System Name = STRING : [32] gassys
+IP = STRING : [32] 192.168.0.105:4870
+Namespace Index = INT32 : 3
+Tags Guid = STRING : [64] ecef81d5-c834-4379-ab79-c8fa3133a311
+
+[/Equipment/GasSystem/Settings]
+Names = STRING[323] :
+[32] @DiagnosticsIndicato
+[32] DB_CycleSelection_MO
+[32] DB_CycleSelection_MO
+[32] DB_Logic_AUTO_SEQ_Ci
+[32] DB_Logic_AUTO_SEQ_Ci
+[32] DB_Logic_AUTO_SEQ_Ci
+[32] DB_Logic_GraphDateAn
+[32] DB_Logic_LocalDateAn
+[32] DB_Logic_Miscelaz_Ca
+[32] DB_Logic_Miscelaz_Ca
+[32] DB_Logic_Miscelaz_Ca
+[32] DB_Logic_Miscelazion
+[32] DB_Logic_PID_Camera_
+[32] DB_Logic_PID_D404_Ou
+[32] DB_Logic_Press_Camer
+[32] DB_Logic_StatoImpian
+[32] DB_PAR_Alarm_Reset
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT401
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_Analisi_AT402
+[32] DB_PAR_CMD_MAN_EV101
+[32] DB_PAR_CMD_MAN_EV201
+[32] DB_PAR_CMD_MAN_EV301
+[32] DB_PAR_CMD_MAN_EV401
+[32] DB_PAR_CMD_MAN_EV402
+[32] DB_PAR_CMD_MAN_EV405
+[32] DB_PAR_CMD_MAN_EV406
+[32] DB_PAR_CMD_MAN_EV410
+[32] DB_PAR_Camera_SET_SE
+[32] DB_PAR_Camera_SET_SE
+[32] DB_PAR_Cicalino_Abil
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT1
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT2
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT3
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_FCT4
+[32] DB_PAR_Flowrate_Reg_
+[32] DB_PAR_Flowrate_Reg_
+[32] DB_PAR_Flowrate_Reg_
+[32] DB_PAR_Flowrate_Reg_
+[32] DB_PAR_Flowrate_Reg_
+[32] DB_PAR_HMI_MAN_AUT
+[32] DB_PAR_HMI_PULS_STAR
+[32] DB_PAR_HMI_PULS_STOP
+[32] DB_PAR_Miscelaz_Rice
+[32] DB_PAR_Miscelaz_Rice
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_Miscelaz_SET_
+[32] DB_PAR_PID_Camera_Ma
+[32] DB_PAR_PID_Camera_Ou
+[32] DB_PAR_PID_Camera_Ou
+[32] DB_PAR_PID_Camera_Pa
+[32] DB_PAR_PID_Camera_Pa
+[32] DB_PAR_PID_Camera_Pa
+[32] DB_PAR_PID_Camera_SP
+[32] DB_PAR_PID_D404_Man_
+[32] DB_PAR_PID_D404_Outp
+[32] DB_PAR_PID_D404_Outp
+[32] DB_PAR_PID_D404_Para
+[32] DB_PAR_PID_D404_Para
+[32] DB_PAR_PID_D404_Para
+[32] DB_PAR_PID_D404_SP
+[32] DB_PAR_Press_Atm
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT10
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT20
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT30
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT40
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Pressure_PT_C
+[32] DB_PAR_Purificaz_SET
+[32] DB_PAR_Purificaz_SET
+[32] DB_PAR_Purificaz_SET
+[32] DB_PAR_Ricircolo_SET
+[32] DB_PAR_Ricircolo_SET
+[32] DB_PAR_Ricircolo_SET
+[32] DB_PAR_Ricircolo_SET
+[32] DB_PAR_Ricircolo_SET
+[32] DB_PAR_SP_Rit_Alarm_
+[32] DB_STS_AlarmActive
+[32] DB_STS_Analisi_AT401
+[32] DB_STS_Analisi_AT401
+[32] DB_STS_Analisi_AT402
+[32] DB_STS_Analisi_AT402
+[32] DB_STS_FCT401_Corr
+[32] DB_STS_FT_Tot
+[32] DB_STS_Flowrate_FCT1
+[32] DB_STS_Flowrate_FCT1
+[32] DB_STS_Flowrate_FCT2
+[32] DB_STS_Flowrate_FCT2
+[32] DB_STS_Flowrate_FCT3
+[32] DB_STS_Flowrate_FCT3
+[32] DB_STS_Flowrate_FCT4
+[32] DB_STS_Flowrate_FCT4
+[32] DB_STS_Pressure_PT10
+[32] DB_STS_Pressure_PT10
+[32] DB_STS_Pressure_PT10
+[32] DB_STS_Pressure_PT10
+[32] DB_STS_Pressure_PT20
+[32] DB_STS_Pressure_PT20
+[32] DB_STS_Pressure_PT20
+[32] DB_STS_Pressure_PT20
+[32] DB_STS_Pressure_PT30
+[32] DB_STS_Pressure_PT30
+[32] DB_STS_Pressure_PT30
+[32] DB_STS_Pressure_PT30
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Pressure_PT40
+[32] DB_STS_Valves_EV101_
+[32] DB_STS_Valves_EV201_
+[32] DB_STS_Valves_EV301_
+[32] DB_STS_Valves_EV401_
+[32] DB_STS_Valves_EV401_
+[32] DB_STS_Valves_EV402_
+[32] DB_STS_Valves_EV402_
+[32] DB_STS_Valves_EV405_
+[32] DB_STS_Valves_EV406_
+[32] DB_STS_Valves_EV410_
+[32] PT_Segnalazioni di g
+[32] VIS_POP_AT401
+[32] VIS_POP_AT402
+[32] VIS_POP_FCT101
+[32] VIS_POP_FCT101_MAN
+[32] VIS_POP_FCT201
+[32] VIS_POP_FCT201_MAN
+[32] VIS_POP_FCT301
+[32] VIS_POP_FCT301_MAN
+[32] VIS_POP_FCT401
+[32] VIS_POP_FCT401_MAN
+[32] VIS_POP_G401_MAN
+[32] VIS_POP_PCV401_MAN
+[32] VIS_POP_PT101
+[32] VIS_POP_PT102
+[32] VIS_POP_PT201
+[32] VIS_POP_PT202
+[32] VIS_POP_PT301
+[32] VIS_POP_PT302
+[32] VIS_POP_PT404
+[32] VIS_POP_PT405
+[32] VIS_POP_PT406
+[32] VIS_POP_PT_Camera
+[32] Variabile_Numero di 
+[32] iDB_Utilities_System
+Update Threshold Measured = FLOAT[323] :
+[0] 1
+[1] 1
+[2] 1
+[3] 1
+[4] 1
+[5] 1
+[6] 1
+[7] 1
+[8] 1
+[9] 1
+[10] 1
+[11] 1
+[12] 1
+[13] 1
+[14] 1
+[15] 1
+[16] 1
+[17] 1
+[18] 1
+[19] 1
+[20] 1
+[21] 1
+[22] 1
+[23] 1
+[24] 1
+[25] 1
+[26] 1
+[27] 1
+[28] 1
+[29] 1
+[30] 1
+[31] 1
+[32] 1
+[33] 1
+[34] 1
+[35] 1
+[36] 1
+[37] 1
+[38] 1
+[39] 1
+[40] 1
+[41] 1
+[42] 1
+[43] 1
+[44] 1
+[45] 1
+[46] 1
+[47] 1
+[48] 1
+[49] 1
+[50] 1
+[51] 1
+[52] 1
+[53] 1
+[54] 1
+[55] 1
+[56] 1
+[57] 1
+[58] 1
+[59] 1
+[60] 1
+[61] 1
+[62] 1
+[63] 1
+[64] 1
+[65] 1
+[66] 1
+[67] 1
+[68] 1
+[69] 1
+[70] 1
+[71] 1
+[72] 1
+[73] 1
+[74] 1
+[75] 1
+[76] 1
+[77] 1
+[78] 1
+[79] 1
+[80] 1
+[81] 1
+[82] 1
+[83] 1
+[84] 1
+[85] 1
+[86] 1
+[87] 1
+[88] 1
+[89] 1
+[90] 1
+[91] 1
+[92] 1
+[93] 1
+[94] 1
+[95] 1
+[96] 1
+[97] 1
+[98] 1
+[99] 1
+[100] 1
+[101] 1
+[102] 1
+[103] 1
+[104] 1
+[105] 1
+[106] 1
+[107] 1
+[108] 1
+[109] 1
+[110] 1
+[111] 1
+[112] 1
+[113] 1
+[114] 1
+[115] 1
+[116] 1
+[117] 1
+[118] 1
+[119] 1
+[120] 1
+[121] 1
+[122] 1
+[123] 1
+[124] 1
+[125] 1
+[126] 1
+[127] 1
+[128] 1
+[129] 1
+[130] 1
+[131] 1
+[132] 1
+[133] 1
+[134] 1
+[135] 1
+[136] 1
+[137] 1
+[138] 1
+[139] 1
+[140] 1
+[141] 1
+[142] 1
+[143] 1
+[144] 1
+[145] 1
+[146] 1
+[147] 1
+[148] 1
+[149] 1
+[150] 1
+[151] 1
+[152] 1
+[153] 1
+[154] 1
+[155] 1
+[156] 1
+[157] 1
+[158] 1
+[159] 1
+[160] 1
+[161] 1
+[162] 1
+[163] 1
+[164] 1
+[165] 1
+[166] 1
+[167] 1
+[168] 1
+[169] 1
+[170] 1
+[171] 1
+[172] 1
+[173] 1
+[174] 1
+[175] 1
+[176] 1
+[177] 1
+[178] 1
+[179] 1
+[180] 1
+[181] 1
+[182] 1
+[183] 1
+[184] 1
+[185] 1
+[186] 1
+[187] 1
+[188] 1
+[189] 1
+[190] 1
+[191] 1
+[192] 1
+[193] 1
+[194] 1
+[195] 1
+[196] 1
+[197] 1
+[198] 1
+[199] 1
+[200] 1
+[201] 1
+[202] 1
+[203] 1
+[204] 1
+[205] 1
+[206] 1
+[207] 1
+[208] 1
+[209] 1
+[210] 1
+[211] 1
+[212] 1
+[213] 1
+[214] 1
+[215] 1
+[216] 1
+[217] 1
+[218] 1
+[219] 1
+[220] 1
+[221] 1
+[222] 1
+[223] 1
+[224] 1
+[225] 1
+[226] 1
+[227] 1
+[228] 1
+[229] 1
+[230] 1
+[231] 1
+[232] 1
+[233] 1
+[234] 1
+[235] 1
+[236] 1
+[237] 1
+[238] 1
+[239] 1
+[240] 1
+[241] 1
+[242] 1
+[243] 1
+[244] 1
+[245] 1
+[246] 1
+[247] 1
+[248] 1
+[249] 1
+[250] 1
+[251] 1
+[252] 1
+[253] 1
+[254] 1
+[255] 1
+[256] 1
+[257] 1
+[258] 1
+[259] 1
+[260] 1
+[261] 1
+[262] 1
+[263] 1
+[264] 1
+[265] 1
+[266] 1
+[267] 1
+[268] 1
+[269] 1
+[270] 1
+[271] 1
+[272] 1
+[273] 1
+[274] 1
+[275] 1
+[276] 1
+[277] 1
+[278] 1
+[279] 1
+[280] 1
+[281] 1
+[282] 1
+[283] 1
+[284] 1
+[285] 1
+[286] 1
+[287] 1
+[288] 1
+[289] 1
+[290] 1
+[291] 1
+[292] 1
+[293] 1
+[294] 1
+[295] 1
+[296] 1
+[297] 1
+[298] 1
+[299] 1
+[300] 1
+[301] 1
+[302] 1
+[303] 1
+[304] 1
+[305] 1
+[306] 1
+[307] 1
+[308] 1
+[309] 1
+[310] 1
+[311] 1
+[312] 1
+[313] 1
+[314] 1
+[315] 1
+[316] 1
+[317] 1
+[318] 1
+[319] 1
+[320] 1
+[321] 1
+[322] 1
+
+[/Equipment/HV/Common]
+Event ID = UINT16 : 3
+Trigger mask = UINT16 : 0
+Buffer = STRING : [32] SYSTEM
+Type = INT32 : 16
+Source = INT32 : 0
+Format = STRING : [8] MIDAS
+Enabled = BOOL : y
+Read on = INT32 : 255
+Period = INT32 : 60000
+Event limit = DOUBLE : 0
+Num subevents = UINT32 : 0
+Log history = INT32 : 1
+Frontend host = STRING : [32] localhost
+Frontend name = STRING : [32] SC Frontend
+Frontend file name = STRING : [256] /home/standard/daq/online/scfe.cxx
+Status = STRING : [256] Ok
+Status color = STRING : [32] greenLight
+Hidden = BOOL : n
+Write cache size = INT32 : 0
+
+[/Equipment/HV/Variables]
+Recovery = INT32 : 0
+Demand = FLOAT[26] :
+[0] 10
+[1] 0
+[2] 20
+[3] 0
+[4] 20
+[5] 0
+[6] 240
+[7] 0
+[8] 0
+[9] 0
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] 770
+[15] 935
+[16] 825
+[17] 0
+[18] 935
+[19] 0
+[20] 0
+[21] 770
+[22] 935
+[23] 825
+[24] 935
+[25] 0
+Measured = FLOAT[26] :
+[0] 0
+[1] 0.22
+[2] 0.18
+[3] 0.12
+[4] 0.04
+[5] 0
+[6] 0
+[7] 0
+[8] 0.02
+[9] 0
+[10] 0
+[11] 0
+[12] 0.18
+[13] 0
+[14] 770
+[15] 935.5
+[16] 825.5
+[17] 0
+[18] 933.25
+[19] 0.25
+[20] 0
+[21] 0.75
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+Current = FLOAT[26] :
+[0] 3.9649
+[1] 3.8264
+[2] 4.7631
+[3] 4.3556
+[4] 4.4066
+[5] 4.6259
+[6] 4.2855
+[7] -0.0106
+[8] -0.0285
+[9] -0.038
+[10] 0.0002
+[11] -0.0136
+[12] -0.0097
+[13] -0.0255
+[14] 178.6
+[15] 218.8
+[16] 193
+[17] 0
+[18] 218.2
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+ChState = UINT32[26] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 0
+[9] 0
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] 1
+[15] 1
+[16] 1
+[17] 0
+[18] 1
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+ChStatus = UINT32[26] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 0
+[9] 0
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] 1
+[15] 1
+[16] 1
+[17] 0
+[18] 1
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+
+[/Equipment/HV/Statistics]
+Events sent = DOUBLE : 5672
+Events per sec. = DOUBLE : 0
+kBytes per sec. = DOUBLE : 0
+
+[/Equipment/HV/Settings/Devices/sy4527]
+Enabled = BOOL : y
+
+[/Equipment/HV/Settings/Devices/sy4527/DD]
+System Name = STRING : [32] daqhv02
+IP = STRING : [32] 192.168.0.102
+LinkType = INT32 : 0
+First Slot = INT32 : 0
+crateMap = INT32 : 0
+
+[/Equipment/HV/Settings/Devices/sy4527/Slot 0]
+Description = STRING : [22]  14 Ch Float 1KV 1mA 
+Model = STRING : [8] A1515TG
+Channels = UINT16 : 14
+
+[/Equipment/HV/Settings/Devices/sy4527/Slot 10]
+Description = STRING : [22]  12 Ch Neg. 3KV 3mA  
+Model = STRING : [6] A1833
+Channels = UINT16 : 12
+
+[/Equipment/HV/Settings]
+Editable = STRING[2] :
+[32] Demand
+[32] ChState
+Names = STRING[26] :
+[32] Offset
+[32] VGEM3
+[32] Transf2
+[32] VGEM2
+[32] Transf1
+[32] VGEM1
+[32] Drift
+[32] Ch00.007
+[32] Ch00.008
+[32] Ch00.009
+[32] Ch00.010
+[32] Ch00.011
+[32] Ch00.012
+[32] Ch00.013
+[32] PMT1
+[32] PMT2
+[32] PMT3
+[32] broken
+[32] PMT4
+[32] Ch10.005
+[32] Ch10.006
+[32] Ch10.007
+[32] Ch10.008
+[32] Ch10.009
+[32] Ch10.010
+[32] Ch10.011
+Update Threshold Measured = FLOAT[26] :
+[0] 0.5
+[1] 0.5
+[2] 0.5
+[3] 0.5
+[4] 0.5
+[5] 0.5
+[6] 0.5
+[7] 0.5
+[8] 0.5
+[9] 0.5
+[10] 0.5
+[11] 0.5
+[12] 0.5
+[13] 0.5
+[14] 0.5
+[15] 0.5
+[16] 0.5
+[17] 0.5
+[18] 0.5
+[19] 0.5
+[20] 0.5
+[21] 0.5
+[22] 0.5
+[23] 0.5
+[24] 0.5
+[25] 0.5
+Update Threshold Current = FLOAT[26] :
+[0] 1
+[1] 1
+[2] 1
+[3] 1
+[4] 1
+[5] 1
+[6] 1
+[7] 1
+[8] 1
+[9] 1
+[10] 1
+[11] 1
+[12] 1
+[13] 1
+[14] 1
+[15] 1
+[16] 1
+[17] 1
+[18] 1
+[19] 1
+[20] 1
+[21] 1
+[22] 1
+[23] 1
+[24] 1
+[25] 1
+Zero Threshold = FLOAT[26] :
+[0] 20
+[1] 20
+[2] 20
+[3] 20
+[4] 20
+[5] 20
+[6] 20
+[7] 20
+[8] 20
+[9] 20
+[10] 20
+[11] 20
+[12] 20
+[13] 20
+[14] 20
+[15] 20
+[16] 20
+[17] 20
+[18] 20
+[19] 20
+[20] 20
+[21] 20
+[22] 20
+[23] 20
+[24] 20
+[25] 20
+Voltage Limit = FLOAT[26] :
+[0] 1000
+[1] 443
+[2] 505
+[3] 443
+[4] 505
+[5] 443
+[6] 1000
+[7] 100
+[8] 470
+[9] 655
+[10] 470
+[11] 505
+[12] 470
+[13] 10
+[14] 2550
+[15] 2500
+[16] 2550
+[17] 2550
+[18] 2660
+[19] 2800
+[20] 2800
+[21] 2800
+[22] 3000
+[23] 3000
+[24] 3000
+[25] 3000
+Current Limit = FLOAT[26] :
+[0] 10
+[1] 10
+[2] 10
+[3] 10
+[4] 10
+[5] 10
+[6] 10
+[7] 10
+[8] 10
+[9] 10
+[10] 10
+[11] 10
+[12] 10
+[13] 10
+[14] 2000
+[15] 2000
+[16] 2000
+[17] 2000
+[18] 2000
+[19] 2000
+[20] 2000
+[21] 2000
+[22] 2000
+[23] 2000
+[24] 2000
+[25] 0
+Current Hot Spot = FLOAT[26] :
+[0] 10
+[1] 10
+[2] 10
+[3] 10
+[4] 10
+[5] 10
+[6] 10
+[7] 10
+[8] 10
+[9] 10
+[10] 10
+[11] 10
+[12] 10
+[13] 10
+[14] 10
+[15] 10
+[16] 10
+[17] 10
+[18] 10
+[19] 10
+[20] 10
+[21] 10
+[22] 10
+[23] 10
+[24] 10
+[25] 10
+Trip Time = FLOAT[26] :
+[0] 10
+[1] 10
+[2] 10
+[3] 10
+[4] 10
+[5] 10
+[6] 100
+[7] 10
+[8] 10
+[9] 10
+[10] 10
+[11] 10
+[12] 10
+[13] 10
+[14] 999
+[15] 999
+[16] 999
+[17] 999
+[18] 999
+[19] 999
+[20] 999
+[21] 999
+[22] 999
+[23] 999
+[24] 999
+[25] 999
+Ramp Up Speed = FLOAT[26] :
+[0] 10
+[1] 10
+[2] 10
+[3] 10
+[4] 10
+[5] 10
+[6] 10
+[7] 5
+[8] 5
+[9] 5
+[10] 5
+[11] 5
+[12] 5
+[13] 5
+[14] 100
+[15] 100
+[16] 100
+[17] 100
+[18] 100
+[19] 200
+[20] 200
+[21] 200
+[22] 200
+[23] 100
+[24] 100
+[25] 100
+Ramp Down Speed = FLOAT[26] :
+[0] 20
+[1] 20
+[2] 20
+[3] 20
+[4] 20
+[5] 20
+[6] 20
+[7] 20
+[8] 20
+[9] 20
+[10] 20
+[11] 20
+[12] 20
+[13] 20
+[14] 200
+[15] 200
+[16] 200
+[17] 200
+[18] 200
+[19] 200
+[20] 100
+[21] 100
+[22] 200
+[23] 100
+[24] 100
+[25] 200
+
+[/Equipment/Environment/Common]
+Event ID = UINT16 : 5
+Trigger mask = UINT16 : 0
+Buffer = STRING : [32] SYSTEM
+Type = INT32 : 16
+Source = INT32 : 0
+Format = STRING : [8] MIDAS
+Enabled = BOOL : y
+Read on = INT32 : 255
+Period = INT32 : 60000
+Event limit = DOUBLE : 0
+Num subevents = UINT32 : 0
+Log history = INT32 : 1
+Frontend host = STRING : [32] localhost
+Frontend name = STRING : [32] SC Frontend
+Frontend file name = STRING : [256] /home/standard/daq/online/scfe.cxx
+Status = STRING : [256] Partially disabled
+Status color = STRING : [32] yellowGreenLight
+Hidden = BOOL : n
+Write cache size = INT32 : 0
+
+[/Equipment/Environment/Variables]
+Input = FLOAT[27] :
+[0] 0.0006049289
+[1] 0.0006597838
+[2] 0.0006118091
+[3] 13.10716
+[4] 0.0007093651
+[5] 0.0006503426
+[6] 0.0006625894
+[7] 0.0006437418
+[8] 0
+[9] 1.373675
+[10] 2.432239
+[11] 2.406896
+[12] 2.305462
+[13] -1.266673
+[14] 1.473697
+[15] -0.0554639
+[16] -0.2765094
+[17] 0
+[18] -0.001145969
+[19] -0.001135597
+[20] -0.001131382
+[21] -0.001162896
+[22] -0.001144805
+[23] -0.001090125
+[24] -0.001213118
+[25] -0.001161487
+[26] 0
+
+[/Equipment/Environment/Statistics]
+Events sent = DOUBLE : 5669
+Events per sec. = DOUBLE : 0
+kBytes per sec. = DOUBLE : 0
+
+[/Equipment/Environment/Settings/Devices/Input]
+MSCB Device = STRING : [32] 192.168.0.103
+MSCB Pwd = STRING : [32] meg
+MSCB Address = INT32[27] :
+[0] 65535
+[1] 65535
+[2] 65535
+[3] 65535
+[4] 65535
+[5] 65535
+[6] 65535
+[7] 65535
+[8] 65535
+[9] 65535
+[10] 65535
+[11] 65535
+[12] 65535
+[13] 65535
+[14] 65535
+[15] 65535
+[16] 65535
+[17] 65535
+[18] 65535
+[19] 65535
+[20] 65535
+[21] 65535
+[22] 65535
+[23] 65535
+[24] 65535
+[25] 65535
+[26] 65535
+MSCB Index = UINT8[27] :
+[0] 0
+[1] 1
+[2] 2
+[3] 3
+[4] 4
+[5] 5
+[6] 6
+[7] 7
+[8] 8
+[9] 9
+[10] 10
+[11] 11
+[12] 12
+[13] 13
+[14] 14
+[15] 15
+[16] 16
+[17] 17
+[18] 18
+[19] 19
+[20] 20
+[21] 21
+[22] 22
+[23] 23
+[24] 24
+[25] 25
+[26] 26
+Enabled = BOOL : y
+MSCB Debug = INT32 : 0
+MSCB Pause = INT32 : 0
+MSCB Retries = INT32 : 10
+Device = STRING : [256] 192.168.0.103
+
+[/Equipment/Environment/Settings/Devices/Output]
+Enabled = BOOL : y
+
+[/Equipment/Environment/Settings]
+Update Threshold = FLOAT[27] :
+[0] 0.1
+[1] 0.1
+[2] 0.1
+[3] 0.1
+[4] 0.1
+[5] 0.1
+[6] 0.1
+[7] 0.1
+[8] 0.1
+[9] 0.1
+[10] 0.1
+[11] 0.1
+[12] 0.1
+[13] 0.1
+[14] 0.1
+[15] 0.1
+[16] 0.1
+[17] 0.1
+[18] 0.1
+[19] 0.1
+[20] 0.1
+[21] 0.1
+[22] 0.1
+[23] 0.1
+[24] 0.1
+[25] 0.1
+[26] 0.1
+Input Offset = FLOAT[27] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 0
+[9] 0
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] 0
+[15] 0
+[16] 0
+[17] 0
+[18] 0
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+[26] 0
+Input Factor = FLOAT[27] :
+[0] 1
+[1] 1
+[2] 1
+[3] 1
+[4] 1
+[5] 1
+[6] 1
+[7] 1
+[8] 1
+[9] 1
+[10] 1
+[11] 1
+[12] 1
+[13] 1
+[14] 1
+[15] 1
+[16] 1
+[17] 1
+[18] 1
+[19] 1
+[20] 1
+[21] 1
+[22] 1
+[23] 1
+[24] 1
+[25] 1
+[26] 1
+Names Input = STRING[27] :
+[32] P0IIn0
+[32] P0IIn1
+[32] P0IIn2
+[32] Humidity
+[32] P0IIn4
+[32] P0IIn5
+[32] P0IIn6
+[32] P0IIn7
+[32] P0Calib
+[32] P1UIn0
+[32] P1UIn1
+[32] P1UIn2
+[32] P1UIn3
+[32] P1UIn4
+[32] P1UIn5
+[32] P1UIn6
+[32] P1UIn7
+[32] P1Calib
+[32] P3IIn0
+[32] P3IIn1
+[32] P3IIn2
+[32] P3IIn3
+[32] P3IIn4
+[32] P3IIn5
+[32] P3IIn6
+[32] P3IIn7
+[32] P3Calib
+
+[/Configurations]
+FreeRunning = BOOL : n
+Exposure = DOUBLE : 1
+TriggerMode = INT32 : 0
+MaxEvents = INT32 : -1
+Number of Digitizers = INT32 : 2
+Digitizer Base Address = INT32[2] :
+[0] 839909376
+[1] 1108344832
+Digitizer Link Number = INT32[2] :
+[0] 1
+[1] 1
+MultiTriggerMaxSize = INT32 : 128
+SamplingFrequency = INT32[2] :
+[0] 0
+[1] 4
+DigitizerPostTrg = INT32[2] :
+[0] 30
+[1] 30
+DigitizerOffset = DOUBLE[40] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+[4] 0
+[5] 0
+[6] 0
+[7] 0
+[8] 0
+[9] 0
+[10] 0
+[11] 0
+[12] 0
+[13] 0
+[14] 0
+[15] 0
+[16] 0
+[17] 0
+[18] 0
+[19] 0
+[20] 0
+[21] 0
+[22] 0
+[23] 0
+[24] 0
+[25] 0
+[26] 0
+[27] 0
+[28] 0
+[29] 0
+[30] 0
+[31] 0
+[32] 0
+[33] 0
+[34] 0
+[35] 0
+[36] 0
+[37] 0
+[38] 0
+[39] 0
+DigitizerSamples = INT32[2] :
+[0] 1024
+[1] 4000
+Threshold = INT32 : 0
+
+[/Alarms]
+Alarm system active = BOOL : y
+
+[/Alarms/Alarms/Demo ODB]
+Active = BOOL : n
+Triggered = INT32 : 0
+Type = INT32 : 3
+Check interval = INT32 : 60
+Checked last = UINT32 : 0
+Time triggered first = STRING : [32] 
+Time triggered last = STRING : [32] 
+Condition = STRING : [256] /Runinfo/Run number > 100
+Alarm Class = STRING : [32] Alarm
+Alarm Message = STRING : [80] Run number became too large
+
+[/Alarms/Alarms/Demo periodic]
+Active = BOOL : n
+Triggered = INT32 : 0
+Type = INT32 : 4
+Check interval = INT32 : 28800
+Checked last = UINT32 : 1639058883
+Time triggered first = STRING : [32] 
+Time triggered last = STRING : [32] 
+Condition = STRING : [256] 
+Alarm Class = STRING : [32] Warning
+Alarm Message = STRING : [80] Please do your shift checks
+
+[/Alarms/Classes/Alarm]
+Write system message = BOOL : y
+Write Elog message = BOOL : n
+System message interval = INT32 : 60
+System message last = UINT32 : 0
+Execute command = STRING : [256] 
+Execute interval = INT32 : 0
+Execute last = UINT32 : 0
+Stop run = BOOL : n
+Display BGColor = STRING : [32] red
+Display FGColor = STRING : [32] black
+
+[/Alarms/Classes/Warning]
+Write system message = BOOL : y
+Write Elog message = BOOL : n
+System message interval = INT32 : 60
+System message last = UINT32 : 0
+Execute command = STRING : [256] 
+Execute interval = INT32 : 0
+Execute last = UINT32 : 0
+Stop run = BOOL : n
+Display BGColor = STRING : [32] red
+Display FGColor = STRING : [32] black
+
+[/Elog]
+External Elog = BOOL : n
+URL = STRING : [1] 
+Allow delete = BOOL : n
+Allow edit = BOOL : n
+Buttons = STRING[3] :
+[32] 8h
+[32] 24h
+[32] 7d
+Types = STRING[20] :
+[32] Routine
+[32] Shift summary
+[32] Minor error
+[32] Severe error
+[32] Fix
+[32] Question
+[32] Info
+[32] Modification
+[32] Reply
+[32] Alarm
+[32] Test
+[32] Other
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+Systems = STRING[20] :
+[32] General
+[32] DAQ
+[32] Detector
+[32] Electronics
+[32] Target
+[32] Beamline
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+
+[/WebServer]
+Enable localhost port = BOOL : y
+localhost port = INT32 : 8080
+localhost port passwords = BOOL : n
+Enable insecure port = BOOL : y
+insecure port = INT32 : 8081
+insecure port passwords = BOOL : y
+insecure port host list = BOOL : y
+Enable https port = BOOL : y
+https port = INT32 : 8443
+https port passwords = BOOL : y
+https port host list = BOOL : n
+Host list = STRING[10] :
+[32] localhost
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+[32] 
+Enable IPv6 = BOOL : y
+
+[/WebServer/Proxy]
+example = STRING : [23] #http://localhost:8080
+
+[/WebServer/mime.types]
+.HTML = STRING : [10] text/html
+.HTM = STRING : [10] text/html
+.CSS = STRING : [9] text/css
+.TXT = STRING : [11] text/plain
+.ASC = STRING : [11] text/plain
+.ICO = STRING : [13] image/x-icon
+.GIF = STRING : [10] image/gif
+.JPG = STRING : [11] image/jpeg
+.JPEG = STRING : [11] image/jpeg
+.PNG = STRING : [10] image/png
+.SVG = STRING : [14] image/svg+xml
+.BMP = STRING : [10] image/bmp
+.MP3 = STRING : [11] audio/mpeg
+.OGG = STRING : [10] audio/ogg
+.MID = STRING : [11] audio/midi
+.WAV = STRING : [10] audio/wav
+.XML = STRING : [16] application/xml
+.JS = STRING : [23] application/javascript
+.JSON = STRING : [17] application/json
+.PS = STRING : [23] application/postscript
+.EPS = STRING : [23] application/postscript
+.PDF = STRING : [16] application/pdf
+.ZIP = STRING : [16] application/zip
+.XLS = STRING : [22] application/x-msexcel
+.DOC = STRING : [19] application/msword
+
+[/History/Links/System]
+Trigger per sec. = LINK : [46] /Equipment/Trigger/Statistics/Events per sec.
+Trigger kB per sec. = LINK : [46] /Equipment/Trigger/Statistics/kBytes per sec.
+
+[/History/Events]
+101 = STRING : [7] System
+0 = STRING : [16] Run transitions
+4 = STRING : [8] CATHODE
+6 = STRING : [10] GasSystem
+3 = STRING : [3] HV
+5 = STRING : [12] Environment
+
+[/History]
+DisableTags = BOOL : n
+
+[/History/Tags]
+101 = STRING[3] :
+[96] System
+[96] 10[1] Trigger per sec.
+[96] 10[1] Trigger kB per sec.
+0 = STRING[3] :
+[96] Run transitions
+[96] 6[1] State
+[96] 6[1] Run number
+4 = STRING[6] :
+[96] CATHODE
+[96] 9[1] ISEG_HPS Demand
+[96] 9[1] ISEG_HPS Measured
+[96] 9[1] ISEG_HPS Current
+[96] 6[1] ISEG_HPS ChState
+[96] 6[1] ISEG_HPS ChStatus
+6 = STRING[647] :
+[96] GasSystem
+[96] 9[1] @DiagnosticsIndicato Demand
+[96] 9[1] DB_CycleSelection_MO Demand
+[96] 9[1] DB_CycleSelection_MO Demand
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Demand
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Demand
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Demand
+[96] 9[1] DB_Logic_GraphDateAn Demand
+[96] 9[1] DB_Logic_LocalDateAn Demand
+[96] 9[1] DB_Logic_Miscelaz_Ca Demand
+[96] 9[1] DB_Logic_Miscelaz_Ca Demand
+[96] 9[1] DB_Logic_Miscelaz_Ca Demand
+[96] 9[1] DB_Logic_Miscelazion Demand
+[96] 9[1] DB_Logic_PID_Camera_ Demand
+[96] 9[1] DB_Logic_PID_D404_Ou Demand
+[96] 9[1] DB_Logic_Press_Camer Demand
+[96] 9[1] DB_Logic_StatoImpian Demand
+[96] 9[1] DB_PAR_Alarm_Reset Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT401 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_Analisi_AT402 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV101 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV201 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV301 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV401 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV402 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV405 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV406 Demand
+[96] 9[1] DB_PAR_CMD_MAN_EV410 Demand
+[96] 9[1] DB_PAR_Camera_SET_SE Demand
+[96] 9[1] DB_PAR_Camera_SET_SE Demand
+[96] 9[1] DB_PAR_Cicalino_Abil Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT1 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT2 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT3 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_FCT4 Demand
+[96] 9[1] DB_PAR_Flowrate_Reg_ Demand
+[96] 9[1] DB_PAR_Flowrate_Reg_ Demand
+[96] 9[1] DB_PAR_Flowrate_Reg_ Demand
+[96] 9[1] DB_PAR_Flowrate_Reg_ Demand
+[96] 9[1] DB_PAR_Flowrate_Reg_ Demand
+[96] 9[1] DB_PAR_HMI_MAN_AUT Demand
+[96] 9[1] DB_PAR_HMI_PULS_STAR Demand
+[96] 9[1] DB_PAR_HMI_PULS_STOP Demand
+[96] 9[1] DB_PAR_Miscelaz_Rice Demand
+[96] 9[1] DB_PAR_Miscelaz_Rice Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_Miscelaz_SET_ Demand
+[96] 9[1] DB_PAR_PID_Camera_Ma Demand
+[96] 9[1] DB_PAR_PID_Camera_Ou Demand
+[96] 9[1] DB_PAR_PID_Camera_Ou Demand
+[96] 9[1] DB_PAR_PID_Camera_Pa Demand
+[96] 9[1] DB_PAR_PID_Camera_Pa Demand
+[96] 9[1] DB_PAR_PID_Camera_Pa Demand
+[96] 9[1] DB_PAR_PID_Camera_SP Demand
+[96] 9[1] DB_PAR_PID_D404_Man_ Demand
+[96] 9[1] DB_PAR_PID_D404_Outp Demand
+[96] 9[1] DB_PAR_PID_D404_Outp Demand
+[96] 9[1] DB_PAR_PID_D404_Para Demand
+[96] 9[1] DB_PAR_PID_D404_Para Demand
+[96] 9[1] DB_PAR_PID_D404_Para Demand
+[96] 9[1] DB_PAR_PID_D404_SP Demand
+[96] 9[1] DB_PAR_Press_Atm Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT10 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT20 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT30 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT40 Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Pressure_PT_C Demand
+[96] 9[1] DB_PAR_Purificaz_SET Demand
+[96] 9[1] DB_PAR_Purificaz_SET Demand
+[96] 9[1] DB_PAR_Purificaz_SET Demand
+[96] 9[1] DB_PAR_Ricircolo_SET Demand
+[96] 9[1] DB_PAR_Ricircolo_SET Demand
+[96] 9[1] DB_PAR_Ricircolo_SET Demand
+[96] 9[1] DB_PAR_Ricircolo_SET Demand
+[96] 9[1] DB_PAR_Ricircolo_SET Demand
+[96] 9[1] DB_PAR_SP_Rit_Alarm_ Demand
+[96] 9[1] DB_STS_AlarmActive Demand
+[96] 9[1] DB_STS_Analisi_AT401 Demand
+[96] 9[1] DB_STS_Analisi_AT401 Demand
+[96] 9[1] DB_STS_Analisi_AT402 Demand
+[96] 9[1] DB_STS_Analisi_AT402 Demand
+[96] 9[1] DB_STS_FCT401_Corr Demand
+[96] 9[1] DB_STS_FT_Tot Demand
+[96] 9[1] DB_STS_Flowrate_FCT1 Demand
+[96] 9[1] DB_STS_Flowrate_FCT1 Demand
+[96] 9[1] DB_STS_Flowrate_FCT2 Demand
+[96] 9[1] DB_STS_Flowrate_FCT2 Demand
+[96] 9[1] DB_STS_Flowrate_FCT3 Demand
+[96] 9[1] DB_STS_Flowrate_FCT3 Demand
+[96] 9[1] DB_STS_Flowrate_FCT4 Demand
+[96] 9[1] DB_STS_Flowrate_FCT4 Demand
+[96] 9[1] DB_STS_Pressure_PT10 Demand
+[96] 9[1] DB_STS_Pressure_PT10 Demand
+[96] 9[1] DB_STS_Pressure_PT10 Demand
+[96] 9[1] DB_STS_Pressure_PT10 Demand
+[96] 9[1] DB_STS_Pressure_PT20 Demand
+[96] 9[1] DB_STS_Pressure_PT20 Demand
+[96] 9[1] DB_STS_Pressure_PT20 Demand
+[96] 9[1] DB_STS_Pressure_PT20 Demand
+[96] 9[1] DB_STS_Pressure_PT30 Demand
+[96] 9[1] DB_STS_Pressure_PT30 Demand
+[96] 9[1] DB_STS_Pressure_PT30 Demand
+[96] 9[1] DB_STS_Pressure_PT30 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Pressure_PT40 Demand
+[96] 9[1] DB_STS_Valves_EV101_ Demand
+[96] 9[1] DB_STS_Valves_EV201_ Demand
+[96] 9[1] DB_STS_Valves_EV301_ Demand
+[96] 9[1] DB_STS_Valves_EV401_ Demand
+[96] 9[1] DB_STS_Valves_EV401_ Demand
+[96] 9[1] DB_STS_Valves_EV402_ Demand
+[96] 9[1] DB_STS_Valves_EV402_ Demand
+[96] 9[1] DB_STS_Valves_EV405_ Demand
+[96] 9[1] DB_STS_Valves_EV406_ Demand
+[96] 9[1] DB_STS_Valves_EV410_ Demand
+[96] 9[1] PT_Segnalazioni di g Demand
+[96] 9[1] VIS_POP_AT401 Demand
+[96] 9[1] VIS_POP_AT402 Demand
+[96] 9[1] VIS_POP_FCT101 Demand
+[96] 9[1] VIS_POP_FCT101_MAN Demand
+[96] 9[1] VIS_POP_FCT201 Demand
+[96] 9[1] VIS_POP_FCT201_MAN Demand
+[96] 9[1] VIS_POP_FCT301 Demand
+[96] 9[1] VIS_POP_FCT301_MAN Demand
+[96] 9[1] VIS_POP_FCT401 Demand
+[96] 9[1] VIS_POP_FCT401_MAN Demand
+[96] 9[1] VIS_POP_G401_MAN Demand
+[96] 9[1] VIS_POP_PCV401_MAN Demand
+[96] 9[1] VIS_POP_PT101 Demand
+[96] 9[1] VIS_POP_PT102 Demand
+[96] 9[1] VIS_POP_PT201 Demand
+[96] 9[1] VIS_POP_PT202 Demand
+[96] 9[1] VIS_POP_PT301 Demand
+[96] 9[1] VIS_POP_PT302 Demand
+[96] 9[1] VIS_POP_PT404 Demand
+[96] 9[1] VIS_POP_PT405 Demand
+[96] 9[1] VIS_POP_PT406 Demand
+[96] 9[1] VIS_POP_PT_Camera Demand
+[96] 9[1] Variabile_Numero di  Demand
+[96] 9[1] iDB_Utilities_System Demand
+[96] 9[1] @DiagnosticsIndicato Measured
+[96] 9[1] DB_CycleSelection_MO Measured
+[96] 9[1] DB_CycleSelection_MO Measured
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Measured
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Measured
+[96] 9[1] DB_Logic_AUTO_SEQ_Ci Measured
+[96] 9[1] DB_Logic_GraphDateAn Measured
+[96] 9[1] DB_Logic_LocalDateAn Measured
+[96] 9[1] DB_Logic_Miscelaz_Ca Measured
+[96] 9[1] DB_Logic_Miscelaz_Ca Measured
+[96] 9[1] DB_Logic_Miscelaz_Ca Measured
+[96] 9[1] DB_Logic_Miscelazion Measured
+[96] 9[1] DB_Logic_PID_Camera_ Measured
+[96] 9[1] DB_Logic_PID_D404_Ou Measured
+[96] 9[1] DB_Logic_Press_Camer Measured
+[96] 9[1] DB_Logic_StatoImpian Measured
+[96] 9[1] DB_PAR_Alarm_Reset Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT401 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_Analisi_AT402 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV101 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV201 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV301 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV401 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV402 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV405 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV406 Measured
+[96] 9[1] DB_PAR_CMD_MAN_EV410 Measured
+[96] 9[1] DB_PAR_Camera_SET_SE Measured
+[96] 9[1] DB_PAR_Camera_SET_SE Measured
+[96] 9[1] DB_PAR_Cicalino_Abil Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT1 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT2 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT3 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_FCT4 Measured
+[96] 9[1] DB_PAR_Flowrate_Reg_ Measured
+[96] 9[1] DB_PAR_Flowrate_Reg_ Measured
+[96] 9[1] DB_PAR_Flowrate_Reg_ Measured
+[96] 9[1] DB_PAR_Flowrate_Reg_ Measured
+[96] 9[1] DB_PAR_Flowrate_Reg_ Measured
+[96] 9[1] DB_PAR_HMI_MAN_AUT Measured
+[96] 9[1] DB_PAR_HMI_PULS_STAR Measured
+[96] 9[1] DB_PAR_HMI_PULS_STOP Measured
+[96] 9[1] DB_PAR_Miscelaz_Rice Measured
+[96] 9[1] DB_PAR_Miscelaz_Rice Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_Miscelaz_SET_ Measured
+[96] 9[1] DB_PAR_PID_Camera_Ma Measured
+[96] 9[1] DB_PAR_PID_Camera_Ou Measured
+[96] 9[1] DB_PAR_PID_Camera_Ou Measured
+[96] 9[1] DB_PAR_PID_Camera_Pa Measured
+[96] 9[1] DB_PAR_PID_Camera_Pa Measured
+[96] 9[1] DB_PAR_PID_Camera_Pa Measured
+[96] 9[1] DB_PAR_PID_Camera_SP Measured
+[96] 9[1] DB_PAR_PID_D404_Man_ Measured
+[96] 9[1] DB_PAR_PID_D404_Outp Measured
+[96] 9[1] DB_PAR_PID_D404_Outp Measured
+[96] 9[1] DB_PAR_PID_D404_Para Measured
+[96] 9[1] DB_PAR_PID_D404_Para Measured
+[96] 9[1] DB_PAR_PID_D404_Para Measured
+[96] 9[1] DB_PAR_PID_D404_SP Measured
+[96] 9[1] DB_PAR_Press_Atm Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT10 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT20 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT30 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT40 Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Pressure_PT_C Measured
+[96] 9[1] DB_PAR_Purificaz_SET Measured
+[96] 9[1] DB_PAR_Purificaz_SET Measured
+[96] 9[1] DB_PAR_Purificaz_SET Measured
+[96] 9[1] DB_PAR_Ricircolo_SET Measured
+[96] 9[1] DB_PAR_Ricircolo_SET Measured
+[96] 9[1] DB_PAR_Ricircolo_SET Measured
+[96] 9[1] DB_PAR_Ricircolo_SET Measured
+[96] 9[1] DB_PAR_Ricircolo_SET Measured
+[96] 9[1] DB_PAR_SP_Rit_Alarm_ Measured
+[96] 9[1] DB_STS_AlarmActive Measured
+[96] 9[1] DB_STS_Analisi_AT401 Measured
+[96] 9[1] DB_STS_Analisi_AT401 Measured
+[96] 9[1] DB_STS_Analisi_AT402 Measured
+[96] 9[1] DB_STS_Analisi_AT402 Measured
+[96] 9[1] DB_STS_FCT401_Corr Measured
+[96] 9[1] DB_STS_FT_Tot Measured
+[96] 9[1] DB_STS_Flowrate_FCT1 Measured
+[96] 9[1] DB_STS_Flowrate_FCT1 Measured
+[96] 9[1] DB_STS_Flowrate_FCT2 Measured
+[96] 9[1] DB_STS_Flowrate_FCT2 Measured
+[96] 9[1] DB_STS_Flowrate_FCT3 Measured
+[96] 9[1] DB_STS_Flowrate_FCT3 Measured
+[96] 9[1] DB_STS_Flowrate_FCT4 Measured
+[96] 9[1] DB_STS_Flowrate_FCT4 Measured
+[96] 9[1] DB_STS_Pressure_PT10 Measured
+[96] 9[1] DB_STS_Pressure_PT10 Measured
+[96] 9[1] DB_STS_Pressure_PT10 Measured
+[96] 9[1] DB_STS_Pressure_PT10 Measured
+[96] 9[1] DB_STS_Pressure_PT20 Measured
+[96] 9[1] DB_STS_Pressure_PT20 Measured
+[96] 9[1] DB_STS_Pressure_PT20 Measured
+[96] 9[1] DB_STS_Pressure_PT20 Measured
+[96] 9[1] DB_STS_Pressure_PT30 Measured
+[96] 9[1] DB_STS_Pressure_PT30 Measured
+[96] 9[1] DB_STS_Pressure_PT30 Measured
+[96] 9[1] DB_STS_Pressure_PT30 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Pressure_PT40 Measured
+[96] 9[1] DB_STS_Valves_EV101_ Measured
+[96] 9[1] DB_STS_Valves_EV201_ Measured
+[96] 9[1] DB_STS_Valves_EV301_ Measured
+[96] 9[1] DB_STS_Valves_EV401_ Measured
+[96] 9[1] DB_STS_Valves_EV401_ Measured
+[96] 9[1] DB_STS_Valves_EV402_ Measured
+[96] 9[1] DB_STS_Valves_EV402_ Measured
+[96] 9[1] DB_STS_Valves_EV405_ Measured
+[96] 9[1] DB_STS_Valves_EV406_ Measured
+[96] 9[1] DB_STS_Valves_EV410_ Measured
+[96] 9[1] PT_Segnalazioni di g Measured
+[96] 9[1] VIS_POP_AT401 Measured
+[96] 9[1] VIS_POP_AT402 Measured
+[96] 9[1] VIS_POP_FCT101 Measured
+[96] 9[1] VIS_POP_FCT101_MAN Measured
+[96] 9[1] VIS_POP_FCT201 Measured
+[96] 9[1] VIS_POP_FCT201_MAN Measured
+[96] 9[1] VIS_POP_FCT301 Measured
+[96] 9[1] VIS_POP_FCT301_MAN Measured
+[96] 9[1] VIS_POP_FCT401 Measured
+[96] 9[1] VIS_POP_FCT401_MAN Measured
+[96] 9[1] VIS_POP_G401_MAN Measured
+[96] 9[1] VIS_POP_PCV401_MAN Measured
+[96] 9[1] VIS_POP_PT101 Measured
+[96] 9[1] VIS_POP_PT102 Measured
+[96] 9[1] VIS_POP_PT201 Measured
+[96] 9[1] VIS_POP_PT202 Measured
+[96] 9[1] VIS_POP_PT301 Measured
+[96] 9[1] VIS_POP_PT302 Measured
+[96] 9[1] VIS_POP_PT404 Measured
+[96] 9[1] VIS_POP_PT405 Measured
+[96] 9[1] VIS_POP_PT406 Measured
+[96] 9[1] VIS_POP_PT_Camera Measured
+[96] 9[1] Variabile_Numero di  Measured
+[96] 9[1] iDB_Utilities_System Measured
+3 = STRING[132] :
+[96] HV
+[96] 7[1] Offset Recovery
+[96] 9[1] Offset Demand
+[96] 9[1] VGEM3 Demand
+[96] 9[1] Transf2 Demand
+[96] 9[1] VGEM2 Demand
+[96] 9[1] Transf1 Demand
+[96] 9[1] VGEM1 Demand
+[96] 9[1] Drift Demand
+[96] 9[1] Ch00.007 Demand
+[96] 9[1] Ch00.008 Demand
+[96] 9[1] Ch00.009 Demand
+[96] 9[1] Ch00.010 Demand
+[96] 9[1] Ch00.011 Demand
+[96] 9[1] Ch00.012 Demand
+[96] 9[1] Ch00.013 Demand
+[96] 9[1] PMT1 Demand
+[96] 9[1] PMT2 Demand
+[96] 9[1] PMT3 Demand
+[96] 9[1] broken Demand
+[96] 9[1] PMT4 Demand
+[96] 9[1] Ch10.005 Demand
+[96] 9[1] Ch10.006 Demand
+[96] 9[1] Ch10.007 Demand
+[96] 9[1] Ch10.008 Demand
+[96] 9[1] Ch10.009 Demand
+[96] 9[1] Ch10.010 Demand
+[96] 9[1] Ch10.011 Demand
+[96] 9[1] Offset Measured
+[96] 9[1] VGEM3 Measured
+[96] 9[1] Transf2 Measured
+[96] 9[1] VGEM2 Measured
+[96] 9[1] Transf1 Measured
+[96] 9[1] VGEM1 Measured
+[96] 9[1] Drift Measured
+[96] 9[1] Ch00.007 Measured
+[96] 9[1] Ch00.008 Measured
+[96] 9[1] Ch00.009 Measured
+[96] 9[1] Ch00.010 Measured
+[96] 9[1] Ch00.011 Measured
+[96] 9[1] Ch00.012 Measured
+[96] 9[1] Ch00.013 Measured
+[96] 9[1] PMT1 Measured
+[96] 9[1] PMT2 Measured
+[96] 9[1] PMT3 Measured
+[96] 9[1] broken Measured
+[96] 9[1] PMT4 Measured
+[96] 9[1] Ch10.005 Measured
+[96] 9[1] Ch10.006 Measured
+[96] 9[1] Ch10.007 Measured
+[96] 9[1] Ch10.008 Measured
+[96] 9[1] Ch10.009 Measured
+[96] 9[1] Ch10.010 Measured
+[96] 9[1] Ch10.011 Measured
+[96] 9[1] Offset Current
+[96] 9[1] VGEM3 Current
+[96] 9[1] Transf2 Current
+[96] 9[1] VGEM2 Current
+[96] 9[1] Transf1 Current
+[96] 9[1] VGEM1 Current
+[96] 9[1] Drift Current
+[96] 9[1] Ch00.007 Current
+[96] 9[1] Ch00.008 Current
+[96] 9[1] Ch00.009 Current
+[96] 9[1] Ch00.010 Current
+[96] 9[1] Ch00.011 Current
+[96] 9[1] Ch00.012 Current
+[96] 9[1] Ch00.013 Current
+[96] 9[1] PMT1 Current
+[96] 9[1] PMT2 Current
+[96] 9[1] PMT3 Current
+[96] 9[1] broken Current
+[96] 9[1] PMT4 Current
+[96] 9[1] Ch10.005 Current
+[96] 9[1] Ch10.006 Current
+[96] 9[1] Ch10.007 Current
+[96] 9[1] Ch10.008 Current
+[96] 9[1] Ch10.009 Current
+[96] 9[1] Ch10.010 Current
+[96] 9[1] Ch10.011 Current
+[96] 6[1] Offset ChState
+[96] 6[1] VGEM3 ChState
+[96] 6[1] Transf2 ChState
+[96] 6[1] VGEM2 ChState
+[96] 6[1] Transf1 ChState
+[96] 6[1] VGEM1 ChState
+[96] 6[1] Drift ChState
+[96] 6[1] Ch00.007 ChState
+[96] 6[1] Ch00.008 ChState
+[96] 6[1] Ch00.009 ChState
+[96] 6[1] Ch00.010 ChState
+[96] 6[1] Ch00.011 ChState
+[96] 6[1] Ch00.012 ChState
+[96] 6[1] Ch00.013 ChState
+[96] 6[1] PMT1 ChState
+[96] 6[1] PMT2 ChState
+[96] 6[1] PMT3 ChState
+[96] 6[1] broken ChState
+[96] 6[1] PMT4 ChState
+[96] 6[1] Ch10.005 ChState
+[96] 6[1] Ch10.006 ChState
+[96] 6[1] Ch10.007 ChState
+[96] 6[1] Ch10.008 ChState
+[96] 6[1] Ch10.009 ChState
+[96] 6[1] Ch10.010 ChState
+[96] 6[1] Ch10.011 ChState
+[96] 6[1] Offset ChStatus
+[96] 6[1] VGEM3 ChStatus
+[96] 6[1] Transf2 ChStatus
+[96] 6[1] VGEM2 ChStatus
+[96] 6[1] Transf1 ChStatus
+[96] 6[1] VGEM1 ChStatus
+[96] 6[1] Drift ChStatus
+[96] 6[1] Ch00.007 ChStatus
+[96] 6[1] Ch00.008 ChStatus
+[96] 6[1] Ch00.009 ChStatus
+[96] 6[1] Ch00.010 ChStatus
+[96] 6[1] Ch00.011 ChStatus
+[96] 6[1] Ch00.012 ChStatus
+[96] 6[1] Ch00.013 ChStatus
+[96] 6[1] PMT1 ChStatus
+[96] 6[1] PMT2 ChStatus
+[96] 6[1] PMT3 ChStatus
+[96] 6[1] broken ChStatus
+[96] 6[1] PMT4 ChStatus
+[96] 6[1] Ch10.005 ChStatus
+[96] 6[1] Ch10.006 ChStatus
+[96] 6[1] Ch10.007 ChStatus
+[96] 6[1] Ch10.008 ChStatus
+[96] 6[1] Ch10.009 ChStatus
+[96] 6[1] Ch10.010 ChStatus
+[96] 6[1] Ch10.011 ChStatus
+5 = STRING[29] :
+[96] Environment
+[96] 9[1] P0IIn0
+[96] 9[1] P0IIn1
+[96] 9[1] P0IIn2
+[96] 9[1] P0IIn3
+[96] 9[1] P0IIn4
+[96] 9[1] P0IIn5
+[96] 9[1] P0IIn6
+[96] 9[1] P0IIn7
+[96] 9[1] P0Calib
+[96] 9[1] P1UIn0
+[96] 9[1] P1UIn1
+[96] 9[1] P1UIn2
+[96] 9[1] P1UIn3
+[96] 9[1] P1UIn4
+[96] 9[1] P1UIn5
+[96] 9[1] P1UIn6
+[96] 9[1] P1UIn7
+[96] 9[1] P1Calib
+[96] 9[1] P3IIn0
+[96] 9[1] P3IIn1
+[96] 9[1] P3IIn2
+[96] 9[1] P3IIn3
+[96] 9[1] P3IIn4
+[96] 9[1] P3IIn5
+[96] 9[1] P3IIn6
+[96] 9[1] P3IIn7
+[96] 9[1] P3Calib
+[96] 9[1] Humidity
+
+[/History/Display/Default/Trigger rate]
+Variables = STRING[2] :
+[64] System:Trigger per sec.
+[64] System:Trigger kB per sec.
+Timescale = STRING : [32] 1h
+Show values = BOOL : y
+Show fill = BOOL : y
+Show run markers = BOOL : y
+Label = STRING[2] :
+[32] 
+[32] 
+Colour = STRING[2] :
+[32] #00AAFF
+[32] #FF9000
+Formula = STRING[2] :
+[256] 
+[256] 
+
+[/History/Display/Environment/Temperature]
+Timescale = STRING : [3] 1h
+Minimum = DOUBLE : 0
+Maximum = DOUBLE : 0
+Zero ylow = BOOL : n
+Log axis = BOOL : n
+Show run markers = BOOL : y
+Show values = BOOL : y
+Show fill = BOOL : y
+Show factor and offset = BOOL : n
+Variables = STRING : [256] Environment:P1UIn1
+Formula = STRING : [256] -22.7*x+82.3
+Colour = STRING : [32] #00AAFF
+Label = STRING : [32] Atm. Temperature [deg]
+Show raw value = BOOL : n
+Factor = DOUBLE : 1
+Offset = DOUBLE : 0
+VOffset = DOUBLE : 0
+
+[/History]
+MaxDisplayEvents = INT32 : 20
+MaxDisplayTags = INT32 : 200
+LoggerHistoryChannel = STRING : [1] 
+
+[/Sequencer/State]
+New File = BOOL : n
+Path = STRING : [256] /home/standard/packages/midas/examples/sequencer/
+Filename = STRING : [256] 
+Error = STRING : [256] 
+Error line = INT32 : 0
+SError line = INT32 : 0
+Message = STRING : [256] 
+Message Wait = BOOL : n
+Running = BOOL : n
+Finished = BOOL : y
+Paused = BOOL : n
+Current line number = INT32 : 0
+SCurrent line number = INT32 : 0
+Stop after run = BOOL : n
+Transition request = BOOL : n
+Loop start line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+SLoop start line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Loop end line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+SLoop end line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Loop counter = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Loop n = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Subdir = STRING : [256] 
+Subdir end line = INT32 : 0
+Subdir not notify = INT32 : 0
+If index = INT32 : 0
+If line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+If else line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+If endif line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Stack index = INT32 : 0
+Subroutine end line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Subroutine return line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Subroutine call line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+SSubroutine call line = INT32[4] :
+[0] 0
+[1] 0
+[2] 0
+[3] 0
+Subroutine param = STRING[4] :
+[256] 
+[256] 
+[256] 
+[256] 
+Wait value = FLOAT : 0
+Wait limit = FLOAT : 0
+Start time = UINT32 : 0
+Wait type = STRING : [32] 
+Last msg = STRING : [10] 00:00:00
+
+[/Sequencer/Command]
+Start script = BOOL : n
+Stop immediately = BOOL : n
+Load new file = BOOL : n
+Load filename = STRING : [1] 
+
+[/Analyzer/Tree switches/DataTree]
+Read = BOOL : n
+Write = BOOL : n
+Fill = BOOL : n
+Save Config = BOOL : n
+Compression Level = INT32 : 1
+Max Entries = INT32 : 0
+
+[/Analyzer/Tasks/ReadData]
+Active = BOOL : y
+
+[/Analyzer/Tasks/WriteData]
+Active = BOOL : n
+
+[/Analyzer/Tabs/EventDisplay]
+Active = BOOL : y
+
+[/Analyzer/Tabs/WaveformDisplay]
+Active = BOOL : y
+
+[/Analyzer/Tabs/Features]
+Active = BOOL : y
+
+[/Analyzer/DAQ/Statistics]
+Events received = DOUBLE : 0
+Events per sec. = DOUBLE : 0
+Events written = DOUBLE : 0
+
+[/Custom]
+Path = STRING : [64] /home/standard/daq/online/custom
+GasSystem& = STRING : [32] GasSystem.html
+PMT HV& = STRING : [32] hv_pmt.html
+GEM HV = STRING : [32] hv_gem.html
+

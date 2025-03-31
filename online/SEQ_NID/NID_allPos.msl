@@ -1,0 +1,558 @@
+COMMENT "Data Taking - NID 650mbar He/CF4 60/40/1.6"
+
+#GOTO 12
+
+######################################################### POS 0 ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "12"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "12"
+
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 12 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 12"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 12 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 12"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 12 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 12"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 12 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 12"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 12 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 12"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+
+
+######################################################### POS 32.5  ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "9"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "9"
+
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 9 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 9"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 9 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 9"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 9 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 9"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 9 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 9"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 9 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 9"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+######################################################### POS 64.5  ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "6"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "6"
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 6 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 6"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 6 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 6"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 6 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 6"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 6 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 6"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 6 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 6"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+######################################################### POS 86.5  ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "4"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "4"
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 4 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 4"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 4 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 4"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 4 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 4"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 4 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 4"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 4 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 4"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+######################################################### POS 96.5  ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "3"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "3"
+
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 3 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 3"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 3 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 3"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 3 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 3"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 3 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 3"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 3 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 3"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+######################################################### POS 107.5  ###################################################################################################################################################
+ODBSET "/Configurations/StepperMotor/SelectedPosition", "2"
+#ODBSET "/Configurations/StepperMotor/buttonPressed", "y"
+WAIT ODBvalue, "/Configurations/SourceState/source_position", ==, "2"
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "525"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "525"
+
+######################## CYCLE ON FIELDS ########################
+
+##### POS 0 - HOLE 2 - FIELD 0.3 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.3" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 2"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 2 - FIELD 0.35 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.35 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.35" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 2"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 2 - FIELD 0.4 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.4 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.4" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 2"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 2 - FIELD 0.5 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.5 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 2"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+
+
+##### POS 0 - HOLE 2 - FIELD 0.6 #####
+SCRIPT "python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 525 525 525"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.6" 
+WAIT seconds, 15
+
+LOOP 10
+    WAIT seconds, 20
+    RUNDESCRIPTION "NID - 60/40/1.6 - 650mbar - HOLE 2"
+    TRANSITION START
+    WAIT events, 500
+    TRANSITION STOP
+ENDLOOP
+

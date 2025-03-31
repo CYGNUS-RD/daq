@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">Data Taking - ED 900mbar He/CF4 60/40 - Quest - EHD</Comment>
+<ODBSet l="4" path="/Equipment/HV/Variables/ChState[0]">1</ODBSet>
+<ODBSet l="5" path="/Configurations/Exposure">0.2</ODBSet>
+<ODBSet l="6" path="/Configurations/FreeRunning">1</ODBSet>
+<ODBSet l="7" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="8" path="/Configurations/pmt_acquisition">0</ODBSet>
+<ODBSet l="9" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[1]">300</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[3]">300</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[5]">300</ODBSet>
+<ODBSet l="17" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<Loop l="19" le="27" n="5">
+<RunDescription l="21">Intensifier 650V - Gate ON - GEM ON - He/CF4 60/40 - Quest - EHD - 300 ccm - 500V/cm</RunDescription>
+<Transition l="22">START</Transition>
+<Wait l="24" for="events">400</Wait>
+<Transition l="25">STOP</Transition>
+</Loop>
+</RunSequence>

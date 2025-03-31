@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <math.h> 
 #include <time.h>
 #include <iostream>
 #include <unistd.h>
@@ -21,7 +21,15 @@
 #include <ctime>
 #include <fstream>
 
+
+#include <vector>
+#include <stdexcept>
+#include <algorithm>
+#include <chrono>
+
 using namespace std;
+
+#define DEBUG false
 
 #define HAVE_CAEN_BRD
 #define HAVE_CAMERA
@@ -72,13 +80,17 @@ BOOL frontend_call_loop = FALSE;
 INT display_period = 3000;
 
 /* maximum event size produced by this frontend */
-INT max_event_size = 1000000000;
+INT max_event_size = 50000000; //1000000000;
 
 /* maximum event size for fragmented events (EQ_FRAGMENTED) */
 INT max_event_size_frag = 5 * 1024 * 1024;
 
 /* buffer size to hold events */
-INT event_buffer_size = 2000000000;
+INT event_buffer_size = 100000000; //2000000000
+
+
+int      picIndex = 0;
+DWORD    timeZero = 0;
 
 /*-- Function declarations -----------------------------------------*/
 
@@ -91,6 +103,7 @@ INT resume_run(INT run_number, char *error);
 INT frontend_loop();
 
 INT read_event(char *pevent, INT off);
+INT read_camera_status(char *pevent, INT off);
 
 INT poll_event(INT source, INT count, BOOL test);
 INT interrupt_configure(INT cmd, INT source, POINTER_T adr);
@@ -110,6 +123,13 @@ INT read_dgtz(char *pevent);
 INT read_camera(char *pevent);
 void ReadDgtzConfig();
 void Free_arrays();
+
+#ifdef HAVE_CAEN_DGTZ
+#define MAX_BASE_INPUT_FILE_LENGTH 1000
+
+int SaveCorrectionTables(char *outputFileName, uint32_t groupMask, CAEN_DGTZ_DRS4Correction_t *tables);
+#endif
+
 
 /*-- Equipment list ------------------------------------------------*/
 BOOL equipment_common_overwrite = TRUE;
@@ -134,7 +154,24 @@ EQUIPMENT equipment[] = {
     "", "", "",},
    read_event,      /* readout routine */
   },
-  
+#ifdef HAVE_CAMERA
+  {"CameraStatus",              /* equipment name */
+    {7, 0,                /* event ID, trigger mask */
+      "SYSTEM",           /* event buffer */
+      EQ_PERIODIC,        /* equipment type */
+      0,                  /* event source */
+      "MIDAS",            /* format */
+      TRUE,               /* enabled */
+      RO_RUNNING |        /* read when running and on transitions */
+      RO_ODB,             /* and update ODB */
+      10000,               /* read every sec */
+      0,                  /* stop run after this event limit */
+      0,                  /* number of sub events */
+      0,                 /* log history every ten seconds*/
+      "", "", "",},
+    read_camera_status,   /* readout routine */
+  },
+#endif
   {""}
 };
 
@@ -190,6 +227,8 @@ HDCAMWAIT hwait = 0;
 #endif
 
 int rec_ev = 0;
+
+std::vector<int> cache_cam = {-999, -999, -999, -999, -999, -999, -999, -999, -999, -999};
 
 /*-- Frontend Init -------------------------------------------------*/
 
@@ -247,7 +286,60 @@ INT frontend_init()
 
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE );  
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY" << endl;
+  
+  //Exposure as output signal of OUT 2 with positive polarity
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
+    
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
+    
+  // Get exposure from ODB
+  HNDLE hDB;
+  cm_get_experiment_database(&hDB, NULL);
+  double exposure;
+  int size = sizeof(double);
+  db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
+    
+    
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
+    
+  
+  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE + 256, DCAMPROP_OUTPUTTRIGGER_ACTIVE__EDGE);
+  //if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;  
+    
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + 0.18);
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
+    
+    
+    
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
 
+
+  /*err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORCOOLER, DCAMPROP_SENSORCOOLER__MAX);  
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORCOOLER" << endl;
+  
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORCOOLERFAN, DCAMPROP_MODE__ON);  
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORCOOLER" << endl;*/
+  
+  
+  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURETARGET, 0.0);  
+  //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORTEMPERATURETARGET" << endl;
+
+  /*HNDLE tempKey;
+  int statusdb;
+  statusdb = db_find_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", &tempKey);
+  if(statusdb!= DB_SUCCESS) {
+    db_create_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", TID_DOUBLE);
+    statusdb = db_find_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", &tempKey);
+    if(statusdb!=DB_SUCCESS) {
+      cout<<"UNABLE TO CREATE CAMERA TEMPERATURE ODB ENTRY"<<endl;
+    }
+  }*/
+    
+    
   ConfigCamera();
   
 #endif
@@ -285,6 +377,14 @@ INT begin_of_run(INT run_number, char *error)
 {
 
   rec_ev = 0;
+  picIndex = 0;
+  
+  if(DEBUG) {
+	  ofstream myfile;
+	  myfile.open("debug.txt");
+	  myfile<<"START OF RUN"<<endl;
+	  myfile.close();
+  }
   
   /* put here clear scalers etc. */
 #ifdef HAVE_CAEN_BRD
@@ -313,12 +413,17 @@ INT begin_of_run(INT run_number, char *error)
   dcambuf_alloc( gCam, 1 );
   dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
 
+
+  DCAMERR err;
+  
   DCAMWAIT_OPEN waitopen;
   memset( &waitopen, 0, sizeof(waitopen) );
   waitopen.size = sizeof(waitopen);
   waitopen.hdcam = gCam;
   
-  dcamwait_open( &waitopen );
+  err = dcamwait_open( &waitopen );
+  
+  if(failed(err)) throw runtime_error("unable to open camera wait handle.\n");
   
   hwait = waitopen.hwait;
   
@@ -342,9 +447,9 @@ INT end_of_run(INT run_number, char *error)
 #endif
 
 #ifdef HAVE_CAMERA
-  dcamcap_stop( gCam );
   dcambuf_release( gCam );
   dcamwait_close( hwait );
+  dcamcap_stop( gCam );
 #endif
    
  return SUCCESS;
@@ -423,7 +528,7 @@ INT poll_event(INT source, INT count, BOOL test)
   
   int lamTDC = 1;
   int lamDGTZ = 1;
-  int lamCAM = 1;
+  int lamCAM = 0;
 
   count = 1;
 
@@ -455,6 +560,15 @@ INT poll_event(INT source, INT count, BOOL test)
     //wait for frame ready
     double exposure;
     dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
+    
+    
+    //get sensor temperature ----- PRELIMINARY WRITTEN ON FILE TO BE CHANGED ASAP
+    /*double cam_temperature;
+    dcamprop_getvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
+    ofstream myfile;
+    myfile.open("cam_temp.txt", ios_base::app);
+    myfile<<"CAM temp = "<<cam_temperature<<std::endl;
+    myfile.close();*/
 
     int delay = 180;
     if(mode==1 || mode==2) delay = 360.;
@@ -462,7 +576,7 @@ INT poll_event(INT source, INT count, BOOL test)
     DCAMWAIT_START waitstart;
     memset( &waitstart, 0, sizeof(waitstart) );
     waitstart.size = sizeof(waitstart);
-    waitstart.timeout = (int)(exposure*1000) + 30 + delay; //in ms --> max wait = 2*exposure + USB transfer time 
+    waitstart.timeout = (int)(exposure*1000) + 60 + delay; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
     
     //ofstream outfile;
     //if(!test){
@@ -470,19 +584,45 @@ INT poll_event(INT source, INT count, BOOL test)
     //  time_t result = time(nullptr);
     //  outfile << result << "  " ;
     //}
-
+    
+    DCAMERR err1;
+    
     int pics = 1;
     if(rec_ev==0) pics = 2;
-    for(int i=0;i<pics;i++){
+    for(int jj=0;jj<pics;jj++){
 
-      if(pics ==2 && i==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+      if(pics ==2 && jj==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 
       //send a trigger to the camera
       dcamcap_firetrigger(gCam,0);
       
-      waitstart.eventmask = DCAMWAIT_CAPEVENT_EXPOSUREEND;
-      DCAMERR err1 = dcamwait_start( hwait, &waitstart );
+      //waitstart.eventmask = DCAMWAIT_CAPEVENT_EXPOSUREEND;
+      waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+      err1 = dcamwait_start( hwait, &waitstart );
+      if(err1 == DCAMERR_TIMEOUT) {
+        //abc
+      	cm_msg(MERROR, "cugnus_daq", "poll_event: dcamwait_start timeout");
+      	
+      	/*disable_trigger();
 
+#ifdef HAVE_CAEN_BRD
+	//WRONG FOR V3718
+	CAENVME_StopPulser(gVme->handle,cvPulserA);
+#endif
+
+	dcambuf_release( gCam );
+	dcamwait_close( hwait );
+	dcamcap_stop( gCam );*/
+      	
+      	
+      	//system("odbedit -c stop");
+      	
+      	//sleep(5);
+      	
+      	//throw runtime_error("poll_event: dcamwait_start timeout");
+      	
+      }
+ 
       //if(pics==2)
       //	sleep(1);
       
@@ -493,9 +633,29 @@ INT poll_event(INT source, INT count, BOOL test)
       //}    
       //if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
 
-      if(pics ==2 && i==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+      if(pics ==2 && jj==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
 
       lamCAM = 1;
+      
+      if(err1 == DCAMERR_TIMEOUT) {
+	  lamCAM = 0;
+	  /*ConfigCamera();
+
+	  dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
+	  DCAMERR err_tmp;
+
+	  DCAMWAIT_OPEN waitopen_tmp;
+	  memset( &waitopen_tmp, 0, sizeof(waitopen_tmp) );
+	  waitopen_tmp.size = sizeof(waitopen_tmp);
+	  waitopen_tmp.hdcam = gCam;
+
+	  err_tmp = dcamwait_open( &waitopen_tmp );
+
+	  if(failed(err_tmp)) throw runtime_error("unable to open camera wait handle.\n");
+
+	  hwait = waitopen_tmp.hwait;*/
+      }
+      if(err1 != DCAMERR_TIMEOUT && failed(err1)) lamCAM = 0;
 
     }
     
@@ -508,10 +668,13 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
+    
+    vector<uint32_t> st(nboard);
     if(!freerun){
       uint32_t status;
-      for(int i=0;i<nboard;i++){
-	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[i],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+      for(int jj=0;jj<nboard;jj++){
+	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+	st[jj] = status;
 	lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
       }
     }
@@ -529,11 +692,39 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
 	
 #ifdef HAVE_CAMERA	
-	waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-	DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-	if(failed(err2) || err2 == DCAMERR_TIMEOUT) break;
+	//waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+	//DCAMERR err2 = dcamwait_start( hwait, &waitstart );
+	//if(failed(err2) || err2 == DCAMERR_TIMEOUT) {
+		//cout<<"\n\n\n\n\n\n\nerrore"<<endl;
+	//	break;
+	//}
 #endif
 
+	// DEBUG
+	/*if(DEBUG) {
+		  ofstream myfile;
+		  myfile.open("debug.txt", ios_base::app);
+		  
+		  //if(rec_ev == 1) {
+	    	//	double mode;
+	    	//	dcamprop_getvalue( gCam,  DCAM_IDPROP_DEVICEBUFFER_MODE, &mode);
+	    	//	double nframes;
+	    	//	dcamprop_getvalue( gCam,  DCAM_IDPROP_DEVICEBUFFER_FRAMECOUNTMAX, &nframes);
+	    	//	
+	    	//	myfile<<"CAM BUFFER MODE "<<mode<<"  "<<DCAMPROP_DEVICEBUFFER_MODE__THRU<<"  "<<nframes<<endl;
+	    		
+		  //}
+		  
+		  myfile << "STATUS ------"<<endl;
+
+		myfile<<rec_ev<<" "<<lamDGTZ<<" "<<lamCAM<<endl;
+		for(int jj=0; jj<nboard; jj++) {
+			myfile<<"boards "<<st[jj]<<endl;
+		}
+	
+	
+		myfile.close();
+	}*/
 	return TRUE;
 	
       }
@@ -541,11 +732,14 @@ INT poll_event(INT source, INT count, BOOL test)
     }
 
 #ifdef HAVE_CAMERA
-    //DCAMBUF_FRAME bufframe;
+    /*DCAMBUF_FRAME bufframe;
+    memset( &bufframe, 0, sizeof(bufframe) );
+    bufframe.size= sizeof(bufframe);
+    bufframe.iFrame = -1;
     //waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
     //DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-    //dcambuf_lockframe( gCam, &bufframe );
-    //dcambuf_release( gCam );
+    dcambuf_lockframe( gCam, &bufframe );
+    dcambuf_release( gCam );*/
 #endif
         
 #ifdef HAVE_CAEN_BRD
@@ -640,6 +834,36 @@ INT read_event(char *pevent, INT off)
 
 }
 
+#ifdef HAVE_CAMERA
+INT read_camera_status(char *pevent, INT off) {
+    
+    //HNDLE hDB;
+    //cm_get_experiment_database(&hDB, NULL);
+    
+    double *pdata;
+    
+    /* init bank structure */
+    bk_init(pevent);
+
+    //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
+    
+    /* create SCLR bank */
+    bk_create(pevent, "TCAM", TID_DOUBLE, (void **)&pdata);
+
+    double cam_temperature;
+    dcamprop_getvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
+
+    //db_set_value(hDB, 0, "/Equipment/CameraStatus/Variables/Sensor Temperature", &cam_temperature, sizeof(double), 1, TID_DOUBLE);
+    
+    *pdata++ = cam_temperature;
+
+    bk_close(pevent, pdata);
+
+    return bk_size(pevent);
+    
+}
+#endif
+
 ///////CUSTOM ROUTINES
 
 #ifdef HAVE_CAEN_DGTZ
@@ -679,6 +903,10 @@ void ReadDgtzConfig(){
     CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,gDigLink[i],0,gDigBase[i],&gDGTZ[i]);
     if(ret != CAEN_DGTZ_Success) {
       printf("Can't open digitizer, board number %d %d\n-- Error %d\n",i,gDigBase[i],ret);
+      //ret = CAEN_DGTZ_Reset(gDGTZ[i]);
+      //if(ret != CAEN_DGTZ_Success) {
+      //printf("Unable to clear digitizer, board number %d %d\n-- Error %d\n",i,gDigBase[i],ret);
+      //}
     }
 
     ////Board name
@@ -817,13 +1045,15 @@ e channel 0 and 1*/
       ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_DISABLED);
       //ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,???); //TO BE FIXED 
       ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_ACQ_ONLY);
-      ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i],128);                                /* Set the max number of events to transfer in a sigle readout */
+      ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i],256);//128);                                /* Set the max number of events to transfer in a sigle readout */
   
       //Acquisition mode
       ret |= CAEN_DGTZ_SetAcquisitionMode(gDGTZ[i],CAEN_DGTZ_SW_CONTROLLED);          /* Set the acquisition mode */
 
       if(ret != CAEN_DGTZ_Success) {  
 	printf("Errors during Digitizer Initialization, board number %d.\n",i);
+	cm_msg(MERROR, "cygnus_daq", "Errors during Digitizer Initialization, board number %d.", i);
+	
       }
 
     }
@@ -930,6 +1160,7 @@ INT ConfigDgtz(){
 	ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ[i],DRS4Frequency);
       }
     
+    
     //#endif
 
     sprintf(query,"/Configurations/DigitizerPostTrg[%d]",i);
@@ -952,24 +1183,58 @@ INT ConfigDgtz(){
 	int data = (ich%8<<16) | (int)(DGTZ_OFFSET[i][ich]/2.*65536 + 32767);
 	//CAEN_DGTZ_SetGroupDCOffset(gDGTZ[i],ich/8,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
 	ret |= CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
+		
       }
+      
+      //if(ret != CAEN_DGTZ_Success) {
+      //   cout<<BoardName[i]<<"  "<<endl;
+      //   printf("%d  %d  Errors during Digitizer Configuration.\n", i, ich);
+      //}
 	
     }
     
     //Uploading and enabling the automatic correction for the 1742 digitizer
-
+    bool enable_corrections;
+    size = 4*sizeof(bool);
+    db_get_value(hDB,0,"/Configurations/DRS4Correction",&enable_corrections, &size, TID_BOOL,TRUE);
+    
+    CAEN_DGTZ_ErrorCode ret2;
+    
+    
+    
     if(strcmp(BoardName[i],"V1742")==0)      //da decidere
       {
-	if ((ret = CAEN_DGTZ_LoadDRS4CorrectionData(gDGTZ[i],DRS4Frequency)) != CAEN_DGTZ_Success) 
-          { 
-	    cerr<<"Error in LoadDRS4Correction"<<endl;
-	    exit(EXIT_FAILURE);
-          } 
-	if ((ret = CAEN_DGTZ_EnableDRS4Correction(gDGTZ[i])) != CAEN_DGTZ_Success)
-          { 
-	    cerr<<"Error in EnableDRS4Correction"<<endl;
-	    exit(EXIT_FAILURE);
-          }
+      	if(!enable_corrections) {
+        //std::cout<<"DEBUG NO CORRECTION"<<std::endl;
+		ret2 = CAEN_DGTZ_DisableDRS4Correction(gDGTZ[i]);
+		if(ret2 != CAEN_DGTZ_Success) {
+			cerr<<"Error in DisableDRS4Correction"<<endl;
+		}
+	} else {
+      
+		if ((ret2 = CAEN_DGTZ_LoadDRS4CorrectionData(gDGTZ[i],DRS4Frequency)) != CAEN_DGTZ_Success) 
+		  { 
+		    cerr<<"Error in LoadDRS4Correction"<<endl;
+		    exit(EXIT_FAILURE);
+		  } 
+		if ((ret2 = CAEN_DGTZ_EnableDRS4Correction(gDGTZ[i])) != CAEN_DGTZ_Success)
+		  { 
+		    cerr<<"Error in EnableDRS4Correction"<<endl;
+		    exit(EXIT_FAILURE);
+		  }
+        
+        
+        // Print correction tables
+//         CAEN_DGTZ_DRS4Correction_t CTable[MAX_X742_GROUP_SIZE];
+//         ret = CAEN_DGTZ_GetCorrectionTables(gDGTZ[i], DRS4Frequency, (void*)CTable);
+//         if(ret != CAEN_DGTZ_Success) {
+//             throw std::runtime_error("DEBUG ctables.\n");
+//         } else {
+//             SaveCorrectionTables("./ctables/ctables_DCO", (uint32_t)(pow(2,NCHDGTZ[i]))-1, CTable);
+//         }
+        
+          
+        }
       }
 
     else{
@@ -978,13 +1243,16 @@ INT ConfigDgtz(){
       //ret |= CAEN_DGTZ_Calibrate(gDGTZ[i]);
 
     }
+    
 
     //Buffer allocation
     uint32_t bsize;
     ret |= CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i],&buffer_dgtz[i],&bsize);
 
-    if(ret != CAEN_DGTZ_Success) {  
+    if(ret != CAEN_DGTZ_Success) {
       printf("Errors during Digitizer Configuration.\n");
+      //cm_msg(MERROR, "cygnus_daq", "Errors during Digitizer Configuration.");
+      //throw runtime_error("Errors during Digitizer Digitizer Configuration.");
     }
     
   }//end for cycle on boards
@@ -1068,6 +1336,9 @@ INT ConfigCamera()
 
   err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, exposure);
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
+  
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + 0.18);
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
 
   int mode;
   size = sizeof(int);
@@ -1084,6 +1355,11 @@ INT ConfigCamera()
   dcamprop_setvalue( gCam, DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF);
   dcamprop_setvalue( gCam, DCAM_IDPROP_DEFECTCORRECT_MODE, DCAMPROP_DEFECTCORRECT_MODE__OFF);
   dcamprop_setvalue( gCam, DCAM_IDPROP_SPOTNOISEREDUCER, DCAMPROP_MODE__OFF);
+  
+  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TIMESTAMP_PRODUCER, DCAMPROP_TIMESTAMP_PRODUCER__IMAGINGDEVICE);
+  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in set TIMESTAMP_PRODUCER.");
+  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_DEVICEBUFFER_MODE, DCAMPROP_DEVICEBUFFER_MODE__THRU);
+  //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_DEVICEBUFFER_MODE" << endl;
   
   return 0;
   
@@ -1166,7 +1442,7 @@ INT read_tdc(char *pevent) {
   v1190_EventRead(gVme, gTdcBase, data, &count);
 
   if (count > 0) {
-
+    //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
     bk_create(pevent, "TDC0", TID_DWORD/*TID_BITFIELD*/, &pdata32);
 
     bool skipEmptyBank=false;
@@ -1221,7 +1497,7 @@ INT read_tdc(char *pevent) {
 
     bk_close(pevent, pdata32);
 
-  }  
+  }
 
   return 1;
 
@@ -1234,16 +1510,35 @@ int read_dgtz(char* pevent){
   uint32_t bsize;
   char * evtptr = NULL;
   uint32_t NumEvents;
+  uint32_t events_max = 128;
   CAEN_DGTZ_EventInfo_t eventInfo;
+    
+    
 
   WORD* pdata16 = NULL;
+  //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
   bk_create(pevent, "DIG0", TID_WORD, &pdata16);
+  
+  std::vector<std::vector<uint32_t>> TRGTTAG(nboard);
+  std::vector<int> EVTSNUM(nboard);
+  std::vector<uint16_t> StartIndexCell(128);
+    
+  // DEBUG
+  //ofstream myfile;
+  //myfile.open("debug.txt", ios_base::app);
+  //myfile << "read_dgtz ------"<<endl;
+    
 
   for(int i=0;i<nboard;i++){
+  
+    int event_i = 0;  
+      
+    std::vector<uint32_t> tmp_trgttag(128);
     
     CAEN_DGTZ_ReadData(gDGTZ[i],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz[i],&bsize);
-    CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);    
-
+    CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);
+    NumEvents =std::min(NumEvents, events_max);  
+    //myfile<<"i = "<<i<<" numevents = "<<NumEvents<<endl;
     //if(NumEvents != 1) cout << "---------- ERROR!!!!! DGTZ > 1 event!!! ----------" << endl;
     //cout << "NumEvents = " << NumEvents << endl;
     
@@ -1258,6 +1553,10 @@ int read_dgtz(char* pevent){
       
 	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
 	CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+	
+	tmp_trgttag[iev] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
+	//tmp_trgttag[event_i] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
+        //event_i ++;
       
 	for(int j=0;j<NCHDGTZ[i];j++){
 	
@@ -1289,6 +1588,11 @@ int read_dgtz(char* pevent){
 	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
 
 	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+	
+	tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag;
+	StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
+	//tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
+        //event_i++;
 
 	for(int j=0;j<NCHDGTZ[i];j++){
 
@@ -1309,14 +1613,25 @@ int read_dgtz(char* pevent){
       }
     } 
 
-      //#endif  
+    //#endif 
+    TRGTTAG[i] = tmp_trgttag;
+    EVTSNUM[i] = NumEvents; //event_i;
     
-    bk_close(pevent, pdata16);
+    //cout<<"       "<< endl<<endl<<endl<<endl;
+    //cout<<atoi(&BoardName[i][1])<<endl;
+    //for(unsigned int j=0; j<EVTSNUM[i]; j++) {
+    //  cout<<TRGTTAG[i][j]<<" "<<endl;
+    //}
+    //if(i==1) throw std::runtime_error("DEBUG");
+    
     
   }//end for on boards for reading data
 
+  bk_close(pevent, pdata16);
+    
   uint32_t* hdata = NULL;
   uint32_t header_data = 0;
+  //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
   bk_create(pevent, "DGH0", TID_DWORD, (void **)&hdata);
 
   header_data = nboard;
@@ -1339,7 +1654,7 @@ int read_dgtz(char* pevent){
     header_data = NCHDGTZ[i];
     *hdata++ = header_data;
     
-    header_data = NumEvents;
+    header_data = EVTSNUM[i];
     *hdata++ = header_data;
     
     CAEN_DGTZ_BoardInfo_t BoardInfo;
@@ -1355,10 +1670,27 @@ int read_dgtz(char* pevent){
       *hdata++ = header_data;
     }
     
-    bk_close(pevent, hdata);
-
+    //cout<<"=========="<<endl;
+    for(unsigned int j=0; j<EVTSNUM[i]; j++) {
+      //cout<<TRGTTAG[i][j]<<" "<<endl;
+      *hdata++ = TRGTTAG[i][j];
+    }
+    
+    if(strcmp(BoardName[i], "V1742")==0) {
+    	for(unsigned int j=0; j<EVTSNUM[i]; j++) {
+      		*hdata++ = (uint32_t)StartIndexCell[j];
+    	}
+    }
+    
   }//end for on boards for header
   
+  
+  //myfile.close();  //debug
+    
+  bk_close(pevent, hdata);
+
+  //throw std::runtime_error("DEBUG");
+
   return 0;
 
 }
@@ -1368,6 +1700,19 @@ int read_dgtz(char* pevent){
 INT read_camera(char *pevent)
 {
 
+  // transferinfo param
+  
+  DCAMERR err;
+  DCAMCAP_TRANSFERINFO captransferinfo;
+  if(DEBUG) {
+	memset( &captransferinfo, 0, sizeof(captransferinfo) );
+	captransferinfo.size	= sizeof(captransferinfo);
+
+	// get number of captured image
+	err = dcamcap_transferinfo( gCam, &captransferinfo );
+	if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
+  }
+
   DCAMBUF_FRAME bufframe;
   memset( &bufframe, 0, sizeof(bufframe) );
   bufframe.size= sizeof(bufframe);
@@ -1376,9 +1721,34 @@ INT read_camera(char *pevent)
   //////Read the data
   dcambuf_lockframe( gCam, &bufframe );
 
+
+  
   //////Create the bank
   WORD* pdata = NULL;
+  
+  uint64_t timetot = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
+  if (picIndex == 0) {
+    timeZero = (DWORD)(timetot/1000);
+  }
+  timetot -= (uint64_t)timeZero*(uint64_t)1000;
+
+  TIME_STAMP(pevent) = (unsigned int)timetot;
+  
+  //cout<<"DEBUG"<<picIndex<<"---"<<timeZero<<","<<timetot<<","<<(unsigned int)timetot<<endl;
+  if (picIndex==0) {
+    DWORD *ptime =NULL;
+    bk_create(pevent, "TIME", TID_DWORD, &ptime);
+    *ptime++ = timeZero;
+    bk_close(pevent, ptime);
+  }
+  
+  picIndex++;
+  
+  //std::cout<<"DEBUG: "<<(std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count()<<std::endl;
   bk_create(pevent, "CAM0", TID_WORD, &pdata);
+    
+    
+  std::vector<int> picture(10);
 
   //////Copy data into the bank
   /*
@@ -1402,6 +1772,19 @@ INT read_camera(char *pevent)
     
   }
   */
+  
+  if(DEBUG) {
+	  ofstream myfile;
+	  myfile.open("debug.txt", ios_base::app);
+	  
+	  DCAM_TIMESTAMP timestamp = bufframe.timestamp;
+	  uint32_t secs = timestamp.sec;
+	  uint32_t microsecs = timestamp.microsec;
+	  
+	  myfile<<"TIME STAMP = "<<secs<<" sec ; "<<microsecs<<" microsecs"<<endl;
+	  myfile<<"NFRAMES = "<<captransferinfo.nFrameCount<<endl;
+	  myfile.close();
+  }
 
   const char* pSrc = (const char*)bufframe.buf;
 
@@ -1410,13 +1793,14 @@ INT read_camera(char *pevent)
 
     //Copy one row
     const unsigned short* pDst = (const unsigned short*)pSrc;
+    //if(y < 10) picture[y] = *pDst;
 
     //go through the row
     for(int x = 0; x < bufframe.width; x++ ){
 
       WORD tmpData = *pDst++; 
-
       *pdata++ = tmpData;
+      //
 
     }
 
@@ -1424,6 +1808,29 @@ INT read_camera(char *pevent)
 
   }
   
+  
+  bk_close(pevent, pdata);
+  
+  
+  // check cache to find duplicates
+  /*bool check = TRUE;
+  for(int kk = 0; kk < 10; kk++) {
+  	if(picture[kk]!=cache_cam[kk]) {
+  		check = FALSE;
+  	}
+  	cache_cam[kk] = picture[kk];
+  }
+  
+  if(check) {
+  	cm_msg(MERROR, "read_camera", "Two identical pics in event %d. pdata = [%d, %d, ...]", rec_ev, cache_cam[0], cache_cam[1]);
+  	//myfile << "Two identical pics in event %d. pdata = ["<< cache_cam[0]<<", "<< cache_cam[1]<<", ...]"<<endl;
+  	
+  	
+  	//throw std::runtime_error("Two identical pics.");
+  }*/
+  
+  
+   
   /*
   unsigned short int threshold = 0;
   
@@ -1453,8 +1860,7 @@ INT read_camera(char *pevent)
   }
   */
   
-  bk_close(pevent, pdata);
-
+  
   //dcambuf_release( gCam );
 
   return 1;
@@ -1481,5 +1887,74 @@ void Free_arrays(){
   delete[]  BoardName;
   delete[]  buffer_dgtz;
   delete[]  DGTZ_OFFSET;
+}
+#endif
+
+
+
+
+
+
+
+#ifdef HAVE_CAEN_DGTZ
+int SaveCorrectionTables(char *outputFileName, uint32_t groupMask, CAEN_DGTZ_DRS4Correction_t *tables) {
+    char fnStr[MAX_BASE_INPUT_FILE_LENGTH + 1];
+    int ch,i,j, gr;
+    FILE *outputfile;
+
+    if((int)(strlen(outputFileName) - 17) > MAX_BASE_INPUT_FILE_LENGTH)
+        return -1; // Too long base filename
+    
+    std::cout<<"DEBUG MAX_X742_GROUP_SIZE = "<<MAX_X742_GROUP_SIZE<<std::endl<<std::flush;
+    
+    for(gr = 0; gr < MAX_X742_GROUP_SIZE; gr++) {
+        std::cout<<"DEBUG (start) gr = "<<gr<<std::endl<<std::flush;
+        CAEN_DGTZ_DRS4Correction_t *tb;
+
+        if(!((groupMask>>gr)&0x1))
+            continue;
+        tb = &tables[gr];
+        sprintf(fnStr, "%s_gr%d_cell.txt", outputFileName, gr);
+        printf("Saving correction table cell values to %s\n", fnStr);
+        if((outputfile = fopen(fnStr, "w")) == NULL)
+            return -2;
+        for(ch=0; ch<MAX_X742_CHANNEL_SIZE; ch++) {
+            fprintf(outputfile, "Calibration values from cell 0 to 1024 for channel %d:\n\n", ch);
+            for(i=0; i<1024; i+=8) {
+                for(j=0; j<8; j++)
+                    fprintf(outputfile, "%d\t", tb->cell[ch][i+j]);
+                fprintf(outputfile, "cell = %d to %d\n", i, i+7);
+            }
+        }
+        fclose(outputfile);
+        
+        sprintf(fnStr, "%s_gr%d_nsample.txt", outputFileName, gr);
+        printf("Saving correction table nsamples values to %s\n", fnStr);
+        if((outputfile = fopen(fnStr, "w")) == NULL)
+            return -3;
+        for(ch=0; ch<MAX_X742_CHANNEL_SIZE; ch++) {
+            fprintf(outputfile, "Calibration values from cell 0 to 1024 for channel %d:\n\n", ch);
+            for(i=0; i<1024; i+=8) {
+                for(j=0; j<8; j++)
+                    fprintf(outputfile, "%d\t", tb->nsample[ch][i+j]);
+                fprintf(outputfile, "cell = %d to %d\n", i, i+7);
+            }
+        }
+        fclose(outputfile);
+
+        sprintf(fnStr, "%s_gr%d_time.txt", outputFileName, gr);
+        printf("Saving correction table time values to %s\n", fnStr);
+        if((outputfile = fopen(fnStr, "w")) == NULL)
+            return -4;
+        fprintf(outputfile, "Calibration values (ps) from cell 0 to 1024 :\n\n");
+        for(i=0; i<1024; i+=8) {
+            for(ch=0; ch<8; ch++)
+                fprintf(outputfile, "%09.3f\t", tb->time[i+ch]);
+            fprintf(outputfile, "cell = %d to %d\n", i, i+7);
+        }
+        fclose(outputfile);
+    }
+    
+    return 0;
 }
 #endif

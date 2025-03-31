@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">QUEST- Charge calibration - CERN</Comment>
+<ODBSet l="5" path="/Equipment/HV/Variables/ChState[0]">0</ODBSet>
+<ODBSet l="6" path="/Configurations/Exposure">0.2</ODBSet>
+<ODBSet l="7" path="/Configurations/FreeRunning">0</ODBSet>
+<ODBSet l="8" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="9" path="/Logger/Write data">0</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[0]">0</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[1]">0</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[2]">0</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[3]">0</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[4]">0</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[5]">0</ODBSet>
+<ODBSet l="17" path="/Equipment/HV/Variables/Demand[6]">0</ODBSet>
+<Wait l="19" for="seconds">10</Wait>
+<Wait l="21" for="seconds">5</Wait>
+<RunDescription l="22">QUEST - Charge calibration - 2.50E-14 CERN</RunDescription>
+<Transition l="23">START</Transition>
+<Wait l="24" for="events">100</Wait>
+<Transition l="25">STOP</Transition>
+</RunSequence>

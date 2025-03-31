@@ -1,0 +1,28 @@
+COMMENT "Data Taking - ED 1000mbar Ar/CF4 60/40 - QUEST - EHD"
+
+######################## DATA PREPARATION ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "1"
+ODBSET "/Configurations/Exposure", "0.3"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "0"
+ODBSET "/Configurations/pmt_acquisition", "0"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "450"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "1.0" 
+#SCRIPT "python3 ./ArduinoServerManager/rpcClient_setField_KEG.py -f 0.3 -gem 400 400 400"
+#WAIT seconds, 10
+
+LOOP INFINITE
+    #RUNDESCRIPTION "INAF - Pol. Source 3 uA 30 kV - FLi 800 - Conf 0-FLi-100 - No Collimator - Mb tube - 60/40 - FUSION - Schneider - 300 ccm"
+    RUNDESCRIPTION "INAF - Cosmic - Ar/CF4 60/40 - QUEST - EHD - 300 ccm"
+    TRANSITION START
+    WAIT events, 400
+    TRANSITION STOP
+    #WAIT seconds, 1200
+ENDLOOP

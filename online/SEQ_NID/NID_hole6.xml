@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">Data Taking - NID 650mbar He/CF4 60/40/1.6</Comment>
+<Goto l="3" sline="11" />
+<ODBSet l="6" path="/Configurations/StepperMotor/SelectedPosition">6</ODBSet>
+<ODBSet l="7" path="/Configurations/StepperMotor/buttonPressed">y</ODBSet>
+<Wait l="8" for="ODBvalue" path="/Configurations/SourceState/source_position" op="==">6</Wait>
+<ODBSet l="11" path="/Equipment/HV/Variables/ChState[0]">1</ODBSet>
+<ODBSet l="12" path="/Configurations/Exposure">0.3</ODBSet>
+<ODBSet l="13" path="/Configurations/FreeRunning">0</ODBSet>
+<ODBSet l="14" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="15" path="/Configurations/pmt_acquisition">1</ODBSet>
+<ODBSet l="16" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="18" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="19" path="/Equipment/HV/Variables/Demand[1]">540</ODBSet>
+<ODBSet l="20" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="21" path="/Equipment/HV/Variables/Demand[3]">530</ODBSet>
+<ODBSet l="22" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="23" path="/Equipment/HV/Variables/Demand[5]">520</ODBSet>
+<Script l="28">python3 /home/cygno01/daq/online/ArduinoServerManager/rpcClient_setField_KEG.py -f 0.6 -gem 540 530 520</Script>
+<ODBSet l="29" path="/Equipment/HV/Variables/Demand[6]">0.6</ODBSet>
+<Wait l="30" for="seconds">15</Wait>
+<Loop l="32" le="38" n="4">
+<Wait l="33" for="seconds">20</Wait>
+<RunDescription l="34">NID - 60/40/1.6 - 650mbar - HOLE 6</RunDescription>
+<Transition l="35">START</Transition>
+<Wait l="36" for="events">250</Wait>
+<Transition l="37">STOP</Transition>
+</Loop>
+</RunSequence>

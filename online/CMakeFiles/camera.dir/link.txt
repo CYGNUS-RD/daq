@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcamera.a  CMakeFiles/camera.dir/mydrivers/camera/common.cpp.o CMakeFiles/camera.dir/mydrivers/camera/qthread.cpp.o
+/usr/bin/ranlib libcamera.a

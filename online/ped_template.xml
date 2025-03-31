@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">FUSION - He/CF4 60/40 CERN 'Pedestal</Comment>
+<ODBSet l="4" path="/Equipment/HV/Variables/ChState[0]">0</ODBSet>
+<ODBSet l="5" path="/Configurations/Exposure">0.2</ODBSet>
+<ODBSet l="6" path="/Configurations/FreeRunning">1</ODBSet>
+<ODBSet l="7" path="/Configurations/Pedestal">1</ODBSet>
+<ODBSet l="8" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="10" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[1]">100</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[3]">100</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[5]">100</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[6]">1.0</ODBSet>
+<Script l="17">python3 ./ArduinoServerManager/rpcClient_setField_MANGOLINO.py -f 1.0 -gem 100 100 100</Script>
+<Wait l="18" for="seconds">30</Wait>
+<RunDescription l="20">Pedestal</RunDescription>
+<Transition l="21">START</Transition>
+<Wait l="22" for="events">200</Wait>
+<Transition l="23">STOP</Transition>
+</RunSequence>

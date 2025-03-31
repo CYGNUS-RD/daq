@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<RunSequence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="">
+<Comment l="1">QUEST- He/CF4-HFO 60/40/5 CERN - Fe55</Comment>
+<ODBSet l="5" path="/Equipment/HV/Variables/ChState[0]">1</ODBSet>
+<ODBSet l="6" path="/Configurations/Exposure">0.2</ODBSet>
+<ODBSet l="7" path="/Configurations/FreeRunning">0</ODBSet>
+<ODBSet l="8" path="/Configurations/Pedestal">0</ODBSet>
+<ODBSet l="9" path="/Logger/Write data">1</ODBSet>
+<ODBSet l="11" path="/Equipment/HV/Variables/Demand[0]">0.0</ODBSet>
+<ODBSet l="12" path="/Equipment/HV/Variables/Demand[1]">480</ODBSet>
+<ODBSet l="13" path="/Equipment/HV/Variables/Demand[2]">2.5</ODBSet>
+<ODBSet l="14" path="/Equipment/HV/Variables/Demand[3]">480</ODBSet>
+<ODBSet l="15" path="/Equipment/HV/Variables/Demand[4]">2.5</ODBSet>
+<ODBSet l="16" path="/Equipment/HV/Variables/Demand[5]">480</ODBSet>
+<ODBSet l="17" path="/Equipment/HV/Variables/Demand[6]">0.5</ODBSet>
+<Script l="18">python3 ./ArduinoServerManager/rpcClient_setField_MANGOLINO.py -f 0.5 -gem 480 480 480 -o 0</Script>
+<Wait l="20" for="seconds">5</Wait>
+<Loop l="22" le="28" n="1">
+<Wait l="23" for="seconds">10</Wait>
+<RunDescription l="24">QUEST - He/CF4-HFO 60/40/5 - Fe55 - GEM 480 - CERN</RunDescription>
+<Transition l="25">START</Transition>
+<Wait l="26" for="events">500</Wait>
+<Transition l="27">STOP</Transition>
+</Loop>
+</RunSequence>

@@ -1,0 +1,24 @@
+COMMENT "QUEST - He/CF4/HFO 60/40/2.5 CERN - 55Fe"
+
+######################## PEDESTAL ########################
+ODBSET "/Equipment/HV/Variables/ChState[0]", "0"
+ODBSET "/Configurations/Exposure", "0.2"
+ODBSET "/Configurations/FreeRunning", "1"
+ODBSET "/Configurations/Pedestal", "1"
+ODBSET "/Logger/Write data", "1"
+
+ODBSET "/Equipment/HV/Variables/Demand[0]", "0.0"
+ODBSET "/Equipment/HV/Variables/Demand[1]", "100"
+ODBSET "/Equipment/HV/Variables/Demand[2]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[3]", "100"
+ODBSET "/Equipment/HV/Variables/Demand[4]", "2.5"
+ODBSET "/Equipment/HV/Variables/Demand[5]", "100"
+ODBSET "/Equipment/HV/Variables/Demand[6]", "0.5"
+SCRIPT "python3 ./ArduinoServerManager/rpcClient_setField_MANGOLINO.py -f 0.5 -gem 100 100 100 -o 0"
+WAIT seconds, 30
+
+WAIT seconds, 5
+RUNDESCRIPTION "Pedestal"
+TRANSITION START
+WAIT events, 150
+TRANSITION STOP

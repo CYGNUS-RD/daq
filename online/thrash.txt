@@ -1,0 +1,35 @@
+Frontend name          :     cygnus_daq
+Event buffer size      :     1000000000
+User max event size    :     500000000
+User max frag. size    :     5242880
+# of events per buffer :     2
+
+Connect to experiment CYGNUS_RD...
+OK
+Init hardware...
+V1742
+request of opening connection with CAEN VME Bridge : V1718 at Link: 0
+FW release: 2.41.0
+-2
+gVme 268905632 status 2
+
+Connected to CAEN Digitizer Model V1742 6 -- 32 channels
+C14440-20UP (S/N: 000428) on USB3
+DCAM_IDSTR_VENDOR         = Hamamatsu
+DCAM_IDSTR_MODEL          = C14440-20UP
+DCAM_IDSTR_CAMERAID       = S/N: 000428
+DCAM_IDSTR_BUS            = USB3
+DCAM_IDSTR_CAMERAVERSION  = 1.21
+DCAM_IDSTR_DRIVERVERSION  = 1.2.6.0
+DCAM_IDSTR_MODULEVERSION  = 4.0.6269.0
+DCAM_IDSTR_DCAMAPIVERSION = 4.00
+C14440-20UP (S/N: 000428) on USB3
+DEBUG: DCAM_IDPROP_INTERNAL_FRAMEINTERVAL = 0.19464
+DEBUG: DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY = 0.18456
+DEBUG: DCAM_IDPROP_TIMING_READOUTTIME = 0.18488
+
+Calibrating.....OK
+[2J[1;1Hcygnus_daq connected to <local>. Press "!" to exit[2;1H================================================================================[3;1HRun status:   Stopped[3;26HRun number 305   [4;1H================================================================================[5;1HEquipment     Status     Events     Events/sec Rate[B/s]  ODB->FE    FE->ODB[6;1H--------------------------------------------------------------------------------[7;1HTrigger[1;73H09:39:33[7;15HOK       [7;26H0      [7;37H0.0      [7;48H0.0      [7;59H0       [7;70H0       [8;1H[1;73H09:39:33[7;15HOK       [7;26H0      [7;37H0.0      [7;48H0.0      [7;59H0       [7;70H0       [8;1HDEBUG: DCAM_IDPROP_INTERNAL_FRAMEINTERVAL = 0.19464
+DEBUG: DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY = 0.18456
+DEBUG: DCAM_IDPROP_TIMING_READOUTTIME = 0.18488
+[3;15HRunning [3;37H306[1;73H09:39:36[7;15HOK       [7;26H0      [7;37H0.0      [7;48H0.0      [7;59H0       [7;70H0       [8;1H[3;80H-[3;80H\[3;80H|[3;80H/[1;73H09:39:39[7;15HOK       [7;26H5      [7;37H1.7      [7;48H17.757M      [7;59H0       [7;70H0       [8;1H[3;80H-[3;80H\[3;80H|[1;73H09:39:43[7;15HOK       [7;26H8      [7;37H0.8      [7;48H8.114M      [7;59H0       [7;70H0       [8;1H[3;80H/[3;80H-[1;73H09:39:46[7;15HOK       [7;26H10      [7;37H0.6      [7;48H6.161M      [7;59H0       [7;70H0       [8;1H[3;80H\[3;80H|[3;80H/[1;73H09:39:50[7;15HOK       [7;26H13      [7;37H0.8      [7;48H8.620M      [7;59H0       [7;70H0       [8;1H[3;80H-[3;80H\[3;80H|[1;73H09:39:55[7;15HOK       [7;26H16      [7;37H0.6      [7;48H6.806M      [7;59H0       [7;70H0       [8;1H[3;80H/[3;80H-[3;80H\[1;73H09:39:58[7;15HOK       [7;26H19      [7;37H0.8      [7;48H8.640M      [7;59H0       [7;70H0       [8;1H[3;80H|[3;80H/[1;73H09:40:02[7;15HOK       [7;26H21      [7;37H0.6      [7;48H6.153M      [7;59H0       [7;70H0       [8;1H[3;80H-[3;80H\[3;80H|[1;73H09:40:06[7;15HOK       [7;26H24      [7;37H0.8      [7;48H8.633M      [7;59H0       [7;70H0       [8;1H[3;80H/[3;80H-[1;73H09:40:09[7;15HOK       [7;26H26      [7;37H0.6      [7;48H6.166M      [7;59H0       [7;70H0       [8;1H[3;80H\[3;80H|[3;80H/[1;73H09:40:13[7;15HOK       [7;26H29      [7;37H0.8      [7;48H8.636M      [7;59H0       [7;70H0       [8;1H[3;80H-[3;80H\[1;73H09:40:16[7;15HOK       [7;26H31      [7;37H0.6      [7;48H6.168M      [7;59H0       [7;70H0       [8;1H[3;80H|[3;80H/[3;80H-[1;73H09:40:20[7;15HOK       [7;26H34      [7;37H0.8      [7;48H8.631M      [7;59H0       [7;70H0       [8;1H[3;80H\[3;80H|[1;73H09:40:24[7;15HOK       [7;26H36      [7;37H0.6      [7;48H6.161M      [7;59H0       [7;70H0       [8;1H
