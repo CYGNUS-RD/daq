@@ -586,6 +586,8 @@ INT poll_event(INT source, INT count, BOOL test)
     /* poll hardware and set flag to TRUE if new event is available */
 #ifdef HAVE_CAMERA
 
+
+    DCAMERR err1;
     //wait for frame ready
     double exposure;
     dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
@@ -599,17 +601,33 @@ INT poll_event(INT source, INT count, BOOL test)
     myfile<<"CAM temp = "<<cam_temperature<<std::endl;
     myfile.close();*/
 
+    /* //old way to get delay from odb
     int delay ;
     size = sizeof(int);
     db_get_value(hDB, 0, "/Configurations/CameraDelay",&delay,&size,TID_INT,TRUE);
+    */
     
-    if(test) delay += 100;
-    if(mode==1 || mode==2) delay = 360.;
+    // get delay from camera
+    double delay;
+    err1 = dcamprop_getvalue(gCam, DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+    if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
+    
+    //if(test) delay += 100;
+    if(mode==1 || mode==2) delay = 360./1000.;
     
     DCAMWAIT_START waitstart;
     memset( &waitstart, 0, sizeof(waitstart) );
     waitstart.size = sizeof(waitstart);
-    waitstart.timeout = DCAMWAIT_TIMEOUT_INFINITE;//(int)(exposure*1000) + 60 + delay; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+    
+    if (mode==3) {
+        waitstart.timeout = DCAMWAIT_TIMEOUT_INFINITE;
+    }
+    else
+    {
+        (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+    }
+    
+
     waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
     
     //ofstream outfile;
@@ -619,7 +637,7 @@ INT poll_event(INT source, INT count, BOOL test)
     //  outfile << result << "  " ;
     //}
     
-    DCAMERR err1;
+    
     
     int pics = 1;
     //if(rec_ev==0) pics = 2;
