@@ -901,11 +901,34 @@ INT read_event(char *pevent, INT off)
 
   cm_get_experiment_database(&hDB, NULL);
 
+
+  int mode;
+  int size = sizeof(int);
+  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+
   bool freerun;
-  int size = 4*sizeof(bool);
+  size = 4*sizeof(bool);
 
   db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
-  if(!freerun) read_dgtz(pevent);
+  if(!freerun && mode != 3) read_dgtz(pevent);
+  else if(!freerun && mode == 3) {
+
+    int lamDGTZ = 0;
+
+    // Check if boards are data ready
+    vector<uint32_t> st(nboard);
+    if(!freerun){
+      uint32_t status;
+      for(int jj=0;jj<nboard;jj++){
+        CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+        st[jj] = status;
+        lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+      }
+    }
+
+    if(lamDGTZ == 1) read_dgtz(pevent);
+
+  }
 
 #endif
 
@@ -1221,33 +1244,33 @@ INT ConfigDgtz(){
     //#ifdef HAVE_V1742
     else if(strcmp(BoardName[i],"V1742")==0)     
       {
-	ndgtz[i] = 1024;
-	int fsampling = 0;
-	sprintf(query,"/Configurations/SamplingFrequency[%d]",i);
-	db_get_value(hDB, 0, query,&fsampling,&size,TID_INT,TRUE);
-	switch(fsampling){
-	case 0:
-	  SAMPLING[i] = (int)((1000.0/750.0)*1000.0);
-             DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;		
-             break;
-	case 1:
-	  SAMPLING[i] = (int)1000;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;		
-	  break;
-	case 2:
-	  SAMPLING[i] = (int)400;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			
-	  break;
-	case 3:
-	  SAMPLING[i] = (int)200;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
-	  break;
-	default:
-	  SAMPLING[i] = (int)200;
-	  DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
-	  break;
-	}
-	ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ[i],DRS4Frequency);
+        ndgtz[i] = 1024;
+        int fsampling = 0;
+        sprintf(query,"/Configurations/SamplingFrequency[%d]",i);
+        db_get_value(hDB, 0, query,&fsampling,&size,TID_INT,TRUE);
+        switch(fsampling){
+        case 0:
+          SAMPLING[i] = (int)((1000.0/750.0)*1000.0);
+                    DRS4Frequency=CAEN_DGTZ_DRS4_750MHz;		
+                    break;
+        case 1:
+          SAMPLING[i] = (int)1000;
+          DRS4Frequency=CAEN_DGTZ_DRS4_1GHz;		
+          break;
+        case 2:
+          SAMPLING[i] = (int)400;
+          DRS4Frequency=CAEN_DGTZ_DRS4_2_5GHz;			
+          break;
+        case 3:
+          SAMPLING[i] = (int)200;
+          DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
+          break;
+        default:
+          SAMPLING[i] = (int)200;
+          DRS4Frequency=CAEN_DGTZ_DRS4_5GHz;			
+          break;
+        }
+        ret |= CAEN_DGTZ_SetDRS4SamplingFrequency(gDGTZ[i],DRS4Frequency);
       }
     
     
@@ -1267,12 +1290,12 @@ INT ConfigDgtz(){
       else if(DGTZ_OFFSET[i][ich] < -0.5) DGTZ_OFFSET[i][ich] = -0.5;
       
       if( (strcmp(BoardName[i],"V1761")==0) || (strcmp(BoardName[i],"V1720E")==0) )    
-	ret |= CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
+        ret |= CAEN_DGTZ_SetChannelDCOffset(gDGTZ[i],ich,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
       else if(strcmp(BoardName[i],"V1742")==0){      //da decidere
-	int grreg = 0x1098 | (ich/8 << 8);
-	int data = (ich%8<<16) | (int)(DGTZ_OFFSET[i][ich]/2.*65536 + 32767);
-	//CAEN_DGTZ_SetGroupDCOffset(gDGTZ[i],ich/8,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
-	ret |= CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
+        int grreg = 0x1098 | (ich/8 << 8);
+        int data = (ich%8<<16) | (int)(DGTZ_OFFSET[i][ich]/2.*65536 + 32767);
+        //CAEN_DGTZ_SetGroupDCOffset(gDGTZ[i],ich/8,(uint32_t)(DGTZ_OFFSET[i][ich]*65536 + 32767));
+        ret |= CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
 		
       }
       
@@ -1694,30 +1717,30 @@ int read_dgtz(char* pevent){
     if(strcmp(BoardName[i],"V1761")==0 || strcmp(BoardName[i],"V1720E")==0){
       
       CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
-    
+
       for(int iev=0;iev<NumEvents;iev++){
-      
-	CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
-      
-	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
-	CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-	
-	tmp_trgttag[iev] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
-	//tmp_trgttag[event_i] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
-        //event_i ++;
-      
-	for(int j=0;j<NCHDGTZ[i];j++){
-	
-	  for (uint32_t k=0; k<ndgtz[i]; ++k) {
-	  
-	    uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
-	    *pdata16++ = temp;
-	  
-	  }
-	
-	}
-      
-	CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
+
+        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
+
+        CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+        CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+
+        tmp_trgttag[iev] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
+        //tmp_trgttag[event_i] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
+          //event_i ++;
+
+        for(int j=0;j<NCHDGTZ[i];j++){
+
+          for (uint32_t k=0; k<ndgtz[i]; ++k) {
+
+            uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
+            *pdata16++ = temp;
+
+          }
+
+        }
+
+        CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
 
       }
 
@@ -1731,33 +1754,33 @@ int read_dgtz(char* pevent){
 
       for(int iev=0;iev<NumEvents;iev++){
 
-	CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);					
+        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);					
 
-	CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+        CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
 
-	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-	
-	tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag;
-	StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
-	//tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
-        //event_i++;
+        CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
 
-	for(int j=0;j<NCHDGTZ[i];j++){
+        tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag;
+        StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
+        //tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
+          //event_i++;
 
-	  uint32_t ig = j/8;
-	  uint32_t ich = j%8;
-	
-	  for (uint32_t k=0; k<ndgtz[i]; ++k) {
-	  
-	    uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][k]);
-	    *pdata16++ = temp;
-	  
-	  }
-	
-	}
-      
-	CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
-      
+        for(int j=0;j<NCHDGTZ[i];j++){
+
+          uint32_t ig = j/8;
+          uint32_t ich = j%8;
+
+          for (uint32_t k=0; k<ndgtz[i]; ++k) {
+
+            uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][k]);
+            *pdata16++ = temp;
+
+          }
+
+        }
+
+        CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
+
       }
     } 
 
