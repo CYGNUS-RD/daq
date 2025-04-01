@@ -624,7 +624,7 @@ INT poll_event(INT source, INT count, BOOL test)
     }
     else
     {
-        (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+        waitstart.timeout = (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
     }
     
 
@@ -661,11 +661,10 @@ INT poll_event(INT source, INT count, BOOL test)
     
     for(int jj=0;jj<pics;jj++){
       
-      if(pics ==2 && jj==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+      //if(pics ==2 && jj==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+      if(rec_ev == 0 && mode != 3 ) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 
       //send a trigger to the camera
-      //AGGIUSTARE
-      
       if(mode!=3) dcamcap_firetrigger(gCam,0);
       
       //if(rec_ev==0) sleep(1);
@@ -711,29 +710,36 @@ INT poll_event(INT source, INT count, BOOL test)
       //}    
       //if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
 
-      if(pics ==2 && jj==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+      //if(pics ==2 && jj==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+      if(rec_ev == 0 && mode != 3 ) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
 
       lamCAM = 1;
       
       if(err1 == DCAMERR_TIMEOUT) {
-	  lamCAM = 0;
-	  /*ConfigCamera();
+	      lamCAM = 0;
+	      /*ConfigCamera();
 
-	  dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
-	  DCAMERR err_tmp;
+	      dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
+	      DCAMERR err_tmp;
 
-	  DCAMWAIT_OPEN waitopen_tmp;
-	  memset( &waitopen_tmp, 0, sizeof(waitopen_tmp) );
-	  waitopen_tmp.size = sizeof(waitopen_tmp);
-	  waitopen_tmp.hdcam = gCam;
+	      DCAMWAIT_OPEN waitopen_tmp;
+	      memset( &waitopen_tmp, 0, sizeof(waitopen_tmp) );
+	      waitopen_tmp.size = sizeof(waitopen_tmp);
+	      waitopen_tmp.hdcam = gCam;
 
-	  err_tmp = dcamwait_open( &waitopen_tmp );
+	      err_tmp = dcamwait_open( &waitopen_tmp );
 
-	  if(failed(err_tmp)) throw runtime_error("unable to open camera wait handle.\n");
+	      if(failed(err_tmp)) throw runtime_error("unable to open camera wait handle.\n");
 
-	  hwait = waitopen_tmp.hwait;*/
+	      hwait = waitopen_tmp.hwait;*/
       }
-      if(err1 != DCAMERR_TIMEOUT && failed(err1)) lamCAM = 0;
+      if(err1 != DCAMERR_TIMEOUT && failed(err1) && !test) {
+        lamCAM = 0;
+        /*if(failed(err1)) { // [FIXME]: it provokes termination of the program when stopping the run
+            cm_msg(MERROR, "cygnus_fe", "Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.");
+            throw runtime_error("Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.\n");
+        }*/
+      }
 
     }
     
@@ -748,19 +754,23 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
-    
-    vector<uint32_t> st(nboard);
-    if(!freerun){
-      uint32_t status;
-      for(int jj=0;jj<nboard;jj++){
-	CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-	st[jj] = status;
-	lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
-      }
+    if (mode !=3) {
+        vector<uint32_t> st(nboard);
+        if(!freerun){
+          uint32_t status;
+          for(int jj=0;jj<nboard;jj++){
+	    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+	    st[jj] = status;
+	    lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+          }
+        }
     }
 #endif
 
-    flag = (lamTDC && lamDGTZ && lamCAM);
+    if(mode!=3) {
+        flag = (lamTDC && lamDGTZ && lamCAM);
+    } else flag = lamCAM;
+    
 
     if (flag){
       if (!test){
@@ -831,7 +841,7 @@ INT poll_event(INT source, INT count, BOOL test)
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
-    if(lamDGTZ) {
+    if(lamDGTZ && mode != 3) {
       for(int i=0;i<nboard;i++){
 	CAEN_DGTZ_ClearData(gDGTZ[i]);
       }
@@ -840,7 +850,7 @@ INT poll_event(INT source, INT count, BOOL test)
     
     //Reset GATE (pulser B)
     //WRONG FOR V3718
-    CAENVME_StopPulser(gVme->handle,cvPulserB);
+    if(mode != 3) CAENVME_StopPulser(gVme->handle,cvPulserB);
     
 #endif
     
@@ -1445,10 +1455,11 @@ INT ConfigCamera()
   
   //continous stream mode
   if(mode==3) {
-    
     err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__START );
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
-  
+  } else {
+    err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
   }
   
   
