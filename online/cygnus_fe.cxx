@@ -452,6 +452,7 @@ INT begin_of_run(INT run_number, char *error)
   
 #endif
   
+  cerr<<"Enabling trigger..."<<endl<<flush;
   enable_trigger();
 
   return SUCCESS;
@@ -524,340 +525,194 @@ INT poll_event(INT source, INT count, BOOL test)
    is available. If test equals TRUE, don't return. The test
    flag is used to time the polling */
 {
-  //if (test) cout<<" TEST = TRUE "<<endl;
-  //cout<<"DEBUG camera"<<endl;
 
-  //if(!test) {
-  //cout<<"DEBUG camera"<<endl;
-  
   int maxevents;
   bool freerun;
+  int mode;
   int size = sizeof(int);
   HNDLE hDB;
-
   cm_get_experiment_database(&hDB, NULL);
 
+  size = sizeof(int);
+  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+  size = 4*sizeof(bool);
+  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
+  size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/MaxEvents",&maxevents,&size,TID_INT,TRUE);
 
+  // If more than needed event then do not acquire
   double events;
   size = sizeof(double);
   db_get_value(hDB, 0, "/Equipment/Trigger/Statistics/Events sent",&events,&size,TID_DOUBLE,TRUE);
-
-  int mode;
-  size = sizeof(int);
-  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-  
   if(maxevents > 0 && events >= maxevents) return 0;
 
-  size = 4*sizeof(bool);
-  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
 
   int i;
+
   DWORD flag;
-  
   int lamTDC = 1;
   int lamDGTZ = 1;
   int lamCAM = 0;
 
-  count = 1;
 
-  if (count > 100) count = 100;
-  
-  for (i = 0; i < count; i++) {
-
-    /*
-#ifdef HAVE_CAEN_BRD    
-    //////Sync test
-    if(rec_ev == 4){
-      //Switch LED on through OUT_3
-      //WRONG FOR V3718
-      CAENVME_SetOutputRegister(gVme->handle,cvOut3Bit|cvOut1Bit);  
-      sleep(1);
-    }
-    else if(rec_ev == 5){
-      //Switch LED off through OUT_3
-      //WRONG FOR V3718
-      CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);
-      sleep(1);
-    }
-#endif
-    */
-    
-    /* poll hardware and set flag to TRUE if new event is available */
+  /* poll hardware and set flag to TRUE if new event is available */
 #ifdef HAVE_CAMERA
 
+  DCAMERR err1;
 
-    DCAMERR err1;
-    //wait for frame ready
-    double exposure;
-    dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
-    
-    
-    //get sensor temperature ----- PRELIMINARY WRITTEN ON FILE TO BE CHANGED ASAP
-    /*double cam_temperature;
-    dcamprop_getvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
-    ofstream myfile;
-    myfile.open("cam_temp.txt", ios_base::app);
-    myfile<<"CAM temp = "<<cam_temperature<<std::endl;
-    myfile.close();*/
+  //wait for frame ready
 
-    /* //old way to get delay from odb
-    int delay ;
-    size = sizeof(int);
-    db_get_value(hDB, 0, "/Configurations/CameraDelay",&delay,&size,TID_INT,TRUE);
-    */
+  // Get camera exposure
+  double exposure;
+  dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
     
-    // get delay from camera
-    double delay;
-    err1 = dcamprop_getvalue(gCam, DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
-    if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
+  // Get GEDelay from camera
+  double delay;
+  err1 = dcamprop_getvalue(gCam, DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+  if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
     
-    //if(test) delay += 100;
-    if(mode==1 || mode==2) delay = 360./1000.;
+  if(mode==1 || mode==2) delay = 360./1000.;
+  
+  // Setup of DCAMWAIT object
+  DCAMWAIT_START waitstart;
+  memset( &waitstart, 0, sizeof(waitstart) );
+  waitstart.size = sizeof(waitstart);
+  if (mode==3) {
+      waitstart.timeout = DCAMWAIT_TIMEOUT_INFINITE;
+  }
+  else
+  {
+      waitstart.timeout = (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+  }
+  waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
     
-    DCAMWAIT_START waitstart;
-    memset( &waitstart, 0, sizeof(waitstart) );
-    waitstart.size = sizeof(waitstart);
+
+  int pics = 1;
+  if(rec_ev==0) pics = 2;
+  
+  /*// Get number of acquired pictures so far
+  DCAMERR errtest;
+  DCAMCAP_TRANSFERINFO captransferinfo;
+  memset( &captransferinfo, 0, sizeof(captransferinfo) );
+  captransferinfo.size	= sizeof(captransferinfo);
+
+  errtest = dcamcap_transferinfo( gCam, &captransferinfo );
+  if(failed(errtest)) throw runtime_error("poll_event: unable to get captransferinfo.\n");
     
-    if (mode==3) {
-        waitstart.timeout = DCAMWAIT_TIMEOUT_INFINITE;
+    
+  string numframe = to_string((int)captransferinfo.nFrameCount);
+  
+  cm_msg(MINFO, "cygnus_daq", numframe.c_str());*/
+    
+  for(int jj=0;jj<pics;jj++){
+    
+    if(pics ==2 && jj==0) {
+      CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+
+      cerr<<"---> GATE SET TO 0"<<endl<<flush;
     }
-    else
-    {
-        waitstart.timeout = (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+
+    //if(rec_ev == 0 && mode != 3 ) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+    //if(rev_ev == 0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+
+    //send a trigger to the camera if mode is not continuous
+    if(mode!=3) dcamcap_firetrigger(gCam,0);
+      
+    // Wait for frameready
+    err1 = dcamwait_start( hwait, &waitstart );
+
+    if(err1 == DCAMERR_TIMEOUT) cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d", jj);
+
+    if(pics ==2 && jj==0) {
+      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+      cerr<<"---> GATE SET TO 1"<<endl<<flush;
     }
-    
+    //if(rec_ev == 0 && mode != 3 ) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+    //if(rev_ev == 0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
 
-    waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-    
-    //ofstream outfile;
-    //if(!test){
-    //  outfile.open("time.dat",ios_base::app);
-    //  time_t result = time(nullptr);
-    //  outfile << result << "  " ;
-    //}
-    
-    
-    
-    int pics = 1;
-    //if(rec_ev==0) pics = 2;
-    
-    DCAMERR errtest;
-    DCAMCAP_TRANSFERINFO captransferinfo;
-    memset( &captransferinfo, 0, sizeof(captransferinfo) );
-    captransferinfo.size	= sizeof(captransferinfo);
-
-    // get number of captured image
-    errtest = dcamcap_transferinfo( gCam, &captransferinfo );
-    if(failed(errtest)) throw runtime_error("poll_event: unable to get captransferinfo.\n");
-    
-    
-    string numframe = to_string((int)captransferinfo.nFrameCount);
-    
-    cm_msg(MINFO, "cygnus_daq", numframe.c_str());
-    
-    int mode;
-    db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-    
-    for(int jj=0;jj<pics;jj++){
+    lamCAM = 1;
       
-      //if(pics ==2 && jj==0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-      if(rec_ev == 0 && mode != 3 ) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-
-      //send a trigger to the camera
-      if(mode!=3) dcamcap_firetrigger(gCam,0);
-      
-      //if(rec_ev==0) sleep(1);
-      
-      //waitstart.eventmask = DCAMWAIT_CAPEVENT_EXPOSUREEND;
-      //waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-      
-      
-      err1 = dcamwait_start( hwait, &waitstart );
-      
- 
-      if(err1 == DCAMERR_TIMEOUT) {
-        //abc
-      	cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d", jj);
-      	
-      	/*disable_trigger();
-
-#ifdef HAVE_CAEN_BRD
-	//WRONG FOR V3718
-	CAENVME_StopPulser(gVme->handle,cvPulserA);
-#endif
-
-	dcambuf_release( gCam );
-	dcamwait_close( hwait );
-	dcamcap_stop( gCam );*/
-      	
-      	
-      	//system("odbedit -c stop");
-      	
-      	//sleep(5);
-      	
-      	//throw runtime_error("poll_event: dcamwait_start timeout");
-      	
-      }
- 
-      //if(pics==2)
-      //	sleep(1);
-      
-      //if(!test){
-      //  time_t result = time(nullptr);
-      //  outfile << result << endl ;
-      //  outfile.close();
-      //}    
-      //if(failed(err1) || err1 == DCAMERR_TIMEOUT) lamCAM = 0;
-
-      //if(pics ==2 && jj==0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
-      if(rec_ev == 0 && mode != 3 ) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
-
-      lamCAM = 1;
-      
-      if(err1 == DCAMERR_TIMEOUT) {
-	      lamCAM = 0;
-	      /*ConfigCamera();
-
-	      dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
-	      DCAMERR err_tmp;
-
-	      DCAMWAIT_OPEN waitopen_tmp;
-	      memset( &waitopen_tmp, 0, sizeof(waitopen_tmp) );
-	      waitopen_tmp.size = sizeof(waitopen_tmp);
-	      waitopen_tmp.hdcam = gCam;
-
-	      err_tmp = dcamwait_open( &waitopen_tmp );
-
-	      if(failed(err_tmp)) throw runtime_error("unable to open camera wait handle.\n");
-
-	      hwait = waitopen_tmp.hwait;*/
-      }
-      if(err1 != DCAMERR_TIMEOUT && failed(err1) && !test) {
-        lamCAM = 0;
-        /*if(failed(err1)) { // [FIXME]: it provokes termination of the program when stopping the run
-            cm_msg(MERROR, "cygnus_fe", "Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.");
-            throw runtime_error("Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.\n");
-        }*/
-      }
-
+    if(err1 == DCAMERR_TIMEOUT) {
+      lamCAM = 0;
     }
-    
-    //if(rec_ev == 0) sleep(1);
+    if(err1 != DCAMERR_TIMEOUT && failed(err1) && !test) {
+      lamCAM = 0;
+      /*if(failed(err1)) { // [FIXME]: it provokes termination of the program when stopping the run
+          cm_msg(MERROR, "cygnus_fe", "Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.");
+          throw runtime_error("Unable to open the camera wait handle for uknown reasons. Killing cygnus_fe.\n");
+      }*/
+    }
+  }
     
 #endif
 
 #ifdef HAVE_V1190
-    if(!freerun){
-      lamTDC = v1190_DataReady(gVme,gTdcBase);
-    }
+  if(!freerun){
+    lamTDC = v1190_DataReady(gVme,gTdcBase);
+  }
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
-    if (mode !=3) {
-        vector<uint32_t> st(nboard);
-        if(!freerun){
-          uint32_t status;
-          for(int jj=0;jj<nboard;jj++){
-	    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-	    st[jj] = status;
-	    lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
-          }
-        }
+
+  // If not contiuous readout and not freerun then check the board for data ready
+  if (mode !=3) {
+    vector<uint32_t> st(nboard);
+    if(!freerun){
+      uint32_t status;
+      for(int jj=0;jj<nboard;jj++){
+        CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+        st[jj] = status;
+        lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+      }
     }
+  }
 #endif
 
-    if(mode!=3) {
-        flag = (lamTDC && lamDGTZ && lamCAM);
-    } else flag = lamCAM;
-    
+  // If not continuous mode, consider board for acquisition. Otherwise not.
+  if(mode!=3) {
+      flag = (lamTDC && lamDGTZ && lamCAM);
+  } else flag = lamCAM;
+  
 
-    if (flag){
-      if (!test){
+  // If conditions are satisfied and test is FALSE then return TRUE
+  if (flag && !test){
 
 #ifdef HAVE_CAEN_BRD	
 	//SET OUT_1 to 0 (busy)
 	//WRONG FOR V3718
-	CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+  if(mode != 3) {
+	  CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+    cerr<<"---> GATE SET TO 0"<<endl<<flush;
+  }
+
 #endif
-	
-#ifdef HAVE_CAMERA	
-	//waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-	//DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-	//if(failed(err2) || err2 == DCAMERR_TIMEOUT) {
-		//cout<<"\n\n\n\n\n\n\nerrore"<<endl;
-	//	break;
-	//}
-#endif
-
-	// DEBUG
-	/*if(DEBUG) {
-		  ofstream myfile;
-		  myfile.open("debug.txt", ios_base::app);
-		  
-		  //if(rec_ev == 1) {
-	    	//	double mode;
-	    	//	dcamprop_getvalue( gCam,  DCAM_IDPROP_DEVICEBUFFER_MODE, &mode);
-	    	//	double nframes;
-	    	//	dcamprop_getvalue( gCam,  DCAM_IDPROP_DEVICEBUFFER_FRAMECOUNTMAX, &nframes);
-	    	//	
-	    	//	myfile<<"CAM BUFFER MODE "<<mode<<"  "<<DCAMPROP_DEVICEBUFFER_MODE__THRU<<"  "<<nframes<<endl;
-	    		
-		  //}
-		  
-		  myfile << "STATUS ------"<<endl;
-
-		myfile<<rec_ev<<" "<<lamDGTZ<<" "<<lamCAM<<endl;
-		for(int jj=0; jj<nboard; jj++) {
-			myfile<<"boards "<<st[jj]<<endl;
-		}
-	
-	
-		myfile.close();
-	}*/
-	return TRUE;
-	
-      }
-
-    }
-
-#ifdef HAVE_CAMERA
-    /*DCAMBUF_FRAME bufframe;
-    memset( &bufframe, 0, sizeof(bufframe) );
-    bufframe.size= sizeof(bufframe);
-    bufframe.iFrame = -1;
-    //waitstart.eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
-    //DCAMERR err2 = dcamwait_start( hwait, &waitstart );
-    dcambuf_lockframe( gCam, &bufframe );
-    dcambuf_release( gCam );*/
-#endif
+    return TRUE;
+  }
         
 #ifdef HAVE_CAEN_BRD
     
 #ifdef HAVE_V1190
-    if(lamTDC) {
-      v1190_SoftClear(gVme,gTdcBase);
-    }
+  if(lamTDC) {
+    v1190_SoftClear(gVme,gTdcBase);
+  }
 #endif
     
 #ifdef HAVE_CAEN_DGTZ
-    if(lamDGTZ && mode != 3) {
-      for(int i=0;i<nboard;i++){
-	CAEN_DGTZ_ClearData(gDGTZ[i]);
-      }
+  //if(lamDGTZ && mode != 3) {
+  if(lamDGTZ) {
+    for(int i=0;i<nboard;i++){
+      CAEN_DGTZ_ClearData(gDGTZ[i]);
     }
-#endif
-    
-    //Reset GATE (pulser B)
-    //WRONG FOR V3718
-    if(mode != 3) CAENVME_StopPulser(gVme->handle,cvPulserB);
-    
-#endif
-    
   }
-  //}
-  return 0;
-  
+#endif
+    
+  //Reset GATE (pulser B)
+  //WRONG FOR V3718
+  CAENVME_StopPulser(gVme->handle,cvPulserB);
+    
+#endif
+
+  return 0;  
 }
 
 /*-- Interrupt configuration ---------------------------------------*/
@@ -890,6 +745,11 @@ INT read_event(char *pevent, INT off)
 
   //////READ SYSTEMS
 
+#ifdef HAVE_CAMERA
+  read_camera(pevent);
+#endif
+
+
 #ifdef HAVE_CAEN_BRD
   
 #ifdef HAVE_V1190
@@ -911,9 +771,10 @@ INT read_event(char *pevent, INT off)
 
   db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
   if(!freerun && mode != 3) read_dgtz(pevent);
+
   else if(!freerun && mode == 3) {
 
-    int lamDGTZ = 0;
+    int lamDGTZ = 1;
 
     // Check if boards are data ready
     vector<uint32_t> st(nboard);
@@ -923,21 +784,33 @@ INT read_event(char *pevent, INT off)
         CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
         st[jj] = status;
         lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
+
+        cerr<<"-->"<<jj<<" - "<<st[jj]<<endl<<flush;
+
+        if(ret != CAEN_DGTZ_Success) cerr<<"DEBUG unlucky"<<endl;
+
       }
     }
 
-    if(lamDGTZ == 1) read_dgtz(pevent);
+    // VITO DEBUG:
+    cerr<<"reading dgtz...??"<<endl;
+    cerr<<lamDGTZ<<endl;
 
+    if(lamDGTZ == 1) {
+
+      // VITO DEBUG:
+      cerr<<"reading dgtz..."<<endl;
+
+      CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+      cerr<<"---> GATE SET TO 0"<<endl<<flush;
+
+      read_dgtz(pevent);
+    }
   }
 
 #endif
 
 #endif
-  
-#ifdef HAVE_CAMERA
-  read_camera(pevent);
-#endif
-
   //////////////////
   
   ClearDevice();
@@ -1209,6 +1082,8 @@ INT ConfigBridge(){
 #ifdef HAVE_CAEN_DGTZ
 INT ConfigDgtz(){
 
+
+  cerr<<"configuring dgtz..."<<endl;
   int size = sizeof(int);
 
   HNDLE hDB;
@@ -1591,6 +1466,8 @@ INT ClearDevice()
   //SET OUT_1 to 1 (not busy)
   CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
 
+  cerr<<"---> GATE SET TO 1"<<endl<<flush;
+
   //TO BE CHECKD FOR V3718
   //Reset GATE (pulser B)
   CAENVME_StopPulser(gVme->handle,cvPulserB);
@@ -1678,6 +1555,8 @@ INT read_tdc(char *pevent) {
 #ifdef HAVE_CAEN_DGTZ
 int read_dgtz(char* pevent){
 
+  cout<<"Start reading..."<<endl<<flush;
+
   uint32_t bsize;
   char * evtptr = NULL;
   uint32_t NumEvents;
@@ -1699,9 +1578,9 @@ int read_dgtz(char* pevent){
   //myfile.open("debug.txt", ios_base::app);
   //myfile << "read_dgtz ------"<<endl;
     
-
-  for(int i=0;i<nboard;i++){
   
+  for(int i=0;i<nboard;i++){
+    cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
     int event_i = 0;  
       
     std::vector<uint32_t> tmp_trgttag(128);
@@ -1752,19 +1631,34 @@ int read_dgtz(char* pevent){
       
       CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
 
+
+      cerr<<"    NumEvents = "<<NumEvents<<endl<<flush;
+
       for(int iev=0;iev<NumEvents;iev++){
 
-        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);					
+        cerr<<"    Allocating Evt iev = "<<iev<<endl<<flush;
+        CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
+        if(retall != CAEN_DGTZ_Success) {
+          cerr <<"    FLAGALL NO SUCCESSOOOOOOAAAAA. ErrorCode = "<<retall<<endl<<flush;
+          //return TRUE;
+        }
+        cerr<<"    Getting info Evt iev = "<<iev<<endl<<flush;				
+
+        if( Evt == NULL) cerr<<"    AIUTO MAMMA"<<endl<<flush;
 
         CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+        cerr<<"    Decoding Evt iev = "<<iev<<endl<<flush;				
 
         CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+        if(ret != CAEN_DGTZ_Success) cerr <<"    FLAG NO SUCCESSO"<<endl<<flush;
 
+        cerr<<"    Saving TTTs and STIs for Evt iev= "<<iev<<endl<<flush;	
         tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag;
         StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
         //tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
           //event_i++;
 
+        cerr<<"    Saving event on pdata16 = "<<iev<<endl<<flush;
         for(int j=0;j<NCHDGTZ[i];j++){
 
           uint32_t ig = j/8;
@@ -1778,8 +1672,9 @@ int read_dgtz(char* pevent){
           }
 
         }
-
+        cerr<<"    Freeing DGTZ Evts..."<<endl<<flush;
         CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
+        cerr<<"    DGTZ Evt freed..."<<endl<<flush;
 
       }
     } 
@@ -1798,7 +1693,11 @@ int read_dgtz(char* pevent){
     
   }//end for on boards for reading data
 
+  cerr<<"Closing DIG0 bank..."<<endl<<flush;
+
   bk_close(pevent, pdata16);
+
+  cerr<<"DIG0 bank closed"<<endl<<flush;
     
   uint32_t* hdata = NULL;
   uint32_t header_data = 0;
