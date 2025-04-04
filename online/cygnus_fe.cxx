@@ -778,18 +778,20 @@ INT read_event(char *pevent, INT off)
 
     // Check if boards are data ready
     vector<uint32_t> st(nboard);
-    if(!freerun){
-      uint32_t status;
-      for(int jj=0;jj<nboard;jj++){
-        CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
-        st[jj] = status;
-        lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
 
-        cerr<<"-->"<<jj<<" - "<<st[jj]<<endl<<flush;
+    CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+    cerr<<"---> GATE SET TO 0"<<endl<<flush;
 
-        if(ret != CAEN_DGTZ_Success) cerr<<"DEBUG unlucky"<<endl;
+    uint32_t status;
+    for(int jj=0;jj<nboard;jj++){
+      CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_ReadRegister(gDGTZ[jj],CAEN_DGTZ_ACQ_STATUS_ADD,&status); /* read status register */
+      st[jj] = status;
+      lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
 
-      }
+      cerr<<"-->"<<jj<<" - "<<st[jj]<<endl<<flush;
+
+      if(ret != CAEN_DGTZ_Success) cerr<<"DEBUG unlucky"<<endl;
+
     }
 
     // VITO DEBUG:
@@ -801,11 +803,14 @@ INT read_event(char *pevent, INT off)
       // VITO DEBUG:
       cerr<<"reading dgtz..."<<endl;
 
-      CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-      cerr<<"---> GATE SET TO 0"<<endl<<flush;
+      //CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
+      //cerr<<"---> GATE SET TO 0"<<endl<<flush;
 
       read_dgtz(pevent);
-    }
+    } /*else {
+      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
+      cerr<<"---> GATE SET TO 1"<<endl<<flush;
+    }*/
   }
 
 #endif
