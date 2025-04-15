@@ -1848,6 +1848,7 @@ INT read_camera(char *pevent)
   }
   */
   
+  /*
   if(DEBUG) {
 	  ofstream myfile;
 	  myfile.open("debug.txt", ios_base::app);
@@ -1860,6 +1861,8 @@ INT read_camera(char *pevent)
 	  myfile<<"NFRAMES = "<<captransferinfo.nFrameCount<<endl;
 	  myfile.close();
   }
+  */
+  
 
   const char* pSrc = (const char*)bufframe.buf;
 
@@ -1935,6 +1938,13 @@ INT read_camera(char *pevent)
   }
   */
   
+    /////VITO : tring to get the timestamp from camera now
+    DCAM_TIMESTAMP timestamp = bufframe.timestamp;
+    DWORD *ptmsp =NULL;
+    bk_create(pevent, "TMSP", TID_DWORD, &ptmsp);
+    *ptmsp++ = (DWORD)timestamp.sec;
+    *ptmsp++ = (DWORD)timestamp.microsec;
+    bk_close(pevent, ptmsp);
   
   //dcambuf_release( gCam );
 
