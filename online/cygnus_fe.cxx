@@ -118,7 +118,7 @@ INT ConfigDisc();
 INT ConfigCamera();
 INT disable_trigger();
 INT enable_trigger();
-INT ClearDevice();
+INT ClearDevice(BOOL clear_dgtz_data);
 INT read_tdc(char *pevent);
 INT read_dgtz(char *pevent);
 INT read_camera(char *pevent);
@@ -414,6 +414,7 @@ INT begin_of_run(INT run_number, char *error)
 #endif
 
 #endif
+
   
 #ifdef HAVE_CAMERA
 
@@ -444,6 +445,10 @@ INT begin_of_run(INT run_number, char *error)
   int mode;
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+
+  cerr<<"Enabling trigger..."<<endl<<flush;
+  enable_trigger();
+  usleep(10);
   
   if(mode==3) {
     dcamcap_firetrigger(gCam,0); 
@@ -452,8 +457,6 @@ INT begin_of_run(INT run_number, char *error)
   
 #endif
   
-  cerr<<"Enabling trigger..."<<endl<<flush;
-  enable_trigger();
 
   return SUCCESS;
 }
@@ -818,7 +821,7 @@ INT read_event(char *pevent, INT off)
 #endif
   //////////////////
   
-  ClearDevice();
+  ClearDevice(false);
 
   if (bk_size(pevent)==defaultEvSize ) { return 0; }
   return bk_size(pevent);
@@ -1441,7 +1444,7 @@ INT disable_trigger()
 INT enable_trigger()
 {
   
-  ClearDevice();
+  ClearDevice(true);
 
 #ifdef HAVE_CAEN_DGTZ
   for(int i=0;i<nboard;i++){
@@ -1453,7 +1456,7 @@ INT enable_trigger()
 
 }
 
-INT ClearDevice()
+INT ClearDevice(BOOL clear_dgtz_data)
 {
 
 #ifdef HAVE_CAEN_BRD
@@ -1461,9 +1464,21 @@ INT ClearDevice()
 #ifdef HAVE_V1190
   v1190_SoftClear(gVme,gTdcBase);
 #endif
+
+// THE DGTZ AFFAIR:
+HNDLE hDB;
+
+cm_get_experiment_database(&hDB, NULL);
+
+int mode;
+int size = sizeof(int);
+db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+
 #ifdef HAVE_CAEN_DGTZ
-  for(int i=0;i<nboard;i++){
-    CAEN_DGTZ_ClearData(gDGTZ[i]);
+  if (clear_dgtz_data) {
+    for(int i=0;i<nboard;i++){
+      CAEN_DGTZ_ClearData(gDGTZ[i]);
+    }
   }
 #endif
 
@@ -1779,14 +1794,19 @@ INT read_camera(char *pevent)
   
   DCAMERR err;
   DCAMCAP_TRANSFERINFO captransferinfo;
-  if(DEBUG) {
+  
+  /*if(DEBUG) {
 	memset( &captransferinfo, 0, sizeof(captransferinfo) );
 	captransferinfo.size	= sizeof(captransferinfo);
 
 	// get number of captured image
 	err = dcamcap_transferinfo( gCam, &captransferinfo );
 	if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
-  }
+	}*/
+  memset( &captransferinfo, 0, sizeof(captransferinfo) );
+  captransferinfo.size    = sizeof(captransferinfo);
+  err = dcamcap_transferinfo( gCam, &captransferinfo );
+  if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
 
   DCAMBUF_FRAME bufframe;
   memset( &bufframe, 0, sizeof(bufframe) );
@@ -1938,13 +1958,21 @@ INT read_camera(char *pevent)
   }
   */
   
-    /////VITO : tring to get the timestamp from camera now
+    /////timestamp from camera now
     DCAM_TIMESTAMP timestamp = bufframe.timestamp;
-    DWORD *ptmsp =NULL;
-    bk_create(pevent, "TMSP", TID_DWORD, &ptmsp);
-    *ptmsp++ = (DWORD)timestamp.sec;
-    *ptmsp++ = (DWORD)timestamp.microsec;
-    bk_close(pevent, ptmsp);
+    DWORD *ptsp =NULL;
+    bk_create(pevent, "TSP0", TID_DWORD, &ptsp);
+    *ptsp++ = (DWORD)timestamp.sec;
+    *ptsp++ = (DWORD)timestamp.microsec;
+    bk_close(pevent, ptsp);
+
+    /////frame index
+    DWORD *pfid =NULL;
+    bk_create(pevent, "FID0", TID_DWORD, &pfid);
+    *pfid++ = (DWORD)captransferinfo.nFrameCount;//bufframe.iFrame;
+    bk_close(pevent, pfid);
+
+
   
   //dcambuf_release( gCam );
 
