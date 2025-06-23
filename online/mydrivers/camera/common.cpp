@@ -5,6 +5,8 @@
 #include	"common.h"
 
 #include	<stdarg.h>
+#include    <iostream>
+#include    <string>
 
 #ifndef ASSERT
 #define	ASSERT(c)
@@ -71,6 +73,31 @@ void dcamcon_show_dcamdev_info( HDCAM hdcam )
 	}
 }
 
+void dcamcon_get_cameraid( HDCAM hdcam, std::string& cameraid)
+{
+	char	buff[ 256 ];
+	DCAMERR	err;
+
+
+	if( ! my_dcamdev_string( err, hdcam, DCAM_IDSTR_CAMERAID, buff, sizeof(buff)) )
+	{
+		dcamcon_show_dcamerr( err, "dcamdev_getstring(DCAM_IDSTR_CAMERAID)\n" );
+	}
+	else
+	{
+		std::string out(buff);
+
+		// Take last 5 chars to return only SN
+		// out is in the form of "S/N: xxxxx" with "xxxxx" being the SN
+		cameraid = out.substr(out.size() - 5);
+
+		//std::cout<<"debug: cameraid OK"<<std::endl; //DEBUG
+		return;
+	}
+
+	std::exit(-1);
+}
+
 // show HDCAM camera information by text.
 void dcamcon_show_dcamdev_info_detail( HDCAM hdcam )
 {
@@ -122,7 +149,7 @@ void dcamcon_show_dcamdev_info_detail( HDCAM hdcam )
 // ----------------------------------------------------------------
 // initialize DCAM-API and get HDCAM camera handle.
 
-HDCAM dcamcon_init_open()
+HDCAM dcamcon_init_open(bool skipquestion)
 {
 	// Initialize DCAM-API ver 4.0
 	DCAMAPI_INIT	paraminit;
@@ -139,19 +166,24 @@ HDCAM dcamcon_init_open()
 	}
 	
 	int32	nDevice = paraminit.iDeviceCount;
+
 	ASSERT( nDevice > 0 );	// nDevice must be larger than 0
 	
 	int32	iDevice;
 	
+	std::string cameraid;
+
 	// show all camera information by text
 	for( iDevice = 0; iDevice < nDevice; iDevice++ )
 	{
 		dcamcon_show_dcamdev_info( (HDCAM)iDevice );
+
 	}
 	
-	if( nDevice > 1 )
+	if( nDevice > 1 && !skipquestion)
 	{
 		// choose one camera from the list if there are two or more cameras.
+
 		printf( "choose one of camera from above list by index (0-%d) >", nDevice-1 );
 
 		iDevice = -1;
@@ -169,6 +201,11 @@ HDCAM dcamcon_init_open()
 			if( 0 <= iDevice && iDevice < nDevice )
 				break;
 		}
+	}
+	else if( nDevice > 1 && skipquestion) {
+		std::cout<<"More than one camera is connected. Default optiona enabled: only camera of index 0 considered."<<std::endl;
+		iDevice = 0;
+
 	}
 	else
 	{
@@ -203,3 +240,82 @@ HDCAM dcamcon_init_open()
 	return NULL;
 }
 
+
+////////////////////////////////////
+
+
+HDCAM dcamcon_init_open_serial(const std::string& camserial)
+{
+	// Initialize DCAM-API ver 4.0
+	DCAMAPI_INIT	paraminit;
+	memset( &paraminit, 0, sizeof(paraminit) );
+	paraminit.size	= sizeof(paraminit);
+	
+	DCAMERR	err;
+	err = dcamapi_init( &paraminit );
+	if( failed( err ) )
+	{
+		// failure
+		dcamcon_show_dcamerr( err, "dcamapi_init()" );
+		return NULL;
+	}
+	
+	int32	nDevice = paraminit.iDeviceCount;
+
+	ASSERT( nDevice > 0 );	// nDevice must be larger than 0
+	
+	int32	iDevice;
+	int32  found_iDevice = -1;
+	
+
+	// show all camera information by text
+	for( iDevice = 0; iDevice < nDevice; iDevice++ )
+	{
+		std::string cameraid;
+		dcamcon_show_dcamdev_info( (HDCAM)iDevice );
+		dcamcon_get_cameraid((HDCAM)iDevice, cameraid);
+
+		// DEBUG
+		//std::cout<<"cameraid = "<<cameraid<<" - camserial = "<<camserial<<std::endl;
+		//std::cout<<"size camid = "<<cameraid.size()<<" - size camser = "<<camserial.size()<<std::endl;
+		
+
+		if(cameraid.compare(camserial) == 0) {
+			//std::cout<<"MATCH"<<std::endl; // DEBUG
+			found_iDevice=iDevice;
+			break;
+		}
+		//DEBUG
+		//std::cout<<iDevice<<std::endl<<std::flush;
+		//std::cout<<cameraid<<std::endl<<std::flush;
+	}
+	
+
+	if(found_iDevice >= 0)
+	{
+		std::cout<<"Device "<<found_iDevice<<" corresponds to SN "<<camserial<<std::endl;
+		// open specified camera
+		DCAMDEV_OPEN	paramopen;
+		memset( &paramopen, 0, sizeof(paramopen) );
+		paramopen.size	= sizeof(paramopen);
+		paramopen.index	= found_iDevice;
+		err = dcamdev_open( &paramopen );
+		if( ! failed(err) )
+		{
+			HDCAM	hdcam = paramopen.hdcam;
+			
+			dcamcon_show_dcamdev_info_detail( hdcam );
+
+			// success
+			return hdcam;
+		}
+		
+		dcamcon_show_dcamerr( err, "dcamdev_open()", "index is %d\n", found_iDevice );
+	}
+	
+	// uninitialize DCAM-API
+	dcamapi_uninit();
+	
+	// failure
+	return NULL;
+}

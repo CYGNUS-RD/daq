@@ -87,7 +87,7 @@ INT max_event_size = 50000000; //1000000000;
 INT max_event_size_frag = 5 * 1024 * 1024;
 
 /* buffer size to hold events */
-INT event_buffer_size = 100000000; //2000000000
+INT event_buffer_size = 1000000000; //2000000000
 
 
 int      picIndex = 0;
@@ -115,13 +115,13 @@ INT init_vme_modules();
 INT ConfigBridge();
 INT ConfigDgtz();
 INT ConfigDisc();
-INT ConfigCamera();
+INT ConfigCamera(int icam);
 INT disable_trigger();
 INT enable_trigger();
 INT ClearDevice(BOOL clear_dgtz_data);
 INT read_tdc(char *pevent);
 INT read_dgtz(char *pevent);
-INT read_camera(char *pevent);
+INT read_camera(char *pevent, int icam);
 void ReadDgtzConfig();
 void Free_arrays();
 
@@ -129,6 +129,10 @@ void Free_arrays();
 #define MAX_BASE_INPUT_FILE_LENGTH 1000
 
 int SaveCorrectionTables(char *outputFileName, uint32_t groupMask, CAEN_DGTZ_DRS4Correction_t *tables);
+#endif
+
+#ifdef HAVE_CAMERA
+#define NCAM_MAX 6
 #endif
 
 
@@ -223,8 +227,11 @@ char **BoardName;
 
 
 #ifdef HAVE_CAMERA
-HDCAM gCam = 0;
-HDCAMWAIT hwait = 0;
+int nCamera = 1;
+vector<HDCAM> gCam(NCAM_MAX, 0);
+vector<HDCAMWAIT> hwait(NCAM_MAX, 0);
+vector<bool> CamMask(NCAM_MAX, false);
+//HDCAMWAIT hwait = 0;
 #endif
 
 int rec_ev = 0;
@@ -258,95 +265,63 @@ INT frontend_init()
 
 #ifdef HAVE_CAMERA
 
-  DCAMERR err;
-  
-  gCam = dcamcon_init_open();
-  if(gCam == NULL) {
-    cout << "CAMERA NOT FOUND" << endl;
-    exit(0);
-  }
-  
-  dcamcon_show_dcamdev_info(gCam);
-
-  //External trigger with positive polarity
-  /*
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL ); 
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
-
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERPOLARITY, DCAMPROP_TRIGGERPOLARITY__POSITIVE );
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERPOLARITY" << endl;
-  */
-
-  
-  /*
-  //Software trigger
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE ); 
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
-  
-  //Global exposure as output signal with positive polarity
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE );
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND" << endl;
-
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE );  
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY" << endl;
-  
-  //Exposure as output signal of OUT 2 with positive polarity
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
-    
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
-  */
-    
-  /*
-  // Get exposure from ODB
   HNDLE hDB;
   cm_get_experiment_database(&hDB, NULL);
-  double exposure;
-  int size = sizeof(double);
-  db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
-   */
-   
-  /*
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
-    
-  
-  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE + 256, DCAMPROP_OUTPUTTRIGGER_ACTIVE__EDGE);
-  //if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;  
- 
-    
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + 0.200);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
-    
-    
-    
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
-   */
 
-  /*err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORCOOLER, DCAMPROP_SENSORCOOLER__MAX);  
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORCOOLER" << endl;
-  
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORCOOLERFAN, DCAMPROP_MODE__ON);  
-  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORCOOLER" << endl;*/
-  
-  
-  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURETARGET, 0.0);  
-  //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_SENSORTEMPERATURETARGET" << endl;
+  int size = sizeof(int);
+  db_get_value(hDB, 0, "/Equipment/Trigger/Settings/nCamera",&nCamera,&size,TID_INT,TRUE);
 
-  /*HNDLE tempKey;
-  int statusdb;
-  statusdb = db_find_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", &tempKey);
-  if(statusdb!= DB_SUCCESS) {
-    db_create_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", TID_DOUBLE);
-    statusdb = db_find_key(hDB, 0, "Equipment/CameraStatus/Variables/Sensor Temperature", &tempKey);
-    if(statusdb!=DB_SUCCESS) {
-      cout<<"UNABLE TO CREATE CAMERA TEMPERATURE ODB ENTRY"<<endl;
+  if(nCamera <= 0) {
+    cerr<<"fontend_init: ncamera = "<<nCamera<<" read by ODB is invalid. Please check."<<endl;
+    cm_msg(MERROR, "cygnus_daq", ("fontend_init: ncamera = "+to_string(nCamera)+" read by ODB is invalid. Please check.\n").c_str());
+    exit(EXIT_FAILURE);
+  } else if (nCamera > NCAM_MAX) {
+    cerr<<"fontend_init: ncamera = "<<nCamera<<" read by ODB is greater than maximum value ("<<NCAM_MAX<<"). Please check."<<endl;
+    cm_msg(MERROR, "cygnus_daq", ("fontend_init: ncamera = "+to_string(nCamera)+
+                   " read by ODB is greater than maximum value ("+to_string(NCAM_MAX)+"). Please check.\n").c_str());
+    exit(EXIT_FAILURE);
+  }
+
+  DCAMERR err;
+
+  if(nCamera == 1) {
+
+    gCam[0] = dcamcon_init_open(true);
+    if(gCam[0] == NULL) {
+      cout << "CAMERA NOT FOUND" << endl;
+      exit(0);
     }
-  }*/
-    
-  ConfigCamera();
+
+    dcamcon_show_dcamdev_info(gCam[0]);
+
+  } else {
+
+    for(int icam = 0; icam<nCamera; icam++) {
+
+      char cam_serial_n[64]="00000";
+      size = sizeof(cam_serial_n);
+
+      char query[256];
+      sprintf(query,"/Equipment/Trigger/Settings/CameraSN[%i]",icam);
+
+      db_get_value(hDB, 0, query,&cam_serial_n,&size,TID_STRING,TRUE);
+      // cout<<"DEBUG SN = "<<cam_serial_n<<endl; //DEBUG
+
+
+      cout<<"Getting handle for camera "<<cam_serial_n<<"..."<<endl;
+
+      gCam[icam] = dcamcon_init_open_serial((string)cam_serial_n);
+      if(gCam[icam] == NULL) {
+        cout << "CAMERA WITH SN "<<cam_serial_n<<" NOT FOUND" << endl;
+        exit(0);
+      }
+    }
+
+  }
+
+  for(int icam =0; icam<nCamera; icam++) {
+    ConfigCamera(icam);
+  }
  
   
 #endif
@@ -367,7 +342,7 @@ INT frontend_exit()
   disable_trigger();
 
 #ifdef HAVE_CAMERA
-  dcamdev_close( gCam );
+  dcamdev_close( gCam[0] );
   dcamapi_uninit();
 #endif
   
@@ -418,25 +393,7 @@ INT begin_of_run(INT run_number, char *error)
   
 #ifdef HAVE_CAMERA
 
-  ConfigCamera();
-  dcambuf_alloc( gCam, 1 );
-  dcamcap_start( gCam, DCAMCAP_START_SEQUENCE );
 
-
-  DCAMERR err;
-  
-  DCAMWAIT_OPEN waitopen;
-  memset( &waitopen, 0, sizeof(waitopen) );
-  waitopen.size = sizeof(waitopen);
-  waitopen.hdcam = gCam;
-  
-  err = dcamwait_open( &waitopen );
-  
-  if(failed(err)) throw runtime_error("unable to open camera wait handle.\n");
-  
-  hwait = waitopen.hwait;
-  
-  
   //if mode 3 then firetrigger
   HNDLE hDB;
 
@@ -446,12 +403,50 @@ INT begin_of_run(INT run_number, char *error)
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
 
+  for(int icam =0; icam<NCAM_MAX; icam ++) {
+    bool imask = false;
+    size = 4*sizeof(imask);  // TID_BOOL is 4 BITs
+
+    char query[256];
+    sprintf(query,"/Equipment/Trigger/Settings/CameraMask[%i]",icam);
+
+    db_get_value(hDB, 0, query, &imask,&size,TID_BOOL,TRUE);
+    CamMask[icam] = imask;
+  }
+
+
+  for(int icam =0; icam < nCamera; icam ++) {
+    ConfigCamera(icam);
+    dcambuf_alloc( gCam[icam], 1);
+    dcamcap_start( gCam[icam], DCAMCAP_START_SEQUENCE );
+  
+
+    DCAMERR err;
+  
+    DCAMWAIT_OPEN waitopen;
+    memset( &waitopen, 0, sizeof(waitopen) );
+    waitopen.size = sizeof(waitopen);
+    waitopen.hdcam = gCam[0];
+  
+    err = dcamwait_open( &waitopen );
+  
+    if(failed(err)) throw runtime_error(("unable to open camera wait handle for camera"+to_string(icam)+".\n").c_str());
+  
+    hwait[icam] = waitopen.hwait;  
+  }
+
   cerr<<"Enabling trigger..."<<endl<<flush;
   enable_trigger();
   usleep(10);
   
+
   if(mode==3) {
-    dcamcap_firetrigger(gCam,0); 
+    for(int icam=0; icam<nCamera; icam++) {
+      //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+      dcamcap_firetrigger(gCam[icam],0);
+      //std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
+      //std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
+    }
   }
   
   
@@ -474,9 +469,12 @@ INT end_of_run(INT run_number, char *error)
 #endif
 
 #ifdef HAVE_CAMERA
-  dcambuf_release( gCam );
-  dcamwait_close( hwait );
-  dcamcap_stop( gCam );
+
+  for(int icam =0; icam<nCamera;icam++) {
+    dcambuf_release( gCam[icam] );
+    dcamwait_close( hwait[icam] );
+    dcamcap_stop( gCam[icam] );
+  }
 
 #endif
    
@@ -489,6 +487,9 @@ INT end_of_run(INT run_number, char *error)
 INT pause_run(INT run_number, char *error)
 {
 
+  cerr<<"pause_run: pause of run via midas is not supported yet. Please stop the run using 'STOP RUN'. Closing the frontend for unexpected behavior."<<endl;
+  cm_msg(MERROR, "cygnus_daq", "pause_run: pause of run via midas is not supported yet. Please stop the run using 'STOP RUN'. Closing the frontend for unexpected behavior.\n");
+  exit(EXIT_FAILURE);
   disable_trigger();
   
   return SUCCESS;
@@ -538,7 +539,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
   size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-  size = 4*sizeof(bool);
+  size = 4*sizeof(bool); // TID_BOOL is 4 BITs
   db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
   size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/MaxEvents",&maxevents,&size,TID_INT,TRUE);
@@ -567,14 +568,14 @@ INT poll_event(INT source, INT count, BOOL test)
 
   // Get camera exposure
   double exposure;
-  dcamprop_getvalue( gCam, DCAM_IDPROP_EXPOSURETIME, &exposure);
+  dcamprop_getvalue( gCam[0], DCAM_IDPROP_EXPOSURETIME, &exposure);
     
   // Get GEDelay from camera
   double delay;
-  err1 = dcamprop_getvalue(gCam, DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+  err1 = dcamprop_getvalue(gCam[0], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
   if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
     
-  if(mode==1 || mode==2) delay = 360./1000.;
+  if((mode==1 || mode==2) && nCamera == 1) delay = 360./1000.;
   
   // Setup of DCAMWAIT object
   DCAMWAIT_START waitstart;
@@ -599,7 +600,7 @@ INT poll_event(INT source, INT count, BOOL test)
   memset( &captransferinfo, 0, sizeof(captransferinfo) );
   captransferinfo.size	= sizeof(captransferinfo);
 
-  errtest = dcamcap_transferinfo( gCam, &captransferinfo );
+  errtest = dcamcap_transferinfo( gCam[0], &captransferinfo );
   if(failed(errtest)) throw runtime_error("poll_event: unable to get captransferinfo.\n");
     
     
@@ -612,26 +613,31 @@ INT poll_event(INT source, INT count, BOOL test)
     if(pics ==2 && jj==0) {
       CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 
-      cerr<<"---> GATE SET TO 0"<<endl<<flush;
+      //cerr<<"---> GATE SET TO 0"<<endl<<flush;
     }
 
     //if(rec_ev == 0 && mode != 3 ) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
     //if(rev_ev == 0) CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 
     //send a trigger to the camera if mode is not continuous
-    if(mode!=3) dcamcap_firetrigger(gCam,0);
+    if(mode!=3 && nCamera == 1) dcamcap_firetrigger(gCam[0],0);
+    else if(mode!=3 && nCamera >1) {
+      cerr<<"poll_event: operation with more than one camera is supported only with mode = 3."<<endl;
+      cm_msg(MERROR, "cygnus_daq", "poll_event: operation with more than one camera is supported only with mode = 3. \n");
+      exit(EXIT_FAILURE);
+    }
       
     // Wait for frameready
-    err1 = dcamwait_start( hwait, &waitstart );
+    err1 = dcamwait_start( hwait[0], &waitstart );
 
     if(err1 == DCAMERR_TIMEOUT) cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d", jj);
 
     if(pics ==2 && jj==0) {
       CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
-      cerr<<"---> GATE SET TO 1"<<endl<<flush;
+      //cerr<<"---> GATE SET TO 1"<<endl<<flush;
     }
     //if(rec_ev == 0 && mode != 3 ) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
-    //if(rev_ev == 0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+    //if(rev_ev == 0) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit)nd_init: ncamera = 0 read by ;
 
     lamCAM = 1;
       
@@ -685,7 +691,7 @@ INT poll_event(INT source, INT count, BOOL test)
 	//WRONG FOR V3718
   if(mode != 3) {
 	  CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-    cerr<<"---> GATE SET TO 0"<<endl<<flush;
+	  //cerr<<"---> GATE SET TO 0"<<endl<<flush;
   }
 
 #endif
@@ -749,7 +755,10 @@ INT read_event(char *pevent, INT off)
   //////READ SYSTEMS
 
 #ifdef HAVE_CAMERA
-  read_camera(pevent);
+  for(int icam=0; icam <nCamera; icam++) {
+    read_camera(pevent, icam);
+  }
+  //read_camera(pevent);
 #endif
 
 
@@ -783,7 +792,7 @@ INT read_event(char *pevent, INT off)
     vector<uint32_t> st(nboard);
 
     CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-    cerr<<"---> GATE SET TO 0"<<endl<<flush;
+    //cerr<<"---> GATE SET TO 0"<<endl<<flush;
 
     uint32_t status;
     for(int jj=0;jj<nboard;jj++){
@@ -791,20 +800,20 @@ INT read_event(char *pevent, INT off)
       st[jj] = status;
       lamDGTZ &= ((status & 0x8)>>3); /* 4th bit is data ready */
 
-      cerr<<"-->"<<jj<<" - "<<st[jj]<<endl<<flush;
+      //cerr<<"-->"<<jj<<" - "<<st[jj]<<endl<<flush;
 
       if(ret != CAEN_DGTZ_Success) cerr<<"DEBUG unlucky"<<endl;
 
     }
 
-    // VITO DEBUG:
-    cerr<<"reading dgtz...??"<<endl;
-    cerr<<lamDGTZ<<endl;
+    // DEBUG:
+    //cerr<<"reading dgtz...??"<<endl;
+    //cerr<<lamDGTZ<<endl;
 
     if(lamDGTZ == 1) {
 
-      // VITO DEBUG:
-      cerr<<"reading dgtz..."<<endl;
+      //DEBUG:
+      //cerr<<"reading dgtz..."<<endl;
 
       //CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
       //cerr<<"---> GATE SET TO 0"<<endl<<flush;
@@ -845,7 +854,7 @@ INT read_camera_status(char *pevent, INT off) {
     bk_create(pevent, "TCAM", TID_DOUBLE, (void **)&pdata);
 
     double cam_temperature;
-    dcamprop_getvalue( gCam, DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
+    dcamprop_getvalue( gCam[0], DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
 
     //db_set_value(hDB, 0, "/Equipment/CameraStatus/Variables/Sensor Temperature", &cam_temperature, sizeof(double), 1, TID_DOUBLE);
     
@@ -1163,6 +1172,29 @@ INT ConfigDgtz(){
     db_get_value(hDB, 0, query,&posttrg[i],&size,TID_INT,TRUE);
     ret |= CAEN_DGTZ_SetPostTriggerSize(gDGTZ[i],posttrg[i]);                               /* Trigger position */
     
+    //Print the firmware version
+    /*
+    CAEN_DGTZ_BoardInfo_t BoardInfo;
+
+    for(int i=0;i<nboard;i++){
+      CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
+      std::cerr << "Digitizer " << i << " (" << BoardName[i] << ") - Firmware: " << BoardInfo.ROC_FirmwareRel << " / " << BoardInfo.AMC_FirmwareRel << std::endl;
+    }
+    */
+
+
+    //VITO: ENABLING EGTTT 60 bit 
+    for(int i=0;i<nboard;i++){
+      // Read the register than turn on the bit 20
+      uint32_t enable_egttt;
+      CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x8000, &enable_egttt);
+      enable_egttt = enable_egttt | 0x00100000;  // bit 20
+      CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x8004, enable_egttt);
+    }
+
+
+    //////
+
     size = sizeof(double);
     for(int ich=0;ich<NCHDGTZ[i];ich++){
       
@@ -1316,9 +1348,11 @@ INT ConfigDisc(){
 #endif
 
 #ifdef HAVE_CAMERA
-INT ConfigCamera()
+INT ConfigCamera(int icam)
 {
   
+  cout<<"Configuring camera "<<icam<<" ... "<<endl;
+
   HNDLE hDB;
 
   cm_get_experiment_database(&hDB, NULL);
@@ -1331,84 +1365,93 @@ INT ConfigCamera()
   db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
 
 
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_EXPOSURETIME, exposure);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, exposure);
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
+
+  //double exp_test;
+  //dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &exp_test);
+
+  //cerr<<"DEBUG exposure before setup = "<<exp_test<<endl;
   
-  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + 0.18);
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + 0.18);
   //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
 
   int mode;
   size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-  if(mode==1) err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__GLOBALRESET); 
-  else if(mode==2) err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__EMULATE); 
-  else err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__DELAYED);
+  if(mode==1) err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__GLOBALRESET); 
+  else if(mode==2) err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__EMULATE); 
+  else err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__DELAYED);
 
-  dcamprop_setvalue( gCam, DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_BITSPERCHANNEL, 16);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_BINNING, 1);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_DEFECTCORRECT_MODE, DCAMPROP_DEFECTCORRECT_MODE__OFF);
-  dcamprop_setvalue( gCam, DCAM_IDPROP_SPOTNOISEREDUCER, DCAMPROP_MODE__OFF);
+
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_BITSPERCHANNEL, 16);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_BINNING, 1);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_DEFECTCORRECT_MODE, DCAMPROP_DEFECTCORRECT_MODE__OFF);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SPOTNOISEREDUCER, DCAMPROP_MODE__OFF);
+
   
-  
-  
+  //dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &exp_test);
+  //cerr<<"DEBUG exposure after setup = "<<exp_test<<endl;
+
+
   //Software trigger
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE ); 
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE ); 
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
   
   //continous stream mode
   if(mode==3) {
-    err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__START );
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__START );
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
   } else {
-    err = dcamprop_setvalue( gCam, DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
   }
   
   
   //Global exposure as output signal with positive polarity
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE );
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND, DCAMPROP_OUTPUTTRIGGER_KIND__EXPOSURE );
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND" << endl;
 
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE );  
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE );  
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY" << endl;
   
   //Exposure as output signal of OUT 2 with positive polarity
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
     
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
   
   
   
   //MY GET VALUE
   double delay;
-  err = dcamprop_getvalue(gCam, DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+  err = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
   if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get TIMING_GLOBALEXPOSUREDELAY");
   
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_TIMESTAMP_PRODUCER, DCAMPROP_TIMESTAMP_PRODUCER__IMAGINGDEVICE);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TIMESTAMP_PRODUCER, DCAMPROP_TIMESTAMP_PRODUCER__IMAGINGDEVICE);
   if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in set TIMESTAMP_PRODUCER.");
-  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_DEVICEBUFFER_MODE, DCAMPROP_DEVICEBUFFER_MODE__THRU);
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_DEVICEBUFFER_MODE, DCAMPROP_DEVICEBUFFER_MODE__THRU);
   //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_DEVICEBUFFER_MODE" << endl;
   
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
     
   
-  //err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE + 256, DCAMPROP_OUTPUTTRIGGER_ACTIVE__EDGE);
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE + 256, DCAMPROP_OUTPUTTRIGGER_ACTIVE__EDGE);
   //if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;  
  
     
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + delay);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + delay);
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
     
     
     
-  err = dcamprop_setvalue( gCam, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
   
   
@@ -1486,7 +1529,7 @@ db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
   //SET OUT_1 to 1 (not busy)
   CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
 
-  cerr<<"---> GATE SET TO 1"<<endl<<flush;
+  //cerr<<"---> GATE SET TO 1"<<endl<<flush;
 
   //TO BE CHECKD FOR V3718
   //Reset GATE (pulser B)
@@ -1575,7 +1618,7 @@ INT read_tdc(char *pevent) {
 #ifdef HAVE_CAEN_DGTZ
 int read_dgtz(char* pevent){
 
-  cout<<"Start reading..."<<endl<<flush;
+  //cout<<"Start reading..."<<endl<<flush;
 
   uint32_t bsize;
   char * evtptr = NULL;
@@ -1590,6 +1633,7 @@ int read_dgtz(char* pevent){
   bk_create(pevent, "DIG0", TID_WORD, &pdata16);
   
   std::vector<std::vector<uint32_t>> TRGTTAG(nboard);
+  std::vector<std::vector<uint32_t>> TRGTTAG1(nboard);
   std::vector<int> EVTSNUM(nboard);
   std::vector<uint16_t> StartIndexCell(128);
     
@@ -1600,10 +1644,12 @@ int read_dgtz(char* pevent){
     
   
   for(int i=0;i<nboard;i++){
-    cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
+    //cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
     int event_i = 0;  
       
     std::vector<uint32_t> tmp_trgttag(128);
+    std::vector<uint32_t> tmp_trgttag1(128);
+    uint64_t tmp_EGTT;
     
     CAEN_DGTZ_ReadData(gDGTZ[i],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz[i],&bsize);
     CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);
@@ -1645,40 +1691,50 @@ int read_dgtz(char* pevent){
 
     }
 
-    //#ifdef HAVE_V1742
+    //#ifdef HAVE_V1742       ///////////////////////// VITO : MODIFICO QUI
     else if(strcmp(BoardName[i],"V1742")==0){
 
       
       CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
 
 
-      cerr<<"    NumEvents = "<<NumEvents<<endl<<flush;
+      //cerr<<"    NumEvents = "<<NumEvents<<endl<<flush;
 
       for(int iev=0;iev<NumEvents;iev++){
 
-        cerr<<"    Allocating Evt iev = "<<iev<<endl<<flush;
+        //cerr<<"    Allocating Evt iev = "<<iev<<endl<<flush;
         CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
         if(retall != CAEN_DGTZ_Success) {
           cerr <<"    FLAGALL NO SUCCESSOOOOOOAAAAA. ErrorCode = "<<retall<<endl<<flush;
           //return TRUE;
         }
-        cerr<<"    Getting info Evt iev = "<<iev<<endl<<flush;				
+        //cerr<<"    Getting info Evt iev = "<<iev<<endl<<flush;				
 
         if( Evt == NULL) cerr<<"    AIUTO MAMMA"<<endl<<flush;
 
         CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
-        cerr<<"    Decoding Evt iev = "<<iev<<endl<<flush;				
+        //cerr<<"    Decoding Evt iev = "<<iev<<endl<<flush;				
 
         CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
         if(ret != CAEN_DGTZ_Success) cerr <<"    FLAG NO SUCCESSO"<<endl<<flush;
 
-        cerr<<"    Saving TTTs and STIs for Evt iev= "<<iev<<endl<<flush;	
-        tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag;
+        //cerr<<"    Saving TTTs and STIs for Evt iev= "<<iev<<endl<<flush;	
+        tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag & 0x3FFFFFFF;
+        tmp_trgttag1[iev]    = Evt->DataGroup[1].TriggerTimeTag & 0x3FFFFFFF;
+
+        tmp_EGTT = (tmp_trgttag1[iev] << 30) | tmp_trgttag[iev];
+        // DEBUG
+        //cerr<<"------------------------------"<<endl<<flush;
+        //cerr<<"old TTT is:   "<< tmp_trgttag[iev] * 8.5 * 1e-6 <<endl<<flush;
+        //cerr<<"The EGTTT is: "<< tmp_EGTT * 8.5 * 1e-6 <<endl<<flush;
+        //cerr<<"------------------------------"<<endl<<flush;
+
         StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
+        //StartIndexCell[iev] = Evt->DataGroup[1].StartIndexCell;
         //tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
           //event_i++;
 
-        cerr<<"    Saving event on pdata16 = "<<iev<<endl<<flush;
+        //cerr<<"    Saving event on pdata16 = "<<iev<<endl<<flush;
         for(int j=0;j<NCHDGTZ[i];j++){
 
           uint32_t ig = j/8;
@@ -1692,15 +1748,17 @@ int read_dgtz(char* pevent){
           }
 
         }
-        cerr<<"    Freeing DGTZ Evts..."<<endl<<flush;
+        //cerr<<"    Freeing DGTZ Evts..."<<endl<<flush; // DEBUG
         CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
-        cerr<<"    DGTZ Evt freed..."<<endl<<flush;
+        //cerr<<"    DGTZ Evt freed..."<<endl<<flush;
 
       }
     } 
 
     //#endif 
+
     TRGTTAG[i] = tmp_trgttag;
+    TRGTTAG1[i] = tmp_trgttag1;
     EVTSNUM[i] = NumEvents; //event_i;
     
     //cout<<"       "<< endl<<endl<<endl<<endl;
@@ -1713,11 +1771,12 @@ int read_dgtz(char* pevent){
     
   }//end for on boards for reading data
 
-  cerr<<"Closing DIG0 bank..."<<endl<<flush;
+  //cerr<<"Closing DIG0 bank..."<<endl<<flush;
 
   bk_close(pevent, pdata16);
 
-  cerr<<"DIG0 bank closed"<<endl<<flush;
+
+  //cerr<<"DIG0 bank closed"<<endl<<flush;
     
   uint32_t* hdata = NULL;
   uint32_t header_data = 0;
@@ -1749,6 +1808,7 @@ int read_dgtz(char* pevent){
     
     CAEN_DGTZ_BoardInfo_t BoardInfo;
     CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
+
     header_data = (uint32_t)pow(2,BoardInfo.ADC_NBits);
     *hdata++ = header_data;
     
@@ -1765,6 +1825,13 @@ int read_dgtz(char* pevent){
       //cout<<TRGTTAG[i][j]<<" "<<endl;
       *hdata++ = TRGTTAG[i][j];
     }
+
+    for(unsigned int j=0; j<EVTSNUM[i]; j++) {
+      //cout<<TRGTTAG[i][j]<<" "<<endl;
+      *hdata++ = TRGTTAG1[i][j];
+    }
+
+    //se ora faccio TRGTTAG con todo list di update cygnolib e ora si legge bank come raw
     
     if(strcmp(BoardName[i], "V1742")==0) {
     	for(unsigned int j=0; j<EVTSNUM[i]; j++) {
@@ -1787,7 +1854,7 @@ int read_dgtz(char* pevent){
 #endif
 
 #ifdef HAVE_CAMERA
-INT read_camera(char *pevent)
+INT read_camera(char *pevent, int icam)
 {
 
   // transferinfo param
@@ -1800,12 +1867,12 @@ INT read_camera(char *pevent)
 	captransferinfo.size	= sizeof(captransferinfo);
 
 	// get number of captured image
-	err = dcamcap_transferinfo( gCam, &captransferinfo );
+	err = dcamcap_transferinfo( gCam[icam], &captransferinfo );
 	if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
 	}*/
   memset( &captransferinfo, 0, sizeof(captransferinfo) );
   captransferinfo.size    = sizeof(captransferinfo);
-  err = dcamcap_transferinfo( gCam, &captransferinfo );
+  err = dcamcap_transferinfo( gCam[icam], &captransferinfo );
   if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
 
   DCAMBUF_FRAME bufframe;
@@ -1814,7 +1881,7 @@ INT read_camera(char *pevent)
   bufframe.iFrame = -1;
 
   //////Read the data
-  dcambuf_lockframe( gCam, &bufframe );
+  dcambuf_lockframe( gCam[icam], &bufframe );
 
 
   
@@ -1830,7 +1897,7 @@ INT read_camera(char *pevent)
   TIME_STAMP(pevent) = (unsigned int)timetot;
   
   //cout<<"DEBUG"<<picIndex<<"---"<<timeZero<<","<<timetot<<","<<(unsigned int)timetot<<endl;
-  if (picIndex==0) {
+  if (picIndex==0 && icam == 0) {
     DWORD *ptime =NULL;
     bk_create(pevent, "TIME", TID_DWORD, &ptime);
     *ptime++ = timeZero;
@@ -1840,7 +1907,7 @@ INT read_camera(char *pevent)
   picIndex++;
   
   //std::cout<<"DEBUG: "<<(std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count()<<std::endl;
-  bk_create(pevent, "CAM0", TID_WORD, &pdata);
+  bk_create(pevent, ("CAM"+to_string(icam)).c_str(), TID_WORD, &pdata);
     
     
   std::vector<int> picture(10);
@@ -1905,6 +1972,7 @@ INT read_camera(char *pevent)
     pSrc += bufframe.rowbytes;
 
   }
+
   
   
   bk_close(pevent, pdata);
@@ -1961,20 +2029,21 @@ INT read_camera(char *pevent)
     /////timestamp from camera now
     DCAM_TIMESTAMP timestamp = bufframe.timestamp;
     DWORD *ptsp =NULL;
-    bk_create(pevent, "TSP0", TID_DWORD, &ptsp);
+    bk_create(pevent, ("TSP"+to_string(icam)).c_str(), TID_DWORD, &ptsp);
     *ptsp++ = (DWORD)timestamp.sec;
     *ptsp++ = (DWORD)timestamp.microsec;
     bk_close(pevent, ptsp);
 
     /////frame index
     DWORD *pfid =NULL;
-    bk_create(pevent, "FID0", TID_DWORD, &pfid);
+    bk_create(pevent, ("FID"+to_string(icam)).c_str(), TID_DWORD, &pfid);
     *pfid++ = (DWORD)captransferinfo.nFrameCount;//bufframe.iFrame;
     bk_close(pevent, pfid);
 
-
+    // DEBUG
+    //cerr<<"nFrameCount = "<<captransferinfo.nFrameCount<<" - Framestamp "<<bufframe.framestamp<<" - newestframeindex = "<<captransferinfo.nNewestFrameIndex<<endl;
   
-  //dcambuf_release( gCam );
+  //dcambuf_release(gCam[icam] );
 
   return 1;
 
