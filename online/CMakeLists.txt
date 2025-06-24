@@ -38,6 +38,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(cygnus_fe)
 
+
 message(STATUS "MIDAS cygnus_fe: MIDASSYS set to " $ENV{MIDASSYS})
 if (NOT EXISTS $ENV{MIDASSYS})
   message(FATAL_ERROR "Environment variable $MIDASSYS not defined, aborting.")
@@ -58,9 +59,11 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # enable certain compile warnings
 
-add_compile_options(-Wall -Wformat=2 -Wno-format-nonliteral -Wno-strict-aliasing -Wuninitialized -Wno-unused-function -fpermissive)
+add_compile_options(-Wall -Wformat=2 -Wno-format-nonliteral -Wno-strict-aliasing -Wuninitialized -Wno-unused-function -fpermissive -O3)
 
 add_compile_options(-DLINUX -DUNIX)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") 
 
 # Optional ZLIB support
 if (NO_ZLIB)
