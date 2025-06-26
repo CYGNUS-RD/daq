@@ -41,7 +41,7 @@ window.onload = function() {
 </script>
 
 
-<title>Camera Status</title>
+<title>Sensor Temperature [°C]</title>
 
 <style>
 .mtable td {
@@ -64,9 +64,15 @@ padding: 8px;
     <tr>
     	<td style="vertical-align:center">
 	    <table class="mtable">
+      <tr><th class="mtableheader" id="page_title" colspan="2">Temperature<th/></tr>
+    <tr height="35"><th style="width:2in">Camera SN</th><th style="width:2.5in">Sensor Temperature [°C]</th></tr>
 	      <tr>
-		<td>Sensor Temperature [°C]</td>
-		<td align="right"><div class="modbvalue" data-odb-path="/Equipment/CameraStatus/Variables/TCAM"></div></td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Equipment/Trigger/Settings/CameraSN[0]"></div></td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Equipment/CameraStatus/Variables/TCAM[0]"></div></td>
+	      </tr>
+	      <tr>
+		<td align="center"><div class="modbvalue" data-odb-path="/Equipment/Trigger/Settings/CameraSN[1]"></div></td>
+		<td align="center"><div class="modbvalue" data-odb-path="/Equipment/CameraStatus/Variables/TCAM[1]"></div></td>
 	      </tr>
 	    </table>
 	</td>
