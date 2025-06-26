@@ -770,7 +770,7 @@ INT poll_event(INT source, INT count, BOOL test)
   
   cm_msg(MINFO, "cygnus_daq", numframe.c_str());*/
   if (rec_ev==0) {
-    usleep(200);
+    usleep(500); //this is necessary do not delete
     CAENVME_ClearOutputRegister(gVme->handle,cvOut2Bit);
   }
   for(int jj=0;jj<pics;jj++){
