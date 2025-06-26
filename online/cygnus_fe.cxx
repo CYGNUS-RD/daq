@@ -118,6 +118,7 @@ INT ConfigBridge();
 INT ConfigDgtz();
 INT ConfigDisc();
 INT ConfigCamera(int icam);
+INT PrintCamConfig(int icam);
 INT disable_trigger();
 INT enable_trigger();
 INT ClearDevice(BOOL clear_dgtz_data);
@@ -313,6 +314,8 @@ INT frontend_init()
       cout<<"Getting handle for camera "<<cam_serial_n<<"..."<<endl;
 
       gCam[icam] = dcamcon_init_open_serial((string)cam_serial_n);
+
+      //DEBUG  //cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  icam: "<<icam<<", SN:"<<cam_serial_n<<endl;
       if(gCam[icam] == NULL) {
         cout << "CAMERA WITH SN "<<cam_serial_n<<" NOT FOUND" << endl;
         exit(0);
@@ -376,11 +379,11 @@ INT begin_of_run(INT run_number, char *error)
 
   ConfigBridge();
   //TO BE CHECKED FOR V3718
-  CAENVME_StartPulser(gVme->handle,cvPulserA);
+  CAENVME_StopPulser(gVme->handle,cvPulserA);
 
   //WRONG FOR V3718
   ////Set LED off
-  CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);  
+  CAENVME_ClearOutputRegister(gVme->handle,cvOut4Bit);  
 
 #ifdef HAVE_CAEN_DGTZ
   ConfigDgtz();
@@ -442,11 +445,19 @@ INT begin_of_run(INT run_number, char *error)
   usleep(10);
   
 
+  
+
   if(mode==3) {
-      dcamcap_firetrigger(gCam[0], 0);
+
+      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit|cvOut4Bit);
+      CAENVME_StartPulser(gVme->handle,cvPulserA);
+      //usleep(10);
+      //CAENVME_ClearOutputRegister(gVme->handle,cvOut3Bit);
+
+      //dcamcap_firetrigger(gCam[0], 0);
   // #pragma omp parallel for num_threads(nCamera)
   //for(int icam=0; icam<nCamera; icam++) {
-      //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+  //    //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
   //    dcamcap_firetrigger(gCam[icam],0);
       //std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
       //std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
@@ -474,6 +485,7 @@ INT end_of_run(INT run_number, char *error)
 
 #ifdef HAVE_CAMERA
 
+  CAENVME_ClearOutputRegister(gVme->handle,cvOut4Bit);
   for(int icam =0; icam<nCamera;icam++) {
     dcambuf_release( gCam[icam] );
     dcamwait_close( hwait[icam] );
@@ -637,7 +649,8 @@ INT poll_event(INT source, INT count, BOOL test)
     if(err1 == DCAMERR_TIMEOUT) cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d", jj);
 
     if(pics ==2 && jj==0) {
-      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
+      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit|cvOut4Bit);
+      //CAENVME_SetOutputRegister(gVme->handle,cvOut4Bit);
       //cerr<<"---> GATE SET TO 1"<<endl<<flush;
     }
     //if(rec_ev == 0 && mode != 3 ) CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
@@ -721,7 +734,7 @@ INT poll_event(INT source, INT count, BOOL test)
     
   //Reset GATE (pulser B)
   //WRONG FOR V3718
-  CAENVME_StopPulser(gVme->handle,cvPulserB);
+  //CAENVME_StopPulser(gVme->handle,cvPulserB);
     
 #endif
 
@@ -820,17 +833,8 @@ INT read_event(char *pevent, INT off)
 
     if(lamDGTZ == 1) {
 
-      //DEBUG:
-      //cerr<<"reading dgtz..."<<endl;
-
-      //CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-      //cerr<<"---> GATE SET TO 0"<<endl<<flush;
-
       read_dgtz(pevent);
-    } /*else {
-      CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
-      cerr<<"---> GATE SET TO 1"<<endl<<flush;
-    }*/
+    } 
   }
 
 #endif
@@ -974,13 +978,16 @@ INT init_vme_modules(){
   
   //TO BE CHECKED FOR V3718
   //Set OUT_2 as pulser B for a single gate
-  CAENVME_SetOutputConf(gVme->handle,cvOutput2,cvInverted,cvActiveHigh,cvMiscSignals);
+  //CAENVME_SetOutputConf(gVme->handle,cvOutput2,cvInverted,cvActiveHigh,cvMiscSignals);
 
   //WRONG FOR V3718
   //USE OUT_1 as VME VETO
-  data = 0xC;
-  CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
-  data = 0xC0;
+  //data = 0xC;
+  //CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
+
+  //data = 0xC0;
+  //CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
+  data = 0x3CE;
   CAENVME_WriteRegister(gVme->handle,cvOutMuxRegSet,data);
 
   ConfigBridge();
@@ -1091,8 +1098,10 @@ INT ConfigBridge(){
   //Configure pulser A for camera trigger
   //---Start and reset from SW
   CVTimeUnits unit = cvUnit410us;
-  DWORD period = 100000/410; //in units of 410 us
-  DWORD width = 10; //in units of 410 us
+  //DWORD period = 100000/410; //in units of 410 us
+  //DWORD width = 10; //in units of 410 us
+  unsigned char width = 1;
+  unsigned char period = 2;
   
   CAENVME_SetPulserConf(gVme->handle,cvPulserA,period,width,unit,0,cvManualSW,cvManualSW);
 
@@ -1378,7 +1387,7 @@ INT ConfigCamera(int icam)
   db_get_value(hDB, 0, "/Configurations/Exposure",&exposure,&size,TID_DOUBLE,TRUE);
 
 
-  if(icam >= 0) {
+  if(icam < 0) {
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, exposure);
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_EXPOSURETIME" << endl;
   }
@@ -1414,13 +1423,13 @@ INT ConfigCamera(int icam)
 
   //continous stream mode
   if(mode==3) {
-    if(icam == 0) {
-      err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__START );
+    //if(icam == 0) {
+      err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
       if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
-    } else {
-      err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__START);
-      if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
-    }
+    //} else {
+    //  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
+    //  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
+    //}
 
   } else {
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, DCAMPROP_TRIGGER_MODE__NORMAL );
@@ -1428,18 +1437,24 @@ INT ConfigCamera(int icam)
   }
 
   //Software trigger
-  if(icam == 0) { //if camera is master then trigger is raised frim the DAQ software
-    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE );
-    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
-  } else { // if camera is not master trigger is raised by the hardware and sent to EXT. TRIG.
+//if(icam == 0) { //if camera is master then trigger is raised frim the DAQ software
+    //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__SOFTWARE );
+    //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
+  //} else {*/ // if camera is not master trigger is raised by the hardware and sent to EXT. TRIG.
 
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, DCAMPROP_TRIGGERSOURCE__EXTERNAL );
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
 
-    //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__SYNCREADOUT );
-    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE );
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__SYNCREADOUT );
+    //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__EDGE );
     if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERACTIVE" << endl;
 
+
+    long int triggertimes = (long int)(exposure/0.000820);
+    //long int triggertimes = (long int)(exposure/0.001);
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERTIMES, triggertimes );
+    cout<<"Trigger times configuration: "<<triggertimes<<endl;
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERTIMES" << endl;
 
 
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERPOLARITY, DCAMPROP_TRIGGERPOLARITY__POSITIVE);
@@ -1448,7 +1463,7 @@ INT ConfigCamera(int icam)
     //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, exposure);
     //DCAMPROP_TRIGGERENABLE_POLARITY__POSITIVE
 
-  }
+  //}
   //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
   
   
@@ -1465,7 +1480,8 @@ INT ConfigCamera(int icam)
   if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY" << endl;
   
   //Exposure as output signal of OUT 2 with positive polarity
-  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, DCAMPROP_OUTPUTTRIGGER_KIND__TRIGGERREADY);
   if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
     
   //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
@@ -1474,23 +1490,23 @@ INT ConfigCamera(int icam)
   
   
   //MY GET VALUE
-  double delay;
+  //double delay;
 
-  err = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
-  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get TIMING_GLOBALEXPOSUREDELAY");
+  //err = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+  //if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get TIMING_GLOBALEXPOSUREDELAY");
 
 
-  dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &exposure);
+  //dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &exposure);
 
-  cout<<"DEBUG icam = "<<icam<<" - delay = "<<delay<<" - exposure = "<<exposure<<endl;
+  //cout<<"DEBUG icam = "<<icam<<" - delay = "<<delay<<" - exposure = "<<exposure<<endl;
   
-  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TIMESTAMP_PRODUCER, DCAMPROP_TIMESTAMP_PRODUCER__IMAGINGDEVICE);
-  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in set TIMESTAMP_PRODUCER.");
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TIMESTAMP_PRODUCER, DCAMPROP_TIMESTAMP_PRODUCER__IMAGINGDEVICE);
+  //if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in set TIMESTAMP_PRODUCER.");
   //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_DEVICEBUFFER_MODE, DCAMPROP_DEVICEBUFFER_MODE__THRU);
   //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_DEVICEBUFFER_MODE" << endl;
   
-  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+  //if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
     
   
   //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE + 256, DCAMPROP_OUTPUTTRIGGER_ACTIVE__EDGE);
@@ -1499,11 +1515,13 @@ INT ConfigCamera(int icam)
   // OLD
   // err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + delay);
   // if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
-  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, delay);
-  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
+  //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, delay);
+  //if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
     
-    
-  if(icam == 0) {  
+  err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
+  if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
+
+  /*if(icam == 0) {  
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
     if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
     
@@ -1520,11 +1538,179 @@ INT ConfigCamera(int icam)
       
     err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256*2, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
     if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
-  }
+  } else {
+
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
+    if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
+    
+    
+    // Exposure as output signal of OUT 3 with positive polarity change comment
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256*2, DCAMPROP_OUTPUTTRIGGER_KIND__PROGRAMABLE);
+    if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
+    
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256*2, DCAMPROP_OUTPUTTRIGGER_SOURCE__TRIGGER);
+    if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
+
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256*2, delay);
+    if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
+      
+    err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256*2, DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE);  
+    if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + step" << endl;
+
+
+  }*/
+
+  PrintCamConfig(icam);
   
   return 0;
   
 }
+
+
+INT PrintCamConfig(int icam) {
+
+  DCAMERR err;
+
+  cout<<"Configuration of camera "<<icam<<": "<<endl;
+
+  double dVar;
+  int    iVar;
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &dVar);
+  if(failed(err)) cout << "ERROR IN READOUT OF DCAM_IDPROP_EXPOSURETIME" << endl;
+  cout << "DCAM_IDPROP_EXPOSURETIME = "<<dVar<<endl;
+
+
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, &dVar);
+  if(failed(err)) cout << "ERROR IN READOUT OF DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE" << endl;
+  cout << "DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE = "<<dVar<<endl;
+
+  /*
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_BITSPERCHANNEL, 16);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_BINNING, 1);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_FRAMEBUNDLE_MODE,DCAMPROP_MODE__OFF);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_DEFECTCORRECT_MODE, DCAMPROP_DEFECTCORRECT_MODE__OFF);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SPOTNOISEREDUCER, DCAMPROP_MODE__OFF);
+  */
+  
+  //continous stream mode
+  if(icam == 0) {
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, &dVar );
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
+    cout << "DCAM_IDPROP_TRIGGER_MODE = "<<dVar<<endl;
+
+  } else {
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGER_MODE, &dVar);
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGER_MODE" << endl;
+    cout << "DCAM_IDPROP_TRIGGER_MODE = "<<dVar<<endl;
+
+  }
+
+  
+  //Software trigger
+  if(icam == 0) { //if camera is master then trigger is raised frim the DAQ software
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, &dVar );
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
+    cout << "DCAM_IDPROP_TRIGGERSOURCE = "<<dVar<<endl;
+
+  } else { // if camera is not master trigger is raised by the hardware and sent to EXT. TRIG.
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGERSOURCE, &dVar );
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
+    cout << "DCAM_IDPROP_TRIGGERSOURCE = "<<dVar<<endl;
+
+    //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, DCAMPROP_TRIGGERACTIVE__SYNCREADOUT );
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGERACTIVE, &dVar );
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERACTIVE" << endl;
+    cout << "DCAM_IDPROP_TRIGGERACTIVE = "<<dVar<<endl;
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TRIGGERPOLARITY, &dVar);
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERPOLARITY" << endl;
+    cout << "DCAM_IDPROP_TRIGGERPOLARITY = "<<dVar<<endl;
+
+    //err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, exposure);
+    //DCAMPROP_TRIGGERENABLE_POLARITY__POSITIVE
+
+  }
+  //if(failed(err)) cout << "ERROR IN DCAM_IDPROP_TRIGGERSOURCE" << endl;
+  
+  
+  //Global exposure as output signal of OUT 1 with positive polarity
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND, &dVar );
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND" << endl;
+  cout << "DCAM_IDPROP_OUTPUTTRIGGER_KIND = "<<dVar<<endl;
+
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, &dVar );  
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY" << endl;
+  cout << "DCAM_IDPROP_OUTPUTTRIGGER_POLARITY = "<<dVar<<endl;
+  
+
+  //Exposure as output signal of OUT 2 with positive polarity
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256, &dVar);
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + step" << endl;
+  cout << "DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256 = "<<dVar<<endl;
+    
+
+  err = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &dVar);
+  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get TIMING_GLOBALEXPOSUREDELAY");
+  cout << "DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY = "<<dVar<<endl;
+
+
+  dcamprop_getvalue( gCam[icam], DCAM_IDPROP_EXPOSURETIME, &dVar);
+  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get DCAM_IDPROP_EXPOSURETIME");
+  cout << "DCAM_IDPROP_EXPOSURETIME = "<<dVar<<endl;
+
+  
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_TIMESTAMP_PRODUCER, &dVar);
+  if(failed(err)) cm_msg(MERROR, "cygnus_daq", "ConfigCamera error in get TIMESTAMP_PRODUCER.");
+  cout << "DCAM_IDPROP_TIMESTAMP_PRODUCER = "<<dVar<<endl;
+  
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256, &dVar);
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + step" << endl;
+  cout << "DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256 = "<<dVar<<endl;
+ 
+  // OLD
+  // err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, exposure + delay);
+  // if(failed(err) && DEBUG) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
+  err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256, &dVar);
+  if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + step" << endl;
+  cout << "DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256 = "<<dVar<<endl;
+
+  
+  if(icam == 0) {  
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256, &dVar);  
+    if(failed(err) ) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + 2 step" << endl;
+    cout << "DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + 256 = "<<dVar<<endl;
+    
+    // Exposure as output signal of OUT 3 with positive polarity change comment
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_KIND + 256*2, &dVar);
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_KIND + 2 step" << endl;
+    cout << "DCAM_IDPROP_OUTPUTTRIGGER_KIND + 2*256 = "<<dVar<<endl;
+    
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 256*2, &dVar);
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 2 step" << endl;
+    cout << "DCAM_IDPROP_OUTPUTTRIGGER_SOURCE + 2*256 = "<<dVar<<endl;
+
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 256*2, &dVar);
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 2 step" << endl;
+    cout << "DCAM_IDPROP_OUTPUTTRIGGER_PERIOD + 2*256 = "<<dVar<<endl;
+      
+    err = dcamprop_getvalue( gCam[icam], DCAM_IDPROP_OUTPUTTRIGGER_POLARITY+256*2, &dVar);  
+    if(failed(err)) cout << "ERROR IN DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + 2 step" << endl;
+    cout << "DCAM_IDPROP_OUTPUTTRIGGER_POLARITY + 2*256 = "<<dVar<<endl;
+
+  }
+
+  return 0;
+}
+
+
 #endif
 
 INT disable_trigger()
@@ -1591,13 +1777,13 @@ db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
 
   //WRONG FOR V3718
   //SET OUT_1 to 1 (not busy)
-  CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);  
+  CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit|cvOut4Bit);  
 
   //cerr<<"---> GATE SET TO 1"<<endl<<flush;
 
   //TO BE CHECKD FOR V3718
   //Reset GATE (pulser B)
-  CAENVME_StopPulser(gVme->handle,cvPulserB);
+  //CAENVME_StopPulser(gVme->handle,cvPulserB);
 
 #endif
 
