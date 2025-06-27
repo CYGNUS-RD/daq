@@ -437,7 +437,7 @@ typedef struct {
 "Log history = INT32 : 1",\
 "Frontend host = STRING : [32] localhost",\
 "Frontend name = STRING : [32] SC Frontend",\
-"Frontend file name = STRING : [256] /home/cygno/DAQ/online/scfe.cxx",\
+"Frontend file name = STRING : [256] /home/cygno01/daq/online/scfe.cxx",\
 "Status = STRING : [256] Ok",\
 "Status color = STRING : [32] greenLight",\
 "Hidden = BOOL : n",\
