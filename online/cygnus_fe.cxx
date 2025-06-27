@@ -70,7 +70,7 @@ BOOL frontend_call_loop = FALSE;
 INT display_period = 3000;
 
 /* maximum event size produced by this frontend */
-INT max_event_size = 50000000; //1000000000;
+INT max_event_size = 150000000; //1000000000;
 
 /* maximum event size for fragmented events (EQ_FRAGMENTED) */
 INT max_event_size_frag = 5 * 1024 * 1024;
@@ -586,7 +586,7 @@ INT begin_of_run(INT run_number, char *error)
   }
 
   // Enable trigger at the beginning of the run
-  cerr<<"Enabling trigger..."<<endl<<flush;
+  //cerr<<"Enabling trigger..."<<endl<<flush;
   enable_trigger();
   usleep(10);
 
@@ -687,6 +687,8 @@ INT poll_event(INT source, INT count, BOOL test)
 
   if (test) return SUCCESS;
 
+  //cerr<<"Polling event ...."<<endl<<flush;
+
   int maxevents;
   bool freerun;
   int mode;
@@ -775,6 +777,7 @@ INT poll_event(INT source, INT count, BOOL test)
   }
   for(int jj=0;jj<pics;jj++){
     
+
     if(pics ==2 && jj==0) {
       CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
 
@@ -797,7 +800,7 @@ INT poll_event(INT source, INT count, BOOL test)
     // Wait for frameready
     //#pragma omp parallel for num_threads(nCamera) // parallelize the wait for each camera
     for(int icam = 0; icam < nCamera; icam++) {
-      cerr<<"Waiting for camera "<<icam<<endl<<flush;
+      //cerr<<"Waiting for camera "<<icam<<endl<<flush;
       err1 = dcamwait_start( hwait[icam], &waitstart[icam] );
       if(failed(err1)) cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
     }
@@ -937,6 +940,8 @@ INT read_event(char *pevent, INT off)
 #ifdef HAVE_CAMERA
 //#pragma omp parallel for// num_threads(nCamera)
   for(int icam=0; icam <nCamera; icam++) {
+
+    //cerr<<"Reading event from camera "<<icam<<".... "<<endl<<flush;
     read_camera(pevent, icam);
   }
   //read_camera(pevent);
@@ -993,6 +998,7 @@ INT read_event(char *pevent, INT off)
 
     if(lamDGTZ == 1) {
 
+      //cerr<<"Reading event from dgtz.... "<<endl<<flush;
       read_dgtz(pevent);
     } 
   }
@@ -1012,13 +1018,16 @@ INT read_event(char *pevent, INT off)
 
   if (bk_size(pevent)==defaultEvSize ) { return 0; }
 
+
+  //cerr<<"End of read_event. Returning event with size "<<bk_size(pevent)<<".... "<<endl<<flush;
+
   return bk_size(pevent);
 
 }
 
 #ifdef HAVE_CAMERA
 INT read_camera_status(char *pevent, INT off) {
-    
+    //cerr<<"Reading camera status for "<<nCamera<<" cameras...."<<endl<<flush;
     //HNDLE hDB;
     //cm_get_experiment_database(&hDB, NULL);
     
@@ -1044,7 +1053,8 @@ INT read_camera_status(char *pevent, INT off) {
     //db_set_value(hDB, 0, "/Equipment/CameraStatus/Variables/Sensor Temperature", &cam_temperature, sizeof(double), 1, TID_DOUBLE);
 
     bk_close(pevent, pdata);
-
+    
+    //cerr<<"End of read_camera_status Returning event with size "<<bk_size(pevent)<<"..."<<endl<<flush;
     return bk_size(pevent);
     
 }
