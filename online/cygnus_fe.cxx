@@ -746,9 +746,14 @@ INT poll_event(INT source, INT count, BOOL test)
     }
     else
     {
-        waitstart[icam].timeout = (int)((delay+exposure)*1000) + 60; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+        //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
+        waitstart[icam].timeout = (int)((delay+exposure)*1000) + 100; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
     }
-    waitstart[icam].eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    if (mode == 3){
+      waitstart[icam].eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    } else {
+      waitstart[icam].eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
+    }
   }
 
   int pics = 1;
