@@ -7,6 +7,7 @@ Code based on Midas for CYGNUS Data Acquisition and used on the MANGO setup. Thi
 
 Installation by:
 ```
+cd online
 cmake build .
 make
 ```
