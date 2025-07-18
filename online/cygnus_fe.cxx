@@ -486,6 +486,31 @@ INT frontend_init()
       }
     }
 
+    // Get cam mask from ODB
+    for(int icam =0; icam<NCAM_MAX; icam ++) {
+      BOOL imask = false;
+      size = sizeof(imask);  // TID_BOOL is 4 BITs
+      char query[256];
+      sprintf(query,"/Equipment/Trigger/Settings/CameraMask[%i]",icam);
+      db_get_value(hDB, 0, query, &imask,&size,TID_BOOL,TRUE);
+      //cerr<<"DEBUG MASK "<<icam<<"= "<<imask<<endl<<flush;
+      CamMask[icam] = (bool)imask;
+    }
+
+    // Check that masks are "consistent", meaning
+    // 1. at least one mask flag among the first nCamera entries is true
+    // 2. the mask options for the other NCAM_MAX - nCamera entries will
+    //    not be considered
+    bool checkMasks = false;
+    for(int icam=0; icam<nCamera; icam ++) {
+      if(CamMask[icam]) checkMasks = true;
+    }
+    if(!checkMasks) {
+      cm_msg(MERROR, "cygnus_daq", "frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
+      throw runtime_error("frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
+    }
+
+
   }
 
   // Configure cameras
@@ -564,17 +589,34 @@ INT begin_of_run(INT run_number, char *error)
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
 
   // Get cam mask from ODB
-  for(int icam =0; icam<NCAM_MAX; icam ++) {
-    bool imask = false;
-    size = 4*sizeof(imask);  // TID_BOOL is 4 BITs
+  for(int icam = 0; icam<NCAM_MAX; icam ++) {
+    BOOL imask = false;
+    size = sizeof(imask);  // TID_BOOL is 4 BITs
     char query[256];
     sprintf(query,"/Equipment/Trigger/Settings/CameraMask[%i]",icam);
     db_get_value(hDB, 0, query, &imask,&size,TID_BOOL,TRUE);
-    CamMask[icam] = imask;
+    //cerr<<"DEBUG MASK "<<icam<<"= "<<imask<<endl<<flush;
+    CamMask[icam] = (bool)imask;
+  }
+
+  // Check that masks are "consistent", meaning
+  // 1. at least one mask flag among the first nCamera entries is true
+  // 2. the mask options for the other NCAM_MAX - nCamera entries will
+  //    not be considered
+  bool checkMasks = false;
+  for(int icam=0; icam<nCamera; icam ++) {
+    if(CamMask[icam]) checkMasks = true;
+  }
+  if(!checkMasks) {
+    cm_msg(MERROR, "cygnus_daq", "begin_of_run: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
+    throw runtime_error("begin_of_run: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
   }
 
   
   for(int icam =0; icam < nCamera; icam ++) {
+    // Check camera mask flag
+    if(!CamMask[icam]) continue;
+
     // Configure each camera
     ConfigCamera(icam);
   
@@ -635,6 +677,9 @@ INT end_of_run(INT run_number, char *error)
 
   // Stop camera acquisition and release resources
   for(int icam =0; icam<nCamera;icam++) {
+    // Check camera mask flag
+    if(!CamMask[icam]) continue;
+
     dcambuf_release( gCam[icam] );
     dcamwait_close( hwait[icam] );
     dcamcap_stop( gCam[icam] );
@@ -733,6 +778,9 @@ INT poll_event(INT source, INT count, BOOL test)
   DCAMERR err1;
 
   for(int icam = 0; icam < nCamera; icam++) {
+    // Check camera mask flag
+    if(!CamMask[icam]) continue;
+
     if(gCam[icam] == NULL) {
       cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
       exit(EXIT_FAILURE);
@@ -752,6 +800,8 @@ INT poll_event(INT source, INT count, BOOL test)
 
   //#pragma omp parallel for num_threads(nCamera)
   for(int icam = 0; icam < nCamera; icam++) {
+    // Check camera mask flag
+    if(!CamMask[icam]) continue;
 
     // Get camera exposure
     double exposure;
@@ -834,7 +884,9 @@ INT poll_event(INT source, INT count, BOOL test)
     // Wait for frameready
     //#pragma omp parallel for num_threads(nCamera) // parallelize the wait for each camera
     for(int icam = 0; icam < nCamera; icam++) {
-      cerr<<"Starting camera "<<icam<<endl<<flush;
+      // Check camera mask flag
+      if(!CamMask[icam]) continue;
+      //cerr<<"Starting camera "<<icam<<endl<<flush;
       //cerr<<"Waiting for camera "<<icam<<endl<<flush;
       err1 = dcamwait_start( hwait[icam], &waitstart[icam] );
       if(failed(err1)) {
@@ -977,6 +1029,8 @@ INT read_event(char *pevent, INT off)
 #ifdef HAVE_CAMERA
 //#pragma omp parallel for// num_threads(nCamera)
   for(int icam=0; icam <nCamera; icam++) {
+    // Check camera mask flag
+    if(!CamMask[icam]) continue;
 
     //cerr<<"Reading event from camera "<<icam<<".... "<<endl<<flush;
     read_camera(pevent, icam);
@@ -1053,7 +1107,7 @@ INT read_event(char *pevent, INT off)
 
   // CHRONO AFTER
   std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
-  std::cerr<<"DEBUG TIME TO READ EVENT: "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
+  //std::cerr<<"DEBUG TIME TO READ EVENT: "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
 
   if (bk_size(pevent)==defaultEvSize ) { return 0; }
 
@@ -1080,7 +1134,11 @@ INT read_camera_status(char *pevent, INT off) {
     /* create SCLR bank */
     bk_create(pevent, "TCAM", TID_DOUBLE, (void **)&pdata);
 
-    for(int icam = 0; icam < nCamera; icam++) {
+    for(int icam = 0; icam < nCamera; icam++) { // Always read temp from all connected cameras for history
+      // Check camera mask flag
+      //if(!CamMask[icam]) {
+      //  *pdata++ = 0.0;
+      //}
       
       double cam_temperature;
       dcamprop_getvalue( gCam[icam], DCAM_IDPROP_SENSORTEMPERATURE, &cam_temperature);
