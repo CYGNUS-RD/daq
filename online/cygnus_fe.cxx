@@ -404,6 +404,7 @@ EQUIPMENT equipment[] = {
   vector<HDCAM> gCam(NCAM_MAX, 0);
   vector<HDCAMWAIT> hwait(NCAM_MAX, 0);
   vector<bool> CamMask(NCAM_MAX, false);
+  vector<DCAMWAIT_OPEN> waitopen(NCAM_MAX);
   //HDCAMWAIT hwait = 0;
 #endif
 
@@ -549,6 +550,13 @@ INT begin_of_run(INT run_number, char *error)
   
 #ifdef HAVE_CAMERA
 
+  for(int icam = 0; icam<nCamera; icam++) { 
+    if(gCam[icam] == NULL) {
+      cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
   HNDLE hDB;
   cm_get_experiment_database(&hDB, NULL);int mode;
 
@@ -565,24 +573,25 @@ INT begin_of_run(INT run_number, char *error)
     CamMask[icam] = imask;
   }
 
-
+  
   for(int icam =0; icam < nCamera; icam ++) {
     // Configure each camera
     ConfigCamera(icam);
-    dcambuf_alloc( gCam[icam], 1);
-    dcamcap_start( gCam[icam], DCAMCAP_START_SEQUENCE );
   
-
     DCAMERR err;
   
     // Setup wait handle for each camera
-    DCAMWAIT_OPEN waitopen;
-    memset( &waitopen, 0, sizeof(waitopen) );
-    waitopen.size = sizeof(waitopen);
-    waitopen.hdcam = gCam[icam];
-    err = dcamwait_open( &waitopen );
+    
+    memset( &waitopen[icam], 0, sizeof(waitopen[icam]) );
+    waitopen[icam].size = sizeof(waitopen[icam]);
+    waitopen[icam].hdcam = gCam[icam];
+    err = dcamwait_open( &waitopen[icam] );
     if(failed(err)) throw runtime_error(("unable to open camera wait handle for camera"+to_string(icam)+".\n").c_str());
-    hwait[icam] = waitopen.hwait;  
+    hwait[icam] = waitopen[icam].hwait; 
+
+    dcambuf_alloc( gCam[icam], 1);
+    dcamcap_start( gCam[icam], DCAMCAP_START_SEQUENCE );
+
   }
 
   // Enable trigger at the beginning of the run
@@ -723,26 +732,46 @@ INT poll_event(INT source, INT count, BOOL test)
 
   DCAMERR err1;
 
+  for(int icam = 0; icam < nCamera; icam++) {
+    if(gCam[icam] == NULL) {
+      cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
+      exit(EXIT_FAILURE);
+    }
+    if(hwait[icam] == NULL) {
+      cout << "WAIT HANDLE OF CAMERA "<<icam<<" NOT FOUND" << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
   //wait for frame ready
 
-  // Get camera exposure
-  double exposure;
-  dcamprop_getvalue( gCam[0], DCAM_IDPROP_EXPOSURETIME, &exposure);
-    
-  // Get GEDelay from camera
-  double delay;
-  err1 = dcamprop_getvalue(gCam[0], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
-  if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
-    
-  if((mode==1 || mode==2) && nCamera == 1) delay = 360./1000.;
-  
+
+  //cerr<<"Waiting for frameready event ...."<<endl<<flush;
   // Setup of DCAMWAIT object
   vector<DCAMWAIT_START> waitstart(NCAM_MAX);
+
+  //#pragma omp parallel for num_threads(nCamera)
   for(int icam = 0; icam < nCamera; icam++) {
+
+    // Get camera exposure
+    double exposure;
+    err1 = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_EXPOSURETIME, &exposure);
+    if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get DCAM_IDPROP_EXPOSURETIME");
+      
+    // Get GEDelay from camera
+    double delay;
+    err1 = dcamprop_getvalue(gCam[icam], DCAM_IDPROP_TIMING_GLOBALEXPOSUREDELAY, &delay);
+    if(failed(err1)) cm_msg(MERROR, "cygnus_daq", "poll_event error in get TIMING_GLOBALEXPOSUREDELAY");
+      
+    if((mode==1 || mode==2) && nCamera == 1) delay = 360./1000.;
+    
+
     memset( &waitstart[icam], 0, sizeof(waitstart[icam]) );
     waitstart[icam].size = sizeof(waitstart[icam]);
+
     if (mode==3) {
         waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
+        //waitstart[icam].timeout = 5000; // Set very large timeout
     }
     else
     {
@@ -805,11 +834,14 @@ INT poll_event(INT source, INT count, BOOL test)
     // Wait for frameready
     //#pragma omp parallel for num_threads(nCamera) // parallelize the wait for each camera
     for(int icam = 0; icam < nCamera; icam++) {
+      cerr<<"Starting camera "<<icam<<endl<<flush;
       //cerr<<"Waiting for camera "<<icam<<endl<<flush;
       err1 = dcamwait_start( hwait[icam], &waitstart[icam] );
-      if(failed(err1)) cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
+      if(failed(err1)) {
+        cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
+      }
     }
-    //err1 = dcamwait_start( hwait[], &waitstart );
+    //err1 = dcamwait_start( hwait[0], &waitstart);
 
     //usleep(1000); // wait 200 us to avoid synch problems with the camera
     //err1 = dcamwait_start( hwait[1], &waitstart2 );
