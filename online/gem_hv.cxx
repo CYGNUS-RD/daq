@@ -14,7 +14,11 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "midas.h"
+
+
+bool printError = true;
 
 typedef struct {
 
@@ -1121,18 +1125,33 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
 
    }
 
-   /*
+   
    ////Trip handling -- switch all off if one channel is tripped
    if(trip_found==1) {
+
+     if(printError) {
+      cm_msg (MERROR, "gem_hv_idle", "HV trip detected by cd_gem_hv: turning HV off.");
+      printError = false;
+
+      //system("odbedit -c stop");
+
+     }
+     
+
      HNDLE hDB;
      cm_get_experiment_database(&hDB, NULL);
-     float val=0;
+     DWORD val=0;
      for (i = 0 ; i < hv_info->num_channels ; i++){
        /////TO DO -- ONLY GEMs IN THE SAME GROUP
-       db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/Demand", &val, sizeof(val), i, TID_FLOAT, FALSE);
+       db_set_value_index(hDB, hv_info->hKeyRoot, "Variables/ChState", &val, sizeof(val), i, TID_DWORD, FALSE);
      }
+     
+     sleep(1); 
+
+   } else {
+      printError = true;
    }
-   */
+   
 
    /*
    ////Hot spot handling
