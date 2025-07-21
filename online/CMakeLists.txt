@@ -130,6 +130,7 @@ set(DRIVERS
   $ENV{MIDASSYS}/mscb/src/mscb
   gem_hv
   gem_dd_sy4527.cxx
+  gem_dd_sy5527.cxx
   iseg_hps
   #opc
   )
