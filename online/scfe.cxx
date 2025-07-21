@@ -19,6 +19,7 @@
 #include "class/generic.h"
 #include "gem_hv.h"
 #include "gem_dd_sy4527.h"
+#include "gem_dd_sy5527.h"
 #include "iseg_hps.h"
 // #include "opc.h"
 #include "bus/null.h"
@@ -49,7 +50,8 @@ INT event_buffer_size = 10 * 10000;
 
 /* device driver list */
 DEVICE_DRIVER sy4527_driver[] = {
-  {"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
+  //{"sy4527", dd_sy4527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
+  {"sy5527", dd_sy5527, 14, null, DF_PRIO_DEVICE|DF_REPORT_CHSTATE|DF_REPORT_STATUS|DF_HW_RAMP},
   {""}
 };
 
