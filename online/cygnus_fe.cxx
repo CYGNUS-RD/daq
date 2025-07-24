@@ -507,7 +507,9 @@ INT frontend_init()
     }
     if(!checkMasks) {
       cm_msg(MERROR, "cygnus_daq", "frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
-      throw runtime_error("frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
+      cerr<<"frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe."<<endl;
+      return CM_SET_ERROR;
+      //throw runtime_error("frontend_init: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
     }
 
 
@@ -553,7 +555,6 @@ INT frontend_exit()
 
 INT begin_of_run(INT run_number, char *error)
 {
-
   rec_ev = 0;
   picIndex = 0;
   
@@ -574,7 +575,6 @@ INT begin_of_run(INT run_number, char *error)
 
   
 #ifdef HAVE_CAMERA
-
   for(int icam = 0; icam<nCamera; icam++) { 
     if(gCam[icam] == NULL) {
       cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
@@ -587,6 +587,7 @@ INT begin_of_run(INT run_number, char *error)
 
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+
 
   // Get cam mask from ODB
   for(int icam = 0; icam<NCAM_MAX; icam ++) {
@@ -608,12 +609,15 @@ INT begin_of_run(INT run_number, char *error)
     if(CamMask[icam]) checkMasks = true;
   }
   if(!checkMasks) {
-    cm_msg(MERROR, "cygnus_daq", "begin_of_run: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
-    throw runtime_error("begin_of_run: Masks in the ODB are not consistent with input nCamera options. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.\n");
+    cm_msg(MERROR, "cygnus_daq", "Please check camera masks.");
+    cerr<<"begin_of_run: Masks in the ODB are not consistent with input nCamera. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe."<<endl;
+    return CM_SET_ERROR;
+    //throw runtime_error("begin_of_run: Masks in the ODB are not consistent with input nCamera. Please check /Equipment/Trigger/Settings/. Closing cygnus_fe.");
   }
 
   
   for(int icam =0; icam < nCamera; icam ++) {
+    
     // Check camera mask flag
     if(!CamMask[icam]) continue;
 
@@ -628,7 +632,12 @@ INT begin_of_run(INT run_number, char *error)
     waitopen[icam].size = sizeof(waitopen[icam]);
     waitopen[icam].hdcam = gCam[icam];
     err = dcamwait_open( &waitopen[icam] );
-    if(failed(err)) throw runtime_error(("unable to open camera wait handle for camera"+to_string(icam)+".\n").c_str());
+    if(failed(err)) {
+      cm_msg(MERROR, "cygnus_daq", "begin_of_run: unable to open camera wait handle for camera %d.", icam);
+      cerr<<"begin_of_run: unable to open camera wait handle for camera "<<icam<<endl;
+      exit(EXIT_FAILURE);
+      //throw runtime_error(("unable to open camera wait handle for camera"+to_string(icam)+".\n").c_str());
+    }
     hwait[icam] = waitopen[icam].hwait; 
 
     dcambuf_alloc( gCam[icam], 1);
@@ -652,10 +661,9 @@ INT begin_of_run(INT run_number, char *error)
   } /*else {
     dcamcap_firetrigger(gCam[0],0);
   }*/
-  
+
 #endif
   
-
   return SUCCESS;
 }
 
@@ -2445,7 +2453,10 @@ INT read_camera(char *pevent, int icam)
   memset( &captransferinfo, 0, sizeof(captransferinfo) );
   captransferinfo.size    = sizeof(captransferinfo);
   err = dcamcap_transferinfo( gCam[icam], &captransferinfo );
-  if(failed(err)) throw runtime_error("read_camera: unable to get captransferinfo.\n");
+  if(failed(err)) {
+    cerr << "read_camera: unable to get captransferinfo." << endl;
+    return FE_ERR_HW;//throw runtime_error("read_camera: unable to get captransferinfo.\n");
+  }
 
   DCAMBUF_FRAME bufframe;
   memset( &bufframe, 0, sizeof(bufframe) );
