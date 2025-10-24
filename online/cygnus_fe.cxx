@@ -26,6 +26,8 @@
 #include <algorithm>
 #include <chrono>
 #include <omp.h>
+// Debug
+#include <bitset>
 
 using namespace std;
 
@@ -1428,16 +1430,16 @@ INT ConfigDgtz(){
 
     if(strcmp(BoardName[i],"V1761")==0)   
       {
-	if(ndgtz[i] > (7.2e6/maxtriggersize) ) ndgtz[i] = (int)(7.2e6/maxtriggersize);
-	ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
-	SAMPLING[i] = 4000;
+        if(ndgtz[i] > (7.2e6/maxtriggersize) ) ndgtz[i] = (int)(7.2e6/maxtriggersize);
+        ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+        SAMPLING[i] = 4000;
       }
      //for_V1720E
     else if(strcmp(BoardName[i],"V1720E")==0)   
       {
-	if(ndgtz[i] > (1.25e6/maxtriggersize) ) ndgtz[i] = (int)(1.25e6/maxtriggersize);                                         
-	ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
-	SAMPLING[i] = 250;
+        if(ndgtz[i] > (1.25e6/maxtriggersize) ) ndgtz[i] = (int)(1.25e6/maxtriggersize);                                         
+        ret |= CAEN_DGTZ_SetRecordLength(gDGTZ[i],ndgtz[i]);                                /* Set the lenght of each waveform (in samples) */
+        SAMPLING[i] = 250;
       }
     //#ifdef HAVE_V1742
     else if(strcmp(BoardName[i],"V1742")==0)     
@@ -1491,11 +1493,43 @@ INT ConfigDgtz(){
 
     //VITO: ENABLING EGTTT 60 bit 
     for(int i=0;i<nboard;i++){
-      // Read the register than turn on the bit 20
-      uint32_t enable_egttt;
-      CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x8000, &enable_egttt);
-      enable_egttt = enable_egttt | 0x00100000;  // bit 20
-      CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x8004, enable_egttt);
+      if(strcmp(BoardName[i],"V1742")==0) {
+        // Read the register than turn on the bit 20
+        uint32_t enable_egttt;
+        CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x8000, &enable_egttt);
+        enable_egttt = enable_egttt | 0x00100000u;  // bit 20
+        CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x8004, enable_egttt);
+      } else if (strcmp(BoardName[i],"V1720E")==0) {
+        // STEFANO: TO TEST FOR 1720E
+        uint32_t enable_egttt;
+        CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x811C, &enable_egttt);
+        cout<<"READOUT of ETTT register for board "<<i<<": "<<std::bitset<32>(enable_egttt)<<endl;
+        // Set register =0x811C properly: Bits[22:21] to "10"
+        enable_egttt = enable_egttt & 0xFF9FFFFFu;
+        enable_egttt = enable_egttt | 0x00400000u;
+        cout<<"SETUP   of ETTT register for board "<<i<<": "<<std::bitset<32>(enable_egttt)<<endl;
+        CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x811C, enable_egttt);
+      }
+
+    }
+
+    // SETUP OF INTERNAL TRIGGER LOCIC FOR 1720E (see page 46 of Manual, point 3)
+    for(int i=0;i<nboard;i++){
+
+      if(strcmp(BoardName[i],"V1720E")==0) {
+        // Read the Global Trigger Mask register
+        uint32_t global_trigger_mask;
+        CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x810C, &global_trigger_mask);
+        cout<<"Readout of GTC register for board "<<i<<": "<<std::bitset<32>(global_trigger_mask)<<endl;
+        // Set external trigger only: Bits[31:29] to "010"
+        global_trigger_mask = global_trigger_mask & 0x1FFFFFFFu; // Clear Bits[31:29]
+        global_trigger_mask = global_trigger_mask | 0x40000000u; // Set Bits[31:29] to "010"
+        // Disable self-trigger on all channels: Bits[7:0] to "00000000"
+        global_trigger_mask = global_trigger_mask & 0xFFFFFF00u;
+        cout<<"Setup of GTC register for board "<<i<<": "<<std::bitset<32>(global_trigger_mask)<<endl;
+        CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x810C, global_trigger_mask);
+      }
+
     }
 
 
@@ -2224,11 +2258,11 @@ int read_dgtz(char* pevent){
     
   
   for(int i=0;i<nboard;i++){
-    //cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
+    cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
     int event_i = 0;  
       
-    std::vector<uint32_t> tmp_trgttag(128);
-    std::vector<uint32_t> tmp_trgttag1(128);
+    std::vector<uint32_t> tmp_trgttag(128, 0);
+    std::vector<uint32_t> tmp_trgttag1(128, 0);
     uint64_t tmp_EGTT;
     
     CAEN_DGTZ_ReadData(gDGTZ[i],CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer_dgtz[i],&bsize);
@@ -2245,97 +2279,81 @@ int read_dgtz(char* pevent){
 
       for(int iev=0;iev<NumEvents;iev++){
 
-        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
-
-        CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
-        CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-
-        tmp_trgttag[iev] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
-        //tmp_trgttag[event_i] = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761 and x720
-          //event_i ++;
-
-        for(int j=0;j<NCHDGTZ[i];j++){
-
-          for (uint32_t k=0; k<ndgtz[i]; ++k) {
-
-            uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
-            *pdata16++ = temp;
-
-          }
-
-        }
-
-        CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
-
-      }
-
-    }
-
-    //#ifdef HAVE_V1742       ///////////////////////// VITO : MODIFICO QUI
-    else if(strcmp(BoardName[i],"V1742")==0){
-
-      
-      CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
-
-
-      //cerr<<"    NumEvents = "<<NumEvents<<endl<<flush;
-
-      for(int iev=0;iev<NumEvents;iev++){
-
-        //cerr<<"    Allocating Evt iev = "<<iev<<endl<<flush;
         CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
         if(retall != CAEN_DGTZ_Success) {
           cerr <<"Error allocating event. ErrorCode = "<<retall<<endl<<flush;
-          //return TRUE;
         }
-        //cerr<<"    Getting info Evt iev = "<<iev<<endl<<flush;				
 
         if( Evt == NULL) cerr<<"Event from DGTZ is NULL."<<endl<<flush;
 
         CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
-        //cerr<<"    Decoding Evt iev = "<<iev<<endl<<flush;				
+        CAEN_DGTZ_ErrorCode retdec = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+        if(retdec != CAEN_DGTZ_Success) cerr <<"Unable to decode DGTZ event"<<endl<<flush;
 
-        CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-        if(ret != CAEN_DGTZ_Success) cerr <<"    FLAG NO SUCCESSO"<<endl<<flush;
+        tmp_trgttag[iev]  = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761
+        tmp_trgttag1[iev] = eventInfo.Pattern;
 
-        //cerr<<"    Saving TTTs and STIs for Evt iev= "<<iev<<endl<<flush;	
+        // WORK IN PROGRESS
+        tmp_EGTT = (((uint64_t)tmp_trgttag1[iev] & 0xFFFF) << 32) | ((uint64_t)tmp_trgttag[iev]);
+        //DEBUG
+        //cerr<<"EV "<<iev<<" - the EGTTT for board V1720E is: "<< tmp_EGTT * 8. * 1e-6 <<" ms"<<endl<<flush;
+        //cerr<<"    TTT part in bit: "<<std::bitset<32>(tmp_trgttag[iev])<<endl<<flush;
+
+
+        // Loop over channels and samples
+        for(int j=0;j<NCHDGTZ[i];j++){
+          for (uint32_t k=0; k<ndgtz[i]; ++k) {
+            uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
+            *pdata16++ = temp;
+          }
+        }
+        CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
+      }
+
+    }
+
+    else if(strcmp(BoardName[i],"V1742")==0){
+      
+      CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
+
+      for(int iev=0;iev<NumEvents;iev++){
+
+        CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
+        if(retall != CAEN_DGTZ_Success) {
+          cerr <<"Error allocating event. ErrorCode = "<<retall<<endl<<flush;
+        }			
+
+        if( Evt == NULL) cerr<<"Event from DGTZ is NULL."<<endl<<flush;
+
+        CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
+
+        CAEN_DGTZ_ErrorCode retdec = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
+        if(retdec != CAEN_DGTZ_Success) cerr <<"Unable to decode DGTZ event"<<endl<<flush;
+
         tmp_trgttag[iev]    = Evt->DataGroup[0].TriggerTimeTag & 0x3FFFFFFF;
         tmp_trgttag1[iev]    = Evt->DataGroup[1].TriggerTimeTag & 0x3FFFFFFF;
 
         tmp_EGTT = (tmp_trgttag1[iev] << 30) | tmp_trgttag[iev];
         // DEBUG
-        //cerr<<"------------------------------"<<endl<<flush;
         //cerr<<"old TTT is:   "<< tmp_trgttag[iev] * 8.5 * 1e-6 <<endl<<flush;
-        //cerr<<"The EGTTT is: "<< tmp_EGTT * 8.5 * 1e-6 <<endl<<flush;
-        //cerr<<"------------------------------"<<endl<<flush;
+        //cerr<<"EV "<<iev<<" - The EGTTT for board V1742  is: "<< tmp_EGTT * 8.5 * 1e-6 <<" ms"<<endl<<flush;
 
         StartIndexCell[iev] = Evt->DataGroup[0].StartIndexCell;
-        //StartIndexCell[iev] = Evt->DataGroup[1].StartIndexCell;
-        //tmp_trgttag[event_i] = Evt->DataGroup[0].TriggerTimeTag;
-          //event_i++;
 
-        //cerr<<"    Saving event on pdata16 = "<<iev<<endl<<flush;
+        // Loop over channels and samples
         for(int j=0;j<NCHDGTZ[i];j++){
-
           uint32_t ig = j/8;
           uint32_t ich = j%8;
-
           for (uint32_t k=0; k<ndgtz[i]; ++k) {
-
             uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][k]);
             *pdata16++ = temp;
-
           }
-
         }
-        //cerr<<"    Freeing DGTZ Evts..."<<endl<<flush; // DEBUG
+        
         CAEN_DGTZ_FreeEvent(gDGTZ[i],&Evt);
-        //cerr<<"    DGTZ Evt freed..."<<endl<<flush;
 
       }
-    } 
-
-    //#endif 
+    }
 
     TRGTTAG[i] = tmp_trgttag;
     TRGTTAG1[i] = tmp_trgttag1;
