@@ -865,10 +865,13 @@ INT poll_event(INT source, INT count, BOOL test)
   string numframe = to_string((int)captransferinfo.nFrameCount);
   
   cm_msg(MINFO, "cygnus_daq", numframe.c_str());*/
+
+  // WAIT FOR CAMERA SIGNAL (needed for correct generation of S-IN signal)
   if (rec_ev==0) {
     usleep(500); //this is necessary do not delete
     CAENVME_ClearOutputRegister(gVme->handle,cvOut2Bit);
   }
+
   for(int jj=0;jj<pics;jj++){
     
 
@@ -1514,6 +1517,8 @@ INT ConfigDgtz(){
     }
 
     // SETUP OF INTERNAL TRIGGER LOCIC FOR 1720E (see page 46 of Manual, point 3)
+
+    int previous_channels = 0;
     for(int i=0;i<nboard;i++){
 
       if(strcmp(BoardName[i],"V1720E")==0) {
@@ -1538,7 +1543,8 @@ INT ConfigDgtz(){
     size = sizeof(double);
     for(int ich=0;ich<NCHDGTZ[i];ich++){
       
-      sprintf(query,"/Configurations/DigitizerOffset[%d]",i*32+ich);      
+      sprintf(query,"/Configurations/DigitizerOffset[%d]",previous_channels+ich);
+
       db_get_value(hDB,0,query,&DGTZ_OFFSET[i][ich],&size,TID_DOUBLE,TRUE);
       
       if(DGTZ_OFFSET[i][ich] > 0.5) DGTZ_OFFSET[i][ich] = 0.5;
@@ -1553,6 +1559,7 @@ INT ConfigDgtz(){
         ret |= CAEN_DGTZ_WriteRegister(gDGTZ[i],grreg,data);
 		
       }
+
       
       //if(ret != CAEN_DGTZ_Success) {
       //   cout<<BoardName[i]<<"  "<<endl;
@@ -1560,6 +1567,7 @@ INT ConfigDgtz(){
       //}
 	
     }
+    previous_channels += NCHDGTZ[i];
     
     //Uploading and enabling the automatic correction for the 1742 digitizer
     bool enable_corrections;
@@ -2258,7 +2266,7 @@ int read_dgtz(char* pevent){
     
   
   for(int i=0;i<nboard;i++){
-    cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
+    //cerr<<"Start reading board i = "<<i<<"..."<<endl<<flush;
     int event_i = 0;  
       
     std::vector<uint32_t> tmp_trgttag(128, 0);
