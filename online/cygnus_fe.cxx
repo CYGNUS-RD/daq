@@ -267,7 +267,7 @@ INT read_dgtz(char *pevent);
  * @param icam Camera index.
  * @return Status code.
  */
-INT read_camera(char *pevent, int icam);
+INT read_camera(char *pevent, int icam, bool crop_image, int crop_size, int crop_origin_x, int crop_origin_y);
 /**
  * @brief Read the camera status into an event buffer.
  * 
@@ -1032,21 +1032,61 @@ INT read_event(char *pevent, INT off)
   std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 
   rec_ev++;
+
+   //////READ SYSTEMS
+  HNDLE hDB;
+  INT status;
+  status = cm_get_experiment_database(&hDB, NULL);
+
+  int mode;
+  int size = sizeof(int);
+  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
+  bool freerun;
+  size = 4*sizeof(bool);
+  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
+
+  int crop_size;
+  size = sizeof(int);
+  status = cm_get_experiment_database(&hDB, NULL);
+  db_get_value(hDB, 0, "/Configurations/CameraCropSettings/crop_size",&crop_size,&size,TID_INT,TRUE);
+  int crop_origin_x;
+  size = sizeof(int);
+  status = cm_get_experiment_database(&hDB, NULL);
+  db_get_value(hDB, 0, "/Configurations/CameraCropSettings/crop_origin_x",&crop_origin_x,&size,TID_INT,TRUE);
+  //cerr<<"DEBUG crop_origin_x "<<crop_origin_x<<endl;
+  int crop_origin_y;
+  size = sizeof(int);
+  status = cm_get_experiment_database(&hDB, NULL);
+  db_get_value(hDB, 0, "/Configurations/CameraCropSettings/crop_origin_y",&crop_origin_y,&size,TID_INT,TRUE);
+  //cerr<<"DEBUG crop_origin_y "<<crop_origin_y<<endl;
+  bool crop_image;
+  size = 4*sizeof(bool);
+  status = cm_get_experiment_database(&hDB, NULL);
+  db_get_value(hDB, 0, "/Configurations/CameraCropSettings/crop_enable",&crop_image,&size,TID_BOOL,TRUE);
+  //cerr<<"DEBUG crop_enable "<<crop_image<<endl;
+  //DEBUG
+  //std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
+  //std::cerr<<"DEBUG TIME TO read ODB: "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
   
   /* init bank structure */
   bk_init32(pevent);
   INT defaultEvSize = bk_size(pevent);
 
-  //////READ SYSTEMS
-
+ 
 #ifdef HAVE_CAMERA
+
+  //bool crop_image;
+  //int sizecam = sizeof(int);
+  //sizecam = 4*sizeof(bool);
+
+  //db_get_value(hDB, 0, "/Configurations/FreeRunning",&crop_image,&sizecam,TID_BOOL,TRUE);
 //#pragma omp parallel for// num_threads(nCamera)
   for(int icam=0; icam <nCamera; icam++) {
     // Check camera mask flag
     if(!CamMask[icam]) continue;
 
     //cerr<<"Reading event from camera "<<icam<<".... "<<endl<<flush;
-    read_camera(pevent, icam);
+    read_camera(pevent, icam, crop_image, crop_size, crop_origin_x, crop_origin_y);
   }
   //read_camera(pevent);
 #endif
@@ -1059,19 +1099,16 @@ INT read_event(char *pevent, INT off)
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
-  HNDLE hDB;
+  
+  //nt mode;
+  //int size = sizeof(int);
+  //db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
 
-  cm_get_experiment_database(&hDB, NULL);
+  //bool freerun;
+  //size = 4*sizeof(bool);
 
+  //db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
 
-  int mode;
-  int size = sizeof(int);
-  db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-
-  bool freerun;
-  size = 4*sizeof(bool);
-
-  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
   if(!freerun && mode != 3) read_dgtz(pevent);
 
   else if(!freerun && mode == 3) {
@@ -1119,7 +1156,7 @@ INT read_event(char *pevent, INT off)
   //cerr<<"---> GATE SET TO 1"<<endl<<flush;
 
   // CHRONO AFTER
-  std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
+  //std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
   //std::cerr<<"DEBUG TIME TO READ EVENT: "<<chrono::duration_cast<chrono::milliseconds>(after - now).count()<<" ms"<<endl;
 
   if (bk_size(pevent)==defaultEvSize ) { return 0; }
@@ -2460,7 +2497,7 @@ int read_dgtz(char* pevent){
 #endif
 
 #ifdef HAVE_CAMERA
-INT read_camera(char *pevent, int icam)
+INT read_camera(char *pevent, int icam, bool crop_image, int crop_size, int crop_origin_x, int crop_origin_y)
 {
 
   // transferinfo param
@@ -2573,8 +2610,15 @@ INT read_camera(char *pevent, int icam)
     for(int x = 0; x < bufframe.width; x++ ){
 
       WORD tmpData = *pDst++; 
-      *pdata++ = tmpData;
-      //
+      //*pdata++ = tmpData;
+      
+      if(crop_image) {
+        if(x>crop_origin_x && x<= crop_origin_x+crop_size && y>crop_origin_y && y<= crop_origin_y+crop_size) {
+          *pdata++ = tmpData;
+        }
+      } else {
+        *pdata++ = tmpData;
+      }
 
     }
 
