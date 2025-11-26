@@ -80,6 +80,9 @@ INT max_event_size_frag = 5 * 1024 * 1024;
 /* buffer size to hold events */
 INT event_buffer_size = 1000000000; //2000000000
 
+/* stop of run requested only if not already requested */
+BOOL stop_already_requested = FALSE;
+
 
 int      picIndex = 0;
 DWORD    timeZero = 0;
@@ -559,6 +562,9 @@ INT begin_of_run(INT run_number, char *error)
 {
   rec_ev = 0;
   picIndex = 0;
+  stop_already_requested = FALSE;
+  uint32_t zero = 0;
+
   
 #ifdef HAVE_CAEN_BRD
 
@@ -586,6 +592,41 @@ INT begin_of_run(INT run_number, char *error)
 
   HNDLE hDB;
   cm_get_experiment_database(&hDB, NULL);int mode;
+
+  // For solution #2, see the poll_event function
+  db_set_value(hDB, 0, "/Logger/Run duration", &zero, sizeof(zero), 1, TID_UINT32);
+
+  // For solution #2, ---
+  BOOL pending = FALSE;
+  INT sp = sizeof(pending);
+  db_get_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &pending, &sp, TID_BOOL, TRUE);
+  if (pending) { // if pending flag this new run as "autorestarted"
+
+    // Set AutoRestarted flag
+    BOOL v = TRUE;
+    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
+
+    // Set AutoRestart counter
+    DWORD arcount = 0;
+    INT sc = sizeof(arcount);
+    db_get_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, &sc, TID_DWORD, TRUE);
+    arcount += 1;
+    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sc, 1, TID_DWORD);
+
+    // Reset Pending flag
+    BOOL v2 = FALSE;
+    db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v2, sizeof(v2), 1, TID_BOOL);
+
+  } else { // if not pending: normal begin of run
+
+    // Run not autorestarted
+    BOOL v = FALSE;
+    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
+
+    // AutoRestart counter is zero
+    DWORD arcount = 0;
+    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sizeof(arcount), 1, TID_DWORD);
+  }
 
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
@@ -751,7 +792,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
   if (test) return SUCCESS;
 
-  //cerr<<"Polling event ...."<<endl<<flush;
+  cerr<<"Polling event ...."<<endl<<flush;
 
   int maxevents;
   bool freerun;
@@ -830,8 +871,10 @@ INT poll_event(INT source, INT count, BOOL test)
     waitstart[icam].size = sizeof(waitstart[icam]);
 
     if (mode==3) {
-        waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
-        //waitstart[icam].timeout = 5000; // Set very large timeout
+        //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
+        waitstart[icam].timeout = (int)(exposure * 1000. * 2.) ; // Set timeout = 2 pics
+        // DEBUG
+        //waitstart[icam].timeout = (int)(exposure * 1000. * 0.5) ; // Set DEBUG timeout = 0.5 pics
     }
     else
     {
@@ -905,13 +948,40 @@ INT poll_event(INT source, INT count, BOOL test)
       if(failed(err1)) {
         cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
       }
+      // Solution #1: it stops the run, but there's no way to restart the run automatically
+      /*if(err1 == DCAMERR_TIMEOUT && !stop_already_requested) {
+        cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d. Stopping run.", jj);
+        char errmsg[128] = "camera timeout";
+        INT status = cm_transition(TR_STOP, 0, errmsg, sizeof(errmsg), TR_ASYNC, 0);
+        if ( status != CM_SUCCESS ) cm_msg(MERROR, "poll_event", "cm_transition(TR_STOP) failed: %d %s", status, errmsg);
+        stop_already_requested = TRUE;
+        return 0;
+      }*/
+
+      // Solution #2: restart the run "tricking" the Logger
+      //if(err1 == DCAMERR_TIMEOUT && !stop_already_requested && rec_ev > 100) { // DEBUG
+      if(err1 == DCAMERR_TIMEOUT && !stop_already_requested) {
+        cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d. Restarting run.", jj);
+
+        // Setting we expect an autorestart
+        BOOL v = TRUE;
+        db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v, sizeof(v), 1, TID_BOOL);
+
+        // Tricking the Logger to autorestart
+        BOOL yes = TRUE;
+        db_set_value(hDB, 0, "/Logger/Auto restart", &yes, sizeof(yes), 1, TID_BOOL);
+        uint32_t one = 1;
+        db_set_value(hDB, 0, "/Logger/Run duration", &one, sizeof(one), 1, TID_UINT32);
+
+
+      }
     }
     //err1 = dcamwait_start( hwait[0], &waitstart);
 
     //usleep(1000); // wait 200 us to avoid synch problems with the camera
     //err1 = dcamwait_start( hwait[1], &waitstart2 );
 
-    if(err1 == DCAMERR_TIMEOUT) cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d", jj);
+    
 
     if(pics ==2 && jj==0) {
       CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit);
@@ -977,6 +1047,8 @@ INT poll_event(INT source, INT count, BOOL test)
   }
 
 #endif
+
+    cerr<<"Event found"<<endl;
     return TRUE;
   }
         
@@ -1003,6 +1075,7 @@ INT poll_event(INT source, INT count, BOOL test)
     
 #endif
 
+  cerr<<"Event not found"<<endl;
   return 0;  
 }
 
@@ -1027,7 +1100,7 @@ INT interrupt_configure(INT cmd, INT source, POINTER_T adr)
 
 INT read_event(char *pevent, INT off)
 {
-
+  cerr<<"Start reading event "<<rec_ev<<endl;
   //CHRONO NOW useless comment
   std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 
@@ -1164,6 +1237,7 @@ INT read_event(char *pevent, INT off)
 
   //cerr<<"End of read_event. Returning event with size "<<bk_size(pevent)<<".... "<<endl<<flush;
 
+  cerr<<"Stop  reading event "<<rec_ev-1<<endl;
   return bk_size(pevent);
 
 }
