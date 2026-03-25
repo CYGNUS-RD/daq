@@ -66,7 +66,7 @@ char *frontend_name = "cygnus_daq";
 char *frontend_file_name = __FILE__;
 
 /* frontend_loop is called periodically if this variable is TRUE    */
-BOOL frontend_call_loop = FALSE;
+BOOL frontend_call_loop = TRUE;
 
 /* a frontend status page is displayed with this frequency in ms */
 INT display_period = 3000;
@@ -83,6 +83,10 @@ INT event_buffer_size = 1000000000; //2000000000
 /* stop of run requested only if not already requested */
 BOOL stop_already_requested = FALSE;
 
+/* latch fatal camera error -> stop run from frontend_loop() */
+BOOL stop_requested = FALSE;
+BOOL stop_sent = FALSE;
+DWORD stop_error_code = 0;
 
 int      picIndex = 0;
 DWORD    timeZero = 0;
@@ -563,6 +567,9 @@ INT begin_of_run(INT run_number, char *error)
   rec_ev = 0;
   picIndex = 0;
   stop_already_requested = FALSE;
+  stop_requested = FALSE;
+  stop_sent = FALSE;
+  stop_error_code = 0;
   uint32_t zero = 0;
 
   
@@ -586,47 +593,53 @@ INT begin_of_run(INT run_number, char *error)
   for(int icam = 0; icam<nCamera; icam++) { 
     if(gCam[icam] == NULL) {
       cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
-      exit(EXIT_FAILURE);
+      // exit(EXIT_FAILURE);
+      //set_equipment_status("Trigger", "Camera not found", "red");
+      if(error) {
+        strcpy(error, "Camera not found");
+      }
+      return FE_ERR_HW;
     }
   }
 
   HNDLE hDB;
   cm_get_experiment_database(&hDB, NULL);int mode;
 
+  // Auto restart: commented because it must be intensively tested
   // For solution #2, see the poll_event function
-  db_set_value(hDB, 0, "/Logger/Run duration", &zero, sizeof(zero), 1, TID_UINT32);
+  //db_set_value(hDB, 0, "/Logger/Run duration", &zero, sizeof(zero), 1, TID_UINT32);
 
   // For solution #2, ---
-  BOOL pending = FALSE;
-  INT sp = sizeof(pending);
-  db_get_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &pending, &sp, TID_BOOL, TRUE);
-  if (pending) { // if pending flag this new run as "autorestarted"
+  //BOOL pending = FALSE;
+  //INT sp = sizeof(pending);
+  //db_get_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &pending, &sp, TID_BOOL, TRUE);
+  //if (pending) { // if pending flag this new run as "autorestarted"
 
-    // Set AutoRestarted flag
-    BOOL v = TRUE;
-    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
+  //  // Set AutoRestarted flag
+  //  BOOL v = TRUE;
+  //  db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
 
-    // Set AutoRestart counter
-    DWORD arcount = 0;
-    INT sc = sizeof(arcount);
-    db_get_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, &sc, TID_DWORD, TRUE);
-    arcount += 1;
-    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sc, 1, TID_DWORD);
+  //  // Set AutoRestart counter
+  //  DWORD arcount = 0;
+  //  INT sc = sizeof(arcount);
+  //  db_get_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, &sc, TID_DWORD, TRUE);
+  //  arcount += 1;
+  //  db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sc, 1, TID_DWORD);
 
-    // Reset Pending flag
-    BOOL v2 = FALSE;
-    db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v2, sizeof(v2), 1, TID_BOOL);
+  //  // Reset Pending flag
+  //  BOOL v2 = FALSE;
+  //  db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v2, sizeof(v2), 1, TID_BOOL);
 
-  } else { // if not pending: normal begin of run
+  //} else { // if not pending: normal begin of run
 
-    // Run not autorestarted
-    BOOL v = FALSE;
-    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
+  //  // Run not autorestarted
+  //  BOOL v = FALSE;
+  //  db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestarted", &v, sizeof(v), 1, TID_BOOL);
 
-    // AutoRestart counter is zero
-    DWORD arcount = 0;
-    db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sizeof(arcount), 1, TID_DWORD);
-  }
+  //  // AutoRestart counter is zero
+  //  DWORD arcount = 0;
+  //  db_set_value(hDB, 0, "Equipment/Trigger/Variables/AutoRestartCount", &arcount, sizeof(arcount), 1, TID_DWORD);
+  //}
 
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
@@ -678,7 +691,13 @@ INT begin_of_run(INT run_number, char *error)
     if(failed(err)) {
       cm_msg(MERROR, "cygnus_daq", "begin_of_run: unable to open camera wait handle for camera %d.", icam);
       cerr<<"begin_of_run: unable to open camera wait handle for camera "<<icam<<endl;
-      exit(EXIT_FAILURE);
+      //exit(EXIT_FAILURE);
+
+      //set_equipment_status("Trigger", "Unable to open camwait handle", "red");
+      if(error) {
+        strcpy(error, "Unable to open camwait handle");
+      }
+      return FE_ERR_HW;
       //throw runtime_error(("unable to open camera wait handle for camera"+to_string(icam)+".\n").c_str());
     }
     hwait[icam] = waitopen[icam].hwait; 
@@ -714,6 +733,10 @@ INT begin_of_run(INT run_number, char *error)
 
 INT end_of_run(INT run_number, char *error)
 {
+  stop_requested = FALSE;
+  stop_sent = FALSE;
+  stop_already_requested = FALSE;
+  stop_error_code = 0;
 
   // Disable trigger at the end of the run
   disable_trigger();
@@ -771,6 +794,33 @@ INT frontend_loop()
 {
   /* if frontend_call_loop is true, this routine gets called when
      the frontend is idle or once between every event */
+  if(stop_requested && !stop_sent) {
+    stop_sent = TRUE;
+
+    HNDLE hDB;
+    cm_get_experiment_database(&hDB, NULL);
+
+    cm_msg(MERROR, "cygnus_daq", 
+           "frontend_loop: requesting TR_STOP due to camera error %u",
+           stop_error_code);
+
+    // The following must be intensively validated
+    //
+    //BOOL v = TRUE;
+    //db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart",
+    //             &v, sizeof(v), 1 TID_BOOL);
+    
+    char errmsg[256];
+    strcpy(errmsg, "camera fatal error");
+
+    INT status = cm_transition(TR_STOP, 0, errmsg, sizeof(errmsg), TR_ASYNC, 0);
+    if (status!= CM_SUCCESS) {
+      cm_msg(MERROR, "cygnus_daq",
+             "fronted_loop: cm_transition(TR_STOP) failed: %d %s", status, errmsg);
+    }
+
+  }
+
   return SUCCESS;
 }
 
@@ -791,6 +841,9 @@ INT poll_event(INT source, INT count, BOOL test)
 {
 
   if (test) return SUCCESS;
+
+  // Do not poll if stop is requested
+  if(stop_requested) return 0;
 
   cerr<<"Polling event ...."<<endl<<flush;
 
@@ -834,11 +887,21 @@ INT poll_event(INT source, INT count, BOOL test)
 
     if(gCam[icam] == NULL) {
       cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
-      exit(EXIT_FAILURE);
+
+      //set_equipment_status("Trigger", "Camera not found", "red");
+      //if(error) {
+      //  strcpy(error, "Camera not found");
+      //}
+      return FE_ERR_HW;
     }
     if(hwait[icam] == NULL) {
       cout << "WAIT HANDLE OF CAMERA "<<icam<<" NOT FOUND" << endl;
-      exit(EXIT_FAILURE);
+
+      //set_equipment_status("Trigger", "Unable to open camwait handle", "red");
+      //if(error) {
+      //  strcpy(error, "Unable to open camwait handle");
+      //}
+      return FE_ERR_HW;
     }
   }
 
@@ -872,14 +935,14 @@ INT poll_event(INT source, INT count, BOOL test)
 
     if (mode==3) {
         //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
-        waitstart[icam].timeout = (int)(exposure * 1000. * 2.) ; // Set timeout = 2 pics
+        waitstart[icam].timeout = (int)(exposure * 1000. * 20.) ; // Set timeout = 3 pics
         // DEBUG
         //waitstart[icam].timeout = (int)(exposure * 1000. * 0.5) ; // Set DEBUG timeout = 0.5 pics
     }
     else
     {
         //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
-        waitstart[icam].timeout = (int)((delay+exposure)*1000) + 100; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
+        waitstart[icam].timeout = (int)((delay+exposure)*1000) +200; //in ms --> max wait = 2*exposure + USB transfer time // 30 before
     }
     if (mode == 3){
       waitstart[icam].eventmask = DCAMWAIT_CAPEVENT_FRAMEREADY;
@@ -948,33 +1011,51 @@ INT poll_event(INT source, INT count, BOOL test)
       if(failed(err1)) {
         cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
       }
-      // Solution #1: it stops the run, but there's no way to restart the run automatically
-      /*if(err1 == DCAMERR_TIMEOUT && !stop_already_requested) {
-        cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d. Stopping run.", jj);
-        char errmsg[128] = "camera timeout";
-        INT status = cm_transition(TR_STOP, 0, errmsg, sizeof(errmsg), TR_ASYNC, 0);
-        if ( status != CM_SUCCESS ) cm_msg(MERROR, "poll_event", "cm_transition(TR_STOP) failed: %d %s", status, errmsg);
-        stop_already_requested = TRUE;
-        return 0;
-      }*/
 
-      // Solution #2: restart the run "tricking" the Logger
-      //if(err1 == DCAMERR_TIMEOUT && !stop_already_requested && rec_ev > 100) { // DEBUG
-      if(err1 == DCAMERR_TIMEOUT && !stop_already_requested) {
-        cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d. Restarting run.", jj);
+      // New solution [to be tested]
+      if(failed(err1)) {
+        cerr << "poll_event: dcamwait_start failed for camera "
+             << icam << " with error "<< err1 << endl << flush;
+        
+        // Fatal errors must be added here to stop the run
+        if(!stop_already_requested && ((DWORD)err1 == 2147483910u)) {
+          stop_already_requested = TRUE;
+          stop_requested = TRUE;
+          stop_error_code = (DWORD)err1;
 
-        // Setting we expect an autorestart
-        BOOL v = TRUE;
-        db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v, sizeof(v), 1, TID_BOOL);
+          cm_msg(MERROR, "cygnus_daq", "poll_event: fatal camera error %u on camera %d, requesting stop",
+                 stop_error_code, icam);
 
-        // Tricking the Logger to autorestart
-        BOOL yes = TRUE;
-        db_set_value(hDB, 0, "/Logger/Auto restart", &yes, sizeof(yes), 1, TID_BOOL);
-        uint32_t one = 1;
-        db_set_value(hDB, 0, "/Logger/Run duration", &one, sizeof(one), 1, TID_UINT32);
+          // The following must be intensively validated
+          //
+          //BOOL v = TRUE;
+          //db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart",
+          //             &v, sizeof(v), 1 TID_BOOL);
+          return 0;
+
+        }
 
 
       }
+
+      //// Solution #2: restart the run "tricking" the Logger
+      ////if(err1 == DCAMERR_TIMEOUT && !stop_already_requested && rec_ev > 100) { // DEBUG
+      //if(failed(err1) && !stop_already_requested && err1 != 2214600705) {
+      ////if(err1 == DCAMERR_TIMEOUT && !stop_already_requested) {
+      //  cm_msg(MERROR, "cygnus_daq", "poll_event: dcamwait_start timeout %d. Restarting run.", jj);
+
+      //  // Setting we expect an autorestart
+      //  BOOL v = TRUE;
+      //  db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart", &v, sizeof(v), 1, TID_BOOL);
+
+      //  // Tricking the Logger to autorestart
+      //  BOOL yes = TRUE;
+      //  //db_set_value(hDB, 0, "/Logger/Auto restart", &yes, sizeof(yes), 1, TID_BOOL);
+      //  uint32_t one = 1;
+      //  db_set_value(hDB, 0, "/Logger/Run duration", &one, sizeof(one), 1, TID_UINT32);
+
+
+      //}
     }
     //err1 = dcamwait_start( hwait[0], &waitstart);
 
