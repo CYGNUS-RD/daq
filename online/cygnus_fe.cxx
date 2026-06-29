@@ -83,6 +83,9 @@ INT event_buffer_size = 1000000000; //2000000000
 /* stop of run requested only if not already requested */
 BOOL stop_already_requested = FALSE;
 
+/* fatal camera error to skip cleanup */
+BOOL fatal_camera_error = FALSE;
+
 /* latch fatal camera error -> stop run from frontend_loop() */
 BOOL stop_requested = FALSE;
 BOOL stop_sent = FALSE;
@@ -569,8 +572,77 @@ INT begin_of_run(INT run_number, char *error)
   stop_already_requested = FALSE;
   stop_requested = FALSE;
   stop_sent = FALSE;
+  fatal_camera_error = FALSE;
   stop_error_code = 0;
-  uint32_t zero = 0;
+  //uint32_t zero = 0;
+
+#ifdef HAVE_CAMERA
+  // DEBUG: TO BE FIXED
+  for (int icam = 0; icam < nCamera; icam++) {
+      if (!CamMask[icam]) continue;
+
+      cerr << "DEBUG: begin_of_run: reinitializing camera..." << endl;
+
+
+      cerr << "DEBUG: begin_of_run: closing wait..." << endl;
+      // 1. close wait
+      if (hwait[icam]) {
+          dcamwait_close(hwait[icam]);
+          hwait[icam] = NULL;
+      }
+
+
+      cerr << "DEBUG: begin_of_run: closing camera..." << endl;
+      // 2. close camera
+      if (gCam[icam] != NULL) {
+          dcamdev_close(gCam[icam]);
+          gCam[icam] = NULL;
+      }
+
+
+      cerr << "DEBUG: begin_of_run: reopen camera..." << endl;
+      // 3. reopen
+      gCam[icam] = dcamcon_init_open(true);
+      if (gCam[icam] == NULL) {
+          cm_msg(MERROR, "cygnus_daq", "begin_of_run: Failed to reopen camera");
+          return FE_ERR_HW;
+      }
+  }
+#endif
+
+  HNDLE hDB;
+  cm_get_experiment_database(&hDB, NULL);int mode;
+
+  // reset chiavi ODB usate dall'alarm/restart logic
+  INT8 zero = 0;
+
+  INT status1 = db_set_value(hDB, 0, "/Custom/RunControl/StopRequested",
+                             &zero, sizeof(zero), 1, TID_INT8);
+
+  const char* empty_reason = "";
+  INT status2 = db_set_value(hDB, 0, "/Custom/RunControl/StopReason",
+                             empty_reason, 1, 1, TID_STRING);
+
+  if (status1 != DB_SUCCESS || status2 != DB_SUCCESS) {
+    cm_msg(MERROR, "cygnus_daq",
+           "begin_of_run: failed to reset ODB stop flags: StopRequested=%d StopReason=%d",
+           status1, status2);
+
+    if (error)
+      strcpy(error, "Cannot reset /Custom/RunControl stop flags");
+
+    return FE_ERR_ODB;
+  }
+
+  // reset esplicito dell'allarme se e' ancora attivo
+  INT status3 = al_reset_alarm("Run Autorestart");
+  if (status3 != AL_RESET && status3 != AL_SUCCESS) {
+    cm_msg(MERROR, "cygnus_daq",
+           "begin_of_run: al_reset_alarm failed, status=%d", status3);
+  }
+
+  // cm_msg(MINFO, "cygnus_daq",
+  //        "begin_of_run: reset /Custom/RunControl stop flags");
 
   
 #ifdef HAVE_CAEN_BRD
@@ -602,8 +674,6 @@ INT begin_of_run(INT run_number, char *error)
     }
   }
 
-  HNDLE hDB;
-  cm_get_experiment_database(&hDB, NULL);int mode;
 
   // Auto restart: commented because it must be intensively tested
   // For solution #2, see the poll_event function
@@ -733,35 +803,86 @@ INT begin_of_run(INT run_number, char *error)
 
 INT end_of_run(INT run_number, char *error)
 {
+  cerr<<"DEBUG: Ending the run ..."<<endl<<flush;
   stop_requested = FALSE;
   stop_sent = FALSE;
   stop_already_requested = FALSE;
   stop_error_code = 0;
-
-  // Disable trigger at the end of the run
-  disable_trigger();
-
-#ifdef HAVE_CAEN_BRD
-  //WRONG FOR V3718
-  // Stop pulser at the end of the run
-  CAENVME_StopPulser(gVme->handle,cvPulserA);
-#endif
-
-#ifdef HAVE_CAMERA
+  
+  #ifdef HAVE_CAMERA
 
   // Stop camera acquisition and release resources
   for(int icam =0; icam<nCamera;icam++) {
     // Check camera mask flag
     if(!CamMask[icam]) continue;
 
-    dcambuf_release( gCam[icam] );
-    dcamwait_close( hwait[icam] );
-    dcamcap_stop( gCam[icam] );
+    // [Fixme: check order]
+    //cerr<<"DEBUG: releasing buffer frame..."<<endl<<flush;
+    //dcambuf_release( gCam[icam] );
+    //cerr<<"DEBUG: closing waiting camera handle..."<<endl<<flush;
+    //dcamwait_close( hwait[icam] );
+    //cerr<<"DEBUG: stopping camera ..."<<endl<<flush;
+    //dcamcap_stop( gCam[icam] );
+    
+    // DEBUG ONLY: TO BE FIXED FOR REAL DATATAKING
+
+    if(!fatal_camera_error) {
+        cerr<<"DEBUG: aborting wating handle ..."<<endl<<flush;
+        dcamwait_abort( hwait[icam]);
+
+        cerr<<"DEBUG: stopping camera ..."<<endl<<flush;
+        dcamcap_stop( gCam[icam] );
+        cerr<<"DEBUG: closing waiting camera handle..."<<endl<<flush;
+        dcamwait_close( hwait[icam] );
+        cerr<<"DEBUG: releasing buffer frame..."<<endl<<flush;
+        dcambuf_release( gCam[icam] );
+
+        cerr<<"DEBUG: Done."<<endl<<flush;
+    } else {
+      cerr<<"DEBUG: camera fatal error, skipping cleanup"<<endl<<flush;
+    }
+    
+    //gCam[0] = dcamcon_init_open(true);
   }
 
 #endif
+
+  cerr<<"DEBUG: disabling trigger..."<<endl<<flush;
+
+  // Disable trigger at the end of the run
+  disable_trigger();
+  cerr<<"DEBUG: Done"<<endl<<flush;
+
+#ifdef HAVE_CAEN_BRD
+  //WRONG FOR V3718
+  // Stop pulser at the end of the run
+  cerr<<"DEBUG: stopping pulser..."<<endl<<flush;
+  CAENVME_StopPulser(gVme->handle,cvPulserA);
+  cerr<<"DEBUG: Done"<<endl<<flush;
+#endif
+
+  HNDLE hDB;
+  cm_get_experiment_database(&hDB, NULL);int mode;
+
+  // Reset chiavi ODB usate dall'alarm/watcher
+  INT8 zero = 0;
+  INT status1 = db_set_value(hDB, 0, "/Custom/RunControl/StopRequested",
+                             &zero, sizeof(zero), 1, TID_INT8);
+
+  const char* empty_reason = "";
+  INT status2 = db_set_value(hDB, 0, "/Custom/RunControl/StopReason",
+                             empty_reason, 1, 1, TID_STRING);
+
+  if (status1 != DB_SUCCESS || status2 != DB_SUCCESS) {
+    cm_msg(MERROR, "cygnus_daq",
+           "end_of_run: failed to reset ODB stop flags: StopRequested=%d StopReason=%d",
+           status1, status2);
+  } else {
+    cm_msg(MINFO, "cygnus_daq",
+           "end_of_run: reset /Custom/RunControl stop flags");
+  }
    
- return SUCCESS;
+  return SUCCESS;
 
 }
 
@@ -795,7 +916,7 @@ INT frontend_loop()
   /* if frontend_call_loop is true, this routine gets called when
      the frontend is idle or once between every event */
   if(stop_requested && !stop_sent) {
-    stop_sent = TRUE;
+    cerr << "DEBUG: fontend_loop: stopping run..." << endl << flush;
 
     HNDLE hDB;
     cm_get_experiment_database(&hDB, NULL);
@@ -810,17 +931,37 @@ INT frontend_loop()
     //db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart",
     //             &v, sizeof(v), 1 TID_BOOL);
     
-    char errmsg[256];
-    strcpy(errmsg, "camera fatal error");
+    char reason[32];
+    strcpy(reason, "camera fatal error");
+    
 
-    INT status = cm_transition(TR_STOP, 0, errmsg, sizeof(errmsg), TR_ASYNC, 0);
-    if (status!= CM_SUCCESS) {
+    INT8 one = 1;
+    INT status1 = db_set_value(hDB, 0, "/Custom/RunControl/StopRequested",
+                          &one, sizeof(one), 1, TID_INT8);
+
+    INT status2 = db_set_value(hDB, 0, "/Custom/RunControl/StopReason",
+                           reason, strlen(reason) + 1, 1, TID_STRING);
+
+    if (status1 == DB_SUCCESS && status2 == DB_SUCCESS) {
+      stop_sent = TRUE;
+
       cm_msg(MERROR, "cygnus_daq",
-             "fronted_loop: cm_transition(TR_STOP) failed: %d %s", status, errmsg);
+             "Requested automatic stop+restart: %s", reason);
+    } else {
+      cm_msg(MERROR, "cygnus_daq",
+             "Failed to set stop request in ODB: StopRequested=%d StopReason=%d",
+             status1, status2);
     }
 
+    // cerr << "DEBUG: calling cm_transition(TR_STOP)" << endl << flush;
+    // INT status = cm_transition(TR_STOP, 0, errmsg, sizeof(errmsg), TR_ASYNC, FALSE);
+    // if (status!= CM_SUCCESS) {
+    //   cm_msg(MERROR, "cygnus_daq",
+    //          "fronted_loop: cm_transition(TR_STOP) failed: %d %s", status, errmsg);
+    // }
+    
   }
-
+  cerr << "DEBUG: end of fontend_loop..." << endl << flush;
   return SUCCESS;
 }
 
@@ -843,7 +984,11 @@ INT poll_event(INT source, INT count, BOOL test)
   if (test) return SUCCESS;
 
   // Do not poll if stop is requested
-  if(stop_requested) return 0;
+  if(stop_requested) {
+    cerr<<"Skip polling of event ...."<<endl<<flush;
+    usleep(1000000);
+    return 0;
+  }
 
   cerr<<"Polling event ...."<<endl<<flush;
 
@@ -853,6 +998,17 @@ INT poll_event(INT source, INT count, BOOL test)
   int size = sizeof(int);
   HNDLE hDB;
   cm_get_experiment_database(&hDB, NULL);
+
+  // Do not poll if some process from outside issues a stop transition
+  // /Runinfo/Transition in progress can be
+  // * 0 == no transition
+  // * 1 == start transition
+  // * 2 == stop transition
+  int tip = 0;
+  size = sizeof(int);
+  db_get_value(hDB, 0, "/Runinfo/Transition in progress",
+               &tip,&size,TID_INT,TRUE);
+  if(tip==2) return 0; // if during stop transition
 
   size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
@@ -935,7 +1091,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
     if (mode==3) {
         //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
-        waitstart[icam].timeout = (int)(exposure * 1000. * 20.) ; // Set timeout = 3 pics
+        waitstart[icam].timeout = (int)(exposure * 1000. * 10.) ; // Set timeout = 3 pics
         // DEBUG
         //waitstart[icam].timeout = (int)(exposure * 1000. * 0.5) ; // Set DEBUG timeout = 0.5 pics
     }
@@ -1008,9 +1164,10 @@ INT poll_event(INT source, INT count, BOOL test)
       //cerr<<"Starting camera "<<icam<<endl<<flush;
       //cerr<<"Waiting for camera "<<icam<<endl<<flush;
       err1 = dcamwait_start( hwait[icam], &waitstart[icam] );
-      if(failed(err1)) {
-        cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
-      }
+
+      // if(failed(err1)) {
+      //   cerr<<"poll_event: dcamwait_start failed for camera "<<icam<<" with error "<<err1<<endl<<flush;
+      // }
 
       // New solution [to be tested]
       if(failed(err1)) {
@@ -1022,6 +1179,8 @@ INT poll_event(INT source, INT count, BOOL test)
           stop_already_requested = TRUE;
           stop_requested = TRUE;
           stop_error_code = (DWORD)err1;
+	  fatal_camera_error = TRUE;
+
 
           cm_msg(MERROR, "cygnus_daq", "poll_event: fatal camera error %u on camera %d, requesting stop",
                  stop_error_code, icam);
@@ -1031,6 +1190,9 @@ INT poll_event(INT source, INT count, BOOL test)
           //BOOL v = TRUE;
           //db_set_value(hDB, 0, "/Equipment/Trigger/Variables/_PendingAutoRestart",
           //             &v, sizeof(v), 1 TID_BOOL);
+
+          cerr << "DEBUG: setting stop_requested and leaving poll_event" << endl << flush;
+
           return 0;
 
         }
