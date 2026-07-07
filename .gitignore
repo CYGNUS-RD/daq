@@ -11,6 +11,7 @@
 *.pcm
 *.png
 *.pdf
+*.bak
 
 online/cygnus_fe
 online/cygnus_fe_*
