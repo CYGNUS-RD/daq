@@ -37,7 +37,7 @@ typedef struct {
 } ARDUINO_SETTINGS;
 
 #define ARDUINO_SETTINGS_STR "\
-Port = STRING : [256] /dev/ttyACM0\n\
+Port = STRING : [256] /dev/ttyACM1\n\
 Baud = INT : 9600\n\
 "
 
