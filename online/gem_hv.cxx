@@ -1364,26 +1364,73 @@ void gem_hv_reset_alarm(INT hDB, INT hKey, void *info) {
    INT status = device_driver(hv_info->driver[0], CMD_CLEAR_ALARM);
 
    if (status == FE_SUCCESS) {
-      hv_info->trip_latched = 0;
-      hv_info->trip_channel = -1;
+      int caen_trip_found = 0;
+      int caen_trip_channel = -1;
+      /*
+      * ClearAlarm may not be reflected immediately in ChStatus.
+      * Retry a few times before deciding whether the trip is still active.
+      */
+      for (int attempt = 0; attempt < 5; attempt++) {
+         caen_trip_found = 0;
+         caen_trip_channel = -1;
+
+         ss_sleep(200);   // wait 200 ms between checks
+         for (int i = 0; i < hv_info->num_channels; i++) {
+            if (hv_info->driver[i]->enabled &&
+               hv_info->driver[i]->flags & DF_REPORT_STATUS) {
+
+               device_driver(hv_info->driver[i],
+                           CMD_GET_STATUS,
+                           i - hv_info->channel_offset[i],
+                           &hv_info->chStatus[i]);
+
+               if (hv_info->chStatus[i] & 0x200) {
+                  caen_trip_found = 1;
+                  caen_trip_channel = i;
+               }
+            }
+         }
+         if (!caen_trip_found)
+            break;
+      }
+
+      db_set_data(hDB, hv_info->hKeyChStatus,
+                  hv_info->chStatus,
+                  sizeof(DWORD) * hv_info->num_channels,
+                  hv_info->num_channels,
+                  TID_DWORD);
+
+      if (caen_trip_found) {
+         hv_info->trip_latched = 1;
+         hv_info->trip_channel = caen_trip_channel;
+
+         cm_msg(MERROR, "gem_hv_reset_alarm",
+               "CAEN HV alarm reset requested, but channel %d is still tripped, ChStatus=0x%08x",
+               caen_trip_channel,
+               hv_info->chStatus[caen_trip_channel]);
+      } else {
+         hv_info->trip_latched = 0;
+         hv_info->trip_channel = -1;
+
+         cm_msg(MINFO, "gem_hv_reset_alarm",
+               "CAEN HV alarm reset completed, no trip status remains");
+      }
 
       db_set_value(hDB, hv_info->hKeyRoot,
-                   "Variables/Trip Latched",
-                   &hv_info->trip_latched,
-                   sizeof(hv_info->trip_latched),
-                   1, TID_INT);
+                  "Variables/Trip Latched",
+                  &hv_info->trip_latched,
+                  sizeof(hv_info->trip_latched),
+                  1, TID_INT);
 
       db_set_value(hDB, hv_info->hKeyRoot,
-                   "Variables/Trip Channel",
-                   &hv_info->trip_channel,
-                   sizeof(hv_info->trip_channel),
-                   1, TID_INT);
+                  "Variables/Trip Channel",
+                  &hv_info->trip_channel,
+                  sizeof(hv_info->trip_channel),
+                  1, TID_INT);
 
-      cm_msg(MINFO, "gem_hv_reset_alarm",
-             "CAEN HV alarm reset completed");
    } else {
       cm_msg(MERROR, "gem_hv_reset_alarm",
-             "CAEN HV alarm reset failed");
+            "CAEN HV alarm reset failed");
    }
 
    hv_info->reset_alarm = 0;
