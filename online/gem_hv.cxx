@@ -15,11 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "midas.h"
+#include "gem_dd_sy4527.h"
 
 typedef struct {
 
    /* ODB keys */
    HNDLE hKeyRoot, hKeyDemand, hKeyMeasured, hKeyCurrent, hKeyChStatus, hKeyChState, hKeyTemperature;
+   HNDLE hKeyCurrentDet;
 
    /* globals */
    INT num_channels;
@@ -33,6 +35,7 @@ typedef struct {
    float *demand;
    float *measured;
    float *current;
+   float *current_det;
    DWORD *chStatus;
    float *temperature;
 
@@ -53,9 +56,11 @@ typedef struct {
    float *demand_mirror;
    float *measured_mirror;
    float *current_mirror;
+   float *current_det_mirror;
    DWORD *chStatus_mirror;
    float *temperature_mirror;
    DWORD *last_change;
+
 
    /* recovery variables */
    int recovery; 
@@ -81,6 +86,7 @@ static void free_mem(GEM_HV_INFO * hv_info)
    free(hv_info->demand);
    free(hv_info->measured);
    free(hv_info->current);
+   free(hv_info->current_det);
    free(hv_info->chStatus);
    free(hv_info->temperature);
 
@@ -99,6 +105,7 @@ static void free_mem(GEM_HV_INFO * hv_info)
    free(hv_info->demand_mirror);
    free(hv_info->measured_mirror);
    free(hv_info->current_mirror);
+   free(hv_info->current_det_mirror);
    free(hv_info->chStatus_mirror);
    free(hv_info->temperature_mirror);
    free(hv_info->last_change);
@@ -166,6 +173,9 @@ INT gem_hv_read(EQUIPMENT * pequipment, int channel)
          status = device_driver(hv_info->driver[i], CMD_GET_CURRENT,
                                 i - hv_info->channel_offset[i],
                                 &hv_info->current[i]);
+         status = device_driver(hv_info->driver[i], CMD_GET_CURRENT_DET,
+                                i - hv_info->channel_offset[i],
+                                &hv_info->current_det[i]);
          if (hv_info->driver[i]->flags & DF_REPORT_STATUS)
             status = device_driver(hv_info->driver[i], CMD_GET_STATUS,
                                    i - hv_info->channel_offset[i],
@@ -185,6 +195,9 @@ INT gem_hv_read(EQUIPMENT * pequipment, int channel)
       status = device_driver(hv_info->driver[channel], CMD_GET_CURRENT,
                                  channel - hv_info->channel_offset[channel],
                                  &hv_info->current[channel]);
+      status = device_driver(hv_info->driver[channel], CMD_GET_CURRENT_DET,
+                                 channel - hv_info->channel_offset[channel],
+                                 &hv_info->current_det[channel]);
       if (hv_info->driver[channel]->flags & DF_REPORT_STATUS)
          status = device_driver(hv_info->driver[channel], CMD_GET_STATUS,
                                     channel - hv_info->channel_offset[channel],
@@ -258,6 +271,35 @@ INT gem_hv_read(EQUIPMENT * pequipment, int channel)
 
       pequipment->odb_out++;
    }
+
+   /* check for update current_det */
+   max_diff = 0.f;
+   min_time = 10000;
+   changed = FALSE;
+   for (i = 0; i < hv_info->num_channels; i++) {
+      if (ABS(hv_info->current_det[i] - hv_info->current_det_mirror[i]) > max_diff)
+         max_diff = ABS(hv_info->current_det[i] - hv_info->current_det_mirror[i]);
+
+      if (ABS(hv_info->current_det[i] - hv_info->current_det_mirror[i]) >
+          hv_info->update_threshold_current[i])
+         changed = TRUE;
+
+      if (act_time - hv_info->last_change[i] < min_time)
+         min_time = act_time - hv_info->last_change[i];
+   }
+
+   /* update if change is more than update_sensitivity or less than 5sec ago */
+   if (changed || (min_time < 5000 && max_diff > 0)) {
+      for (i = 0; i < hv_info->num_channels; i++)
+         hv_info->current_det_mirror[i] = hv_info->current_det[i];
+
+      db_set_data(hDB, hv_info->hKeyCurrentDet, hv_info->current_det,
+                  sizeof(float) * hv_info->num_channels, hv_info->num_channels,
+                  TID_FLOAT);
+
+      pequipment->odb_out++;
+   }
+
 
    //check for updated chStatus:
    max_diff = 0.f;
@@ -723,6 +765,7 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    hv_info->demand = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->measured = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->current = (float *) calloc(hv_info->num_channels, sizeof(float));
+   hv_info->current_det = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->chStatus = (DWORD *) calloc(hv_info->num_channels, sizeof(DWORD));
    hv_info->temperature = (float *) calloc(hv_info->num_channels, sizeof(float));
 
@@ -741,6 +784,7 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    hv_info->demand_mirror = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->measured_mirror = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->current_mirror = (float *) calloc(hv_info->num_channels, sizeof(float));
+   hv_info->current_det_mirror = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->chStatus_mirror = (DWORD *) calloc(hv_info->num_channels, sizeof(DWORD));
    hv_info->temperature_mirror = (float *) calloc(hv_info->num_channels, sizeof(float));
    hv_info->last_change = (DWORD *) calloc(hv_info->num_channels, sizeof(DWORD));
@@ -896,12 +940,20 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    memcpy(hv_info->measured_mirror, hv_info->measured,
           hv_info->num_channels * sizeof(float));
 
-   /* Current */
+   /* Current = Imon */
    db_merge_data(hDB, hv_info->hKeyRoot, "Variables/Current",
                  hv_info->current, sizeof(float) * hv_info->num_channels,
                  hv_info->num_channels, TID_FLOAT);
    db_find_key(hDB, hv_info->hKeyRoot, "Variables/Current", &hv_info->hKeyCurrent);
    memcpy(hv_info->current_mirror, hv_info->current,
+          hv_info->num_channels * sizeof(float));
+
+   /* CurrentDet = IMonDet */
+   db_merge_data(hDB, hv_info->hKeyRoot, "Variables/CurrentDet",
+                 hv_info->current_det, sizeof(float) * hv_info->num_channels,
+                 hv_info->num_channels, TID_FLOAT);
+   db_find_key(hDB, hv_info->hKeyRoot, "Variables/CurrentDet", &hv_info->hKeyCurrentDet);
+   memcpy(hv_info->current_det_mirror, hv_info->current_det,
           hv_info->num_channels * sizeof(float));
 
    /* Channel State */
@@ -1016,6 +1068,8 @@ INT gem_hv_init(EQUIPMENT * pequipment)
                                 i - hv_info->channel_offset[i], &hv_info->measured[i]);
          hv_info->driver[i]->dd(CMD_GET_CURRENT, hv_info->driver[i]->dd_info,
                                 i - hv_info->channel_offset[i], &hv_info->current[i]);
+         hv_info->driver[i]->dd(CMD_GET_CURRENT_DET, hv_info->driver[i]->dd_info,
+                                i - hv_info->channel_offset[i], &hv_info->current_det[i]);
          if (hv_info->driver[i]->flags & DF_REPORT_STATUS)
             hv_info->driver[i]->dd(CMD_GET_STATUS, hv_info->driver[i]->dd_info,
                                    i - hv_info->channel_offset[i], &hv_info->chStatus[i]);
@@ -1027,10 +1081,15 @@ INT gem_hv_init(EQUIPMENT * pequipment)
          hv_info->current_mirror[i]  = hv_info->current[i];
          hv_info->chStatus_mirror[i]  = hv_info->chStatus[i];
          hv_info->temperature_mirror[i]  = hv_info->temperature[i];
+         hv_info->current_det_mirror[i] = hv_info->current_det[i];
       }
    }
 
    db_set_data(hDB, hv_info->hKeyCurrent, hv_info->current,
+               sizeof(float) * hv_info->num_channels, hv_info->num_channels,
+               TID_FLOAT);
+
+   db_set_data(hDB, hv_info->hKeyCurrentDet, hv_info->current_det,
                sizeof(float) * hv_info->num_channels, hv_info->num_channels,
                TID_FLOAT);
 
@@ -1243,13 +1302,16 @@ INT cd_gem_hv_read(char *pevent, int offset)
       memcpy(pevent, hv_info->current, sizeof(float) * hv_info->num_channels);
       pevent += sizeof(float) * hv_info->num_channels;
 
+      memcpy(pevent, hv_info->current_det, sizeof(float) * hv_info->num_channels);
+      pevent += sizeof(float) * hv_info->num_channels;
+
       memcpy(pevent, hv_info->chStatus, sizeof(DWORD) * hv_info->num_channels);
       pevent += sizeof(DWORD) * hv_info->num_channels;
 
       memcpy(pevent, hv_info->temperature, sizeof(float) * hv_info->num_channels);
       pevent += sizeof(float) * hv_info->num_channels;
 
-      return ( 4 * sizeof(float) + sizeof(DWORD) )* hv_info->num_channels;
+      return ( 5 * sizeof(float) + sizeof(DWORD) )* hv_info->num_channels;
    } else if (hv_info->format == FORMAT_MIDAS) {
       bk_init(pevent);
 
@@ -1268,6 +1330,12 @@ INT cd_gem_hv_read(char *pevent, int offset)
       /* create CRNT bank */
       bk_create(pevent, "CRNT", TID_FLOAT, (void **)&pdata);
       memcpy(pdata, hv_info->current, sizeof(float) * hv_info->num_channels);
+      pdata += hv_info->num_channels;
+      bk_close(pevent, pdata);
+
+      /* create CRND bank */
+      bk_create(pevent, "CRND", TID_FLOAT, (void **)&pdata);
+      memcpy(pdata, hv_info->current_det, sizeof(float) * hv_info->num_channels);
       pdata += hv_info->num_channels;
       bk_close(pevent, pdata);
 
@@ -1310,6 +1378,12 @@ INT cd_gem_hv_read(char *pevent, int offset)
       /* create CRNT bank */
       ybk_create((DWORD *) pevent, "CRNT", F4_BKTYPE, (DWORD *) & pdata);
       memcpy(pdata, hv_info->current, sizeof(float) * hv_info->num_channels);
+      pdata += hv_info->num_channels;
+      ybk_close((DWORD *) pevent, pdata);
+
+      /* create CRND bank */
+      ybk_create((DWORD *) pevent, "CRND", F4_BKTYPE, (DWORD *) & pdata);
+      memcpy(pdata, hv_info->current_det, sizeof(float) * hv_info->num_channels);
       pdata += hv_info->num_channels;
       ybk_close((DWORD *) pevent, pdata);
 

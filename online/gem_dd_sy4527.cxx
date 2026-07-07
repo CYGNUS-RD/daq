@@ -20,6 +20,7 @@ $Id: dd_sy4527.c 2780 2005-10-19 13:20:29Z ritt $
 #include "midas.h"
 #undef ALARM
 #include "CAENHVWrapper.h"
+#include "gem_dd_sy4527.h"
 
 /*---- globals -----------------------------------------------------*/
 
@@ -533,21 +534,39 @@ INT dd_sy4527_current_get (DDSY4527_INFO * info, WORD channel, float *pvalue)
   //do the normal thing for 12 and 24 channel cards and channel 0 of 48 chan cards;
   //return an error code for non-primary channels of 48 chan cards.
   
-
-  
-  
   if(nChan == 12 || nChan == 24 || nChan == 14 || isPrimary == 1 ){
-    if((strcmp (info->slot[islot].Model, "A1515TG")) == 0){
-      ret = dd_sy4527_fParam_get (info, 1, channel, "IMonDet", pvalue);
-    } else{
-      ret = dd_sy4527_fParam_get (info, 1, channel, "IMon", pvalue);
-    }
+    ret = dd_sy4527_fParam_get (info, 1, channel, "IMon", pvalue);
     return ret == 0 ? FE_SUCCESS : 0;
   } else {
     *pvalue = -9999;
     return FE_SUCCESS;
   }
 
+}
+
+/*---------------------------------------------------------------------------*/
+INT dd_sy4527_current_det_get(DDSY4527_INFO *info, WORD channel, float *pvalue)
+{
+  CAENHVRESULT ret;
+
+  WORD islot, ch;
+  get_slot(info, channel, &ch, &islot);
+
+  int nChan = howBig(info, islot);
+  int isPrimary = isFirst(info, channel);
+
+  if (nChan == 12 || nChan == 24 || nChan == 14 || isPrimary == 1) {
+    if ((strcmp(info->slot[islot].Model, "A1515TG")) == 0) {
+      ret = dd_sy4527_fParam_get(info, 1, channel, "IMonDet", pvalue);
+      return ret == 0 ? FE_SUCCESS : 0;
+    } else {
+      *pvalue = -9999;
+      return FE_SUCCESS;
+    }
+  } else {
+    *pvalue = -9999;
+    return FE_SUCCESS;
+  }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -913,6 +932,13 @@ INT dd_sy4527 (INT cmd, ...)
     channel = (WORD) va_arg (argptr, INT);
     pvalue = va_arg(argptr, float *);
     status = dd_sy4527_current_get ((DDSY4527_INFO *) info, channel, pvalue);
+    break;
+
+  case CMD_GET_CURRENT_DET:
+    info = va_arg(argptr, void *);
+    channel = (WORD) va_arg(argptr, INT);
+    pvalue = va_arg(argptr, float *);
+    status = dd_sy4527_current_det_get((DDSY4527_INFO *) info, channel, pvalue);
     break;
 
   case CMD_SET_CHSTATE:

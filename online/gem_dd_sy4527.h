@@ -9,4 +9,8 @@
 
 \********************************************************************/
 
+#ifndef CMD_GET_CURRENT_DET
+#define CMD_GET_CURRENT_DET 50000
+#endif
+
 INT dd_sy4527(INT cmd, ...);
