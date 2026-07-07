@@ -646,6 +646,22 @@ function applyOffGain(){
 
 }
 
+function applyResetAlarm(){
+
+  if(!confirm("Reset CAEN HV alarm? This will clear the latched trip alarm.")) {
+    return;
+  }
+
+  var paths = ["/Equipment/HV/Variables/Reset Alarm"];
+  var sets  = [1];
+
+  mjsonrpc_db_paste(paths, sets).then(function(rpc) {
+  }).catch(function(error) {
+    mjsonrpc_error_alert(error);
+  });
+
+}
+
 </script>
 
 <title>HV</title>
@@ -1068,7 +1084,7 @@ padding: 8px;
     </tr>
     <tr>
       <td>
-      <table class="mtable" style="width:6in;font-size:18px">
+      <table class="mtable" style="width:6.25in;font-size:18px">
 	<tr align="center">
 	  <td colspan=2 style="width:2in"> <input class="mbutton" id="btnAllOn" type="button" value="ON ALL" onclick="applyOnAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/> <input class="mbutton" id="btnAllOff" type="button" value="OFF ALL" onclick="applyOffAll()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
 	</tr>
@@ -1081,6 +1097,30 @@ padding: 8px;
 	<tr align="center">
 	  <td style="width:2in">GAIN</td><td><input class="mbutton" id="btnGOn" type="button" value="ON" onclick="applyOnGain()" style="padding: 7px 20px;font-size:18px;margin:5px"/><input class="mbutton" id="btnGOff" type="button" value="OFF" onclick="applyOffGain()" style="padding: 7px 20px;font-size:18px;margin:5px"/></td>
 	</tr>
+  <tr align="center">
+    <td style="width:2in">ALARM</td>
+    <td>
+      <input class="mbutton"
+            id="btnResetAlarm"
+            type="button"
+            value="RESET ALARM"
+            onclick="applyResetAlarm()"
+            style="padding: 7px 20px;font-size:18px;margin:5px;background-color:#ffcc66"/>
+
+      <span style="margin-left:10px">Latched</span>
+      <div class="modbbox"
+          data-odb-path="/Equipment/HV/Variables/Trip Latched"
+          data-color="red"
+          data-background-color="#00FF00"
+          style="display:inline-block;width:20px;height:20px;border-radius:20px;vertical-align:middle">
+      </div>
+
+      <span style="margin-left:10px">Ch</span>
+      <span class="modbvalue"
+            data-odb-path="/Equipment/HV/Variables/Trip Channel">
+      </span>
+    </td>
+  </tr>
       </table>
       </td>
       <td>
