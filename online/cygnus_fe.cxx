@@ -1091,7 +1091,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
     if (mode==3) {
         //waitstart[icam].timeout = DCAMWAIT_TIMEOUT_INFINITE;
-        waitstart[icam].timeout = (int)(exposure * 1000. * 10.) ; // Set timeout = 3 pics
+        waitstart[icam].timeout = (int)(exposure * 1000. * 1000.) ; // Set timeout = 3 pics
         // DEBUG
         //waitstart[icam].timeout = (int)(exposure * 1000. * 0.5) ; // Set DEBUG timeout = 0.5 pics
     }
@@ -2771,6 +2771,9 @@ int read_dgtz(char* pevent){
   uint32_t header_data = 0;
   //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
   bk_create(pevent, "DGH0", TID_DWORD, (void **)&hdata);
+
+  uint32_t DAQ_version = 1000;
+  *hdata++ = DAQ_version;
 
   header_data = nboard;
   *hdata++ = header_data;
