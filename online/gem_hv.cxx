@@ -67,12 +67,28 @@ typedef struct {
    int group_recovery; 
    DWORD t_recovery;
    float *demand_recovery;
+
+   /* alarm/trip variables */
+   int trip_latched;
+   int trip_channel;
+   int reset_alarm;
   
    DEVICE_DRIVER **driver;
    INT *channel_offset;
    void **dd_info;
 
 } GEM_HV_INFO;
+
+
+/*------------------------------------------------------------------*/
+
+void gem_hv_reset_alarm(INT hDB, INT hKey, void *info);
+
+void gem_hv_validate_odb_int_command(HNDLE hDB, GEM_HV_INFO *hv_info,
+                                     const char *path, int default_value,
+                                     int *target,
+                                     void (*callback)(INT, INT, void *),
+                                     EQUIPMENT *pequipment);
 
 #ifndef ABS
 #define ABS(a) (((a) < 0)   ? -(a) : (a))
@@ -917,6 +933,14 @@ INT gem_hv_init(EQUIPMENT * pequipment)
    /* Recovery status */
    gem_hv_validate_odb_int_read(hDB, hv_info, "Variables/Recovery", 0, &hv_info->recovery);
 
+   /* Alarm status */
+   gem_hv_validate_odb_int_read(hDB, hv_info, "Variables/Trip Latched", 0, &hv_info->trip_latched);
+   gem_hv_validate_odb_int_read(hDB, hv_info, "Variables/Trip Channel", -1, &hv_info->trip_channel);
+
+   /* Reset Alarm button/request */
+   gem_hv_validate_odb_int_command(hDB, hv_info, "Variables/Reset Alarm", 0, &hv_info->reset_alarm,
+                                   gem_hv_reset_alarm, pequipment);
+
    /* Crate Map */
    if (hv_info->driver[0]->flags & DF_REPORT_CRATEMAP){
       sprintf(str, "Settings/Devices/%s/DD/crateMap", pequipment->driver[0].name);
@@ -1154,30 +1178,58 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
 
    int i;
    //int j;
-   int trip_found=0;
+   int caen_trip_found = 0;
+   int caen_trip_channel = -1;
    int hotspot_current=0;
    int hotspot_group=0;
    for (i = 0 ; i < hv_info->num_channels ; i++){
+      //int val=0;
+      //status = device_driver(hv_info->driver[i], CMD_GET_TRIP, //the command CDM_GET_TRIP not exist
+      //                       i - hv_info->channel_offset[i], &val);
+      //if(val ==1){
+      if(hv_info->chStatus[i] & 0x200){
+         caen_trip_found=1;
+         caen_trip_channel=i;
+         break;
+      }
+      /*
+      if(hv_info->current[i] > hv_info->current_hotspot[i]){
+         if(hv_info->recovery == 0) hotspot_current=1;
+         //trip if current is still large or the hot spot appears again after 10 seconds of recovery
+         else if(hv_info->recovery == 1 && ss_millitime() - hv_info->t_recovery > 10000) {
+         hotspot_current=0;
+         hotspot_group = i/7;
+         }
+         break;
+      }
+      */
 
-     //int val=0;
-     //status = device_driver(hv_info->driver[i], CMD_GET_TRIP, //the command CDM_GET_TRIP not exist
-     //                       i - hv_info->channel_offset[i], &val);
-     //if(val ==1){
-     if(hv_info->chStatus[i] & 0x200){
-       trip_found=1;
-       break;
-     }
-     if(hv_info->current[i] > hv_info->current_hotspot[i]){
-       if(hv_info->recovery == 0) hotspot_current=1;
-       //trip if current is still large or the hot spot appears again after 10 seconds of recovery
-       else if(hv_info->recovery == 1 && ss_millitime() - hv_info->t_recovery > 10000) {
-	 trip_found=1;
-	 hotspot_current=0;
-	 hotspot_group = i/7;
-       }
-       break;
-     }
+   }
 
+   /* CYGNO-04 Trip handling*/
+
+   if (caen_trip_found && !hv_info->trip_latched) {
+      HNDLE hDB;
+      cm_get_experiment_database(&hDB, NULL);
+
+      hv_info->trip_latched = 1;
+      hv_info->trip_channel = caen_trip_channel;
+
+      db_set_value(hDB, hv_info->hKeyRoot,
+                  "Variables/Trip Latched",
+                  &hv_info->trip_latched,
+                  sizeof(hv_info->trip_latched),
+                  1, TID_INT);
+
+      db_set_value(hDB, hv_info->hKeyRoot,
+                  "Variables/Trip Channel",
+                  &hv_info->trip_channel,
+                  sizeof(hv_info->trip_channel),
+                  1, TID_INT);
+
+      cm_msg(MERROR, "gem_hv_idle",
+            "CAEN HV trip detected on channel %d, ChStatus=0x%08x. Alarm latched; user reset required.",
+            caen_trip_channel, hv_info->chStatus[caen_trip_channel]);
    }
 
    /*
@@ -1277,6 +1329,114 @@ INT gem_hv_idle(EQUIPMENT * pequipment)
    return status;
 
 }
+
+/*------------------------------------------------------------------*/
+
+void gem_hv_reset_alarm(INT hDB, INT hKey, void *info) {
+   EQUIPMENT *pequipment = (EQUIPMENT *) info;
+   GEM_HV_INFO *hv_info = (GEM_HV_INFO *) pequipment->cd_info;
+
+   if (!hv_info->reset_alarm)
+      return;
+
+   /*
+    * User pressed Reset Alarm, but the frontend has no latched trip.
+    * Do not send ClearAlarm to the CAEN mainframe.
+    * Just reset the ODB command variable back to 0.
+   */
+   if (!hv_info->trip_latched) {
+      cm_msg(MINFO, "gem_hv_reset_alarm",
+            "Reset Alarm requested, but no trip is latched");
+
+      hv_info->reset_alarm = 0;
+
+      db_set_value(hDB, hv_info->hKeyRoot,
+                  "Variables/Reset Alarm",
+                  &hv_info->reset_alarm,
+                  sizeof(hv_info->reset_alarm),
+                  1, TID_INT);
+      return;
+   }
+
+   cm_msg(MINFO, "gem_hv_reset_alarm",
+          "User requested CAEN HV alarm reset");
+
+   INT status = device_driver(hv_info->driver[0], CMD_CLEAR_ALARM);
+
+   if (status == FE_SUCCESS) {
+      hv_info->trip_latched = 0;
+      hv_info->trip_channel = -1;
+
+      db_set_value(hDB, hv_info->hKeyRoot,
+                   "Variables/Trip Latched",
+                   &hv_info->trip_latched,
+                   sizeof(hv_info->trip_latched),
+                   1, TID_INT);
+
+      db_set_value(hDB, hv_info->hKeyRoot,
+                   "Variables/Trip Channel",
+                   &hv_info->trip_channel,
+                   sizeof(hv_info->trip_channel),
+                   1, TID_INT);
+
+      cm_msg(MINFO, "gem_hv_reset_alarm",
+             "CAEN HV alarm reset completed");
+   } else {
+      cm_msg(MERROR, "gem_hv_reset_alarm",
+             "CAEN HV alarm reset failed");
+   }
+
+   hv_info->reset_alarm = 0;
+
+   db_set_value(hDB, hv_info->hKeyRoot,
+                "Variables/Reset Alarm",
+                &hv_info->reset_alarm,
+                sizeof(hv_info->reset_alarm),
+                1, TID_INT);
+}
+
+/*------------------------------------------------------------------*/
+/* This is needed to avoid calling a clear alarm when ODB variables
+** are missing and have to be created by the driver.
+*/
+void gem_hv_validate_odb_int_command(HNDLE hDB, GEM_HV_INFO *hv_info,
+                                     const char *path, int default_value,
+                                     int *target,
+                                     void (*callback)(INT, INT, void *),
+                                     EQUIPMENT *pequipment) {
+   HNDLE hKey;
+
+   *target = default_value;
+
+   db_merge_data(hDB, hv_info->hKeyRoot,
+                 path,
+                 target,
+                 sizeof(INT),
+                 1,
+                 TID_INT);
+
+   db_find_key(hDB, hv_info->hKeyRoot, path, &hKey);
+   assert(hKey);
+
+   /*
+    * Force command variable to default at frontend startup.
+    * This prevents a stale Reset Alarm = 1 from a previous condition.
+    */
+   db_set_value(hDB, hv_info->hKeyRoot,
+                path,
+                target,
+                sizeof(INT),
+                1,
+                TID_INT);
+
+   db_open_record(hDB, hKey,
+                  target,
+                  sizeof(INT),
+                  MODE_READ,
+                  callback,
+                  pequipment);
+}
+
 
 /*------------------------------------------------------------------*/
 

@@ -92,6 +92,9 @@ INT dd_sy4527_fParam_get (DDSY4527_INFO * info, WORD nchannel, WORD , char const
 INT dd_sy4527_fBoard_set (DDSY4527_INFO * info, WORD nchannel, WORD , char const *ParName, float *fvalue);
 INT dd_sy4527_fBoard_get (DDSY4527_INFO * info, WORD nchannel, WORD , char const *ParName, float *fvalue);
 
+/*---- clear alarm ----*/
+INT dd_sy4527_clear_alarm(DDSY4527_INFO *info);
+
 /*---- device driver routines --------------------------------------*/
 /* the init function creates a ODB record which contains the
 settings  and initialized it variables as well as the bus driver */
@@ -384,6 +387,27 @@ INT dd_sy4527_fBoard_get (DDSY4527_INFO * info, WORD nchannel, WORD channel,
   }
   return ret;
 }
+
+/*--------------------------------------------------------------------------*/
+INT dd_sy4527_clear_alarm(DDSY4527_INFO *info)
+{
+  CAENHVRESULT ret;
+
+  ret = CAENHV_ExecComm(info->handle, "ClearAlarm");
+
+  if (ret != CAENHV_OK) {
+    cm_msg(MERROR, "dd_sy4527_clear_alarm",
+           "CAENHV_ExecComm(ClearAlarm) failed: %d (%s)",
+           ret, CAENHV_GetError(info->handle));
+    return FE_ERR_HW;
+  }
+
+  cm_msg(MINFO, "dd_sy4527_clear_alarm",
+         "CAEN ClearAlarm executed by user request");
+
+  return FE_SUCCESS;
+}
+
 
 /*---------------------------------------------------------------------------*/
 
@@ -911,6 +935,11 @@ INT dd_sy4527 (INT cmd, ...)
     channel = (WORD) va_arg (argptr, INT);
     pvalue = va_arg (argptr, float *);
     status = dd_sy4527_demand_get ((DDSY4527_INFO *) info, channel, pvalue);
+    break;
+
+  case CMD_CLEAR_ALARM:
+    info = va_arg(argptr, void *);
+    status = dd_sy4527_clear_alarm((DDSY4527_INFO *)info);
     break;
 
   case CMD_SET:  // voltage
