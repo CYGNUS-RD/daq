@@ -889,11 +889,49 @@ INT begin_of_run(INT run_number, char *error)
 INT end_of_run(INT run_number, char *error)
 {
   cerr<<"DEBUG: Ending the run ..."<<endl<<flush;
+
   stop_requested = FALSE;
   stop_sent = FALSE;
   stop_already_requested = FALSE;
   stop_error_code = 0;
   
+  #ifdef HAVE_CAEN_BRD
+
+    // 1. Closing the gate to avoid new triggers while the run is being stopped
+    cerr << "DEBUG: closing trigger gate..." << endl << flush;
+    CAENVME_ClearOutputRegister(gVme->handle, cvOut1Bit);
+
+    // 2. Stop the pulser, before cleaning up the camera
+    cerr << "DEBUG: stopping pulser..." << endl << flush;
+    CAENVME_StopPulser(gVme->handle, cvPulserA);
+
+    // 3. Wait for any triggers already accepted by the V1742 to finish conversion
+    usleep(1000); // molto maggiore dei ~182 us della V1742
+  #endif
+
+  #ifdef HAVE_CAEN_DGTZ
+    // 4. Now stop the acquisition of the digitizers
+    for (int i = 0; i < nboard; i++) {
+      CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_SWStopAcquisition(gDGTZ[i]);
+      if (ret != CAEN_DGTZ_Success) {
+        cerr << "end_of_run: SWStopAcquisition failed on board "
+            << i << " ret=" << ret << endl << flush;
+      }
+    }
+
+    // 5. Check the acquisition status of each digitizer board after stopping acquisition
+    for (int i = 0; i < nboard; i++) {
+      uint32_t acq = 0;
+      CAEN_DGTZ_ErrorCode ret = ReadRegisterRetry(gDGTZ[i], DGTZ_ACQ_STATUS, &acq, 5, 200);
+      cerr << "end_of_run: board " << i
+          << " ACQ_STATUS ret=" << ret
+          << " value=0x" << hex << acq << dec << endl << flush;
+      if (IsV1742(BoardName[i])) {
+        ReadV1742GroupBusyOrFull(gDGTZ[i], i, true);
+      }
+    }
+  #endif
+
   #ifdef HAVE_CAMERA
 
   // Stop camera acquisition and release resources
@@ -929,11 +967,11 @@ INT end_of_run(INT run_number, char *error)
 
 #endif
 
-  cerr<<"DEBUG: disabling trigger..."<<endl<<flush;
+  // cerr<<"DEBUG: disabling trigger..."<<endl<<flush;
 
-  // Disable trigger at the end of the run
-  disable_trigger();
-  cerr<<"DEBUG: Done"<<endl<<flush;
+  // // Disable trigger at the end of the run
+  // disable_trigger();
+  // cerr<<"DEBUG: Done"<<endl<<flush;
 
 #ifdef HAVE_CAEN_BRD
   // Remember: WRONG FOR V3718
@@ -2465,30 +2503,29 @@ INT PrintCamConfig(int icam) {
 
   return 0;
 }
-
-
 #endif
 
 INT disable_trigger()
 {
-
 #ifdef HAVE_CAEN_BRD
+  // Close external gate first
+  CAENVME_ClearOutputRegister(gVme->handle, cvOut1Bit);
 
-  //WRONG FOR V3718
-  //SET OUT_1 to 0 (busy)
-  CAENVME_ClearOutputRegister(gVme->handle,cvOut1Bit);
-  //CAENVME_SetOutputRegister(gVme->handle,cvOut1Bit); 
+  // Let already accepted V1742 triggers finish DRS4 conversion
+  usleep(1000);
+#endif
 
 #ifdef HAVE_CAEN_DGTZ
-  for(int i=0;i<nboard;i++){
-    CAEN_DGTZ_SWStopAcquisition(gDGTZ[i]);
+  for (int i = 0; i < nboard; i++) {
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_SWStopAcquisition(gDGTZ[i]);
+    if (ret != CAEN_DGTZ_Success) {
+      cerr << "disable_trigger: SWStopAcquisition failed on board "
+           << i << " ret=" << ret << endl << flush;
+    }
   }
 #endif
 
-#endif 
-
-  return 0;
-  
+  return SUCCESS;
 }
  
 INT enable_trigger()
@@ -3076,6 +3113,21 @@ INT read_camera(char *pevent, int icam, bool crop_image, int crop_size, int crop
 
 #ifdef HAVE_CAEN_DGTZ
 void Free_arrays(){
+  
+  if (buffer_dgtz) {
+    for (int i = 0; i < nboard; i++) {
+      if (buffer_dgtz[i]) {
+        CAEN_DGTZ_FreeReadoutBuffer(&buffer_dgtz[i]);
+        buffer_dgtz[i] = NULL;
+      }
+    }
+  }
+
+  for (int i = 0; i < nboard; i++) {
+    if (gDGTZ) {
+      CAEN_DGTZ_CloseDigitizer(gDGTZ[i]);
+    }
+  }
 
   delete[] gDGTZ;
   delete[] gDigBase;
@@ -3085,7 +3137,7 @@ void Free_arrays(){
   delete[] posttrg;
   for(int i=0;i<nboard;i++){
     delete[] BoardName[i];
-    delete[] buffer_dgtz[i];      //This may raise a break for multiple free of memory, in case just comment this line
+    //delete[] buffer_dgtz[i];      //This may raise a break for multiple free of memory, in case just comment this line
     delete[] DGTZ_OFFSET[i];
   }
   delete[]  BoardName;
