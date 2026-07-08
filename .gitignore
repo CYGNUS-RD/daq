@@ -14,6 +14,7 @@
 *.bak
 
 online/cygnus_fe
+online/vme_reset
 online/cygnus_fe_*
 online/debug.txt
 offline/PlainTObjectsDumper
