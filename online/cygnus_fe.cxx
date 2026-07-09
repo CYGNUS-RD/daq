@@ -298,14 +298,6 @@ INT ConfigBridge();
  */
 INT ConfigDgtz();
 /**
- * @brief Configure the discriminator.
- * 
- * This function sets up the discriminator hardware.
- * 
- * @return Status code.
- */
-INT ConfigDisc();
-/**
  * @brief Configure the cameras.
  * 
  * This function sets up the camera hardware.
@@ -474,7 +466,6 @@ EQUIPMENT equipment[] = {
 
 #ifdef HAVE_CAEN_BRD
   MVME_INTERFACE *gVme = 0;
-  int gDisBase   = 0xEE000000;
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
@@ -1727,20 +1718,6 @@ INT init_vme_modules(){
   //CAENVME_StopPulser(gVme->handle,cvPulserA);
   //CAENVME_StopPulser(gVme->handle,cvPulserB);
 
-#ifdef HAVE_V895
-
-  /* DISCRIMINATOR INITIALIZATION */
-
-  v895_Status(gVme,gDisBase);
-  
-  v895_writeReg16(gVme,gDisBase,0x40,255); // width 0-7
-  v895_writeReg16(gVme,gDisBase,0x42,255); // width 8-15
-  v895_writeReg16(gVme,gDisBase,0x4A,0xFFFF); // enable all channels
-  
-  ConfigDisc();
-  
-#endif
-
 #ifdef HAVE_CAEN_DGTZ
   
   /* DIGITIZER INITIALIZATION */
@@ -2059,64 +2036,6 @@ INT ConfigDgtz(){
     
   }//end for cycle on boards
   return SUCCESS;
-  
-}
-#endif
-
-#ifdef HAVE_V895
-INT ConfigDisc(){
-
-  HNDLE hDB;
-
-  cm_get_experiment_database(&hDB, NULL);
-  
-  int thr;
-  int size = sizeof(int);
-  
-  db_get_value(hDB, 0, "/Configurations/Threshold[0]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x00 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[1]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x02 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[2]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x04 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[3]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x06 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[4]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x08 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[5]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x0A ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[6]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x0C ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[7]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x0E ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[8]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x10 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[9]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x12 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[10]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x14 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[11]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x16 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[12]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x18 ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[13]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x1A ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[14]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x1C ,thr);
-  db_get_value(hDB, 0, "/Configurations/Threshold[15]",&thr,&size,TID_INT,TRUE);
-  v895_writeReg16(gVme,gDisBase,0x1E ,thr);
-  
-  int wdt = 255;
-  v895_writeReg16(gVme,gDisBase,0x40 ,wdt);
-  v895_writeReg16(gVme,gDisBase,0x42 ,wdt);
-  
-  int maj = 2;
-  v895_writeReg16(gVme,gDisBase,0x48 , round((maj*50-25)/4));
-  
-  int inib = 0xC000; //0b1100000000000000
-  v895_writeReg16(gVme,gDisBase,0x4A ,inib);
-  
-  return 0;
   
 }
 #endif
