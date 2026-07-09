@@ -7,7 +7,7 @@
 
   Contents: Frontend program for CYGNO-04
 
-  Compile by:  g++ -o vme_reset vme_reset.cxx -lCAENVMElib
+  Compile by:  g++ -o vme_reset vme_reset.cxx -lCAENVME
 
 \********************************************************************/
 

@@ -100,6 +100,10 @@ add_executable(cygnus_fe cygnus_fe.cxx)
 target_include_directories(cygnus_fe PRIVATE ${INC_PATH})
 target_link_libraries(cygnus_fe mfe midas vme camera ${LIBS})
 
+add_executable(vme_reset vme_reset.cxx)
+target_include_directories(vme_reset PRIVATE ${INC_PATH})
+target_link_libraries(vme_reset ${LIBS})
+
 set(DRIVERS
   $ENV{MIDASSYS}/drivers/class/hv
   $ENV{MIDASSYS}/drivers/class/multi
