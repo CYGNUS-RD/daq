@@ -2677,9 +2677,11 @@ int read_dgtz(char* pevent){
           uint32_t group_ch = ch % 8;
 
           for(uint32_t sample = 0; sample < ndgtz[i]; sample++) {
-            uint16_t temp = static_cast<uint16_t>(Evt->DataGroup[group].DataChannel[group_ch][sample]);
+            *pdata16++ = static_cast<uint16_t>(Evt->DataGroup[group].DataChannel[group_ch][sample]);
           }
         }
+
+        CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
 
         nvalid++;
       } else {
