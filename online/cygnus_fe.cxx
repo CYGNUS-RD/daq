@@ -469,38 +469,34 @@ EQUIPMENT equipment[] = {
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
-  int nboard = 2;
-  int *gDGTZ;
-  char **buffer_dgtz;
-  int *posttrg;   //=  70;
-
-  double **DGTZ_OFFSET;
-  uint32_t *NCHDGTZ;        // = 40000;
-  uint32_t *ndgtz;          //= 1024;
-  uint32_t *SAMPLING;    //250;
+  int      nboard = 2;
+  int      *gDGTZ;
+  char     **buffer_dgtz;
+  int      *posttrg;      //=  70;
+  double   **DGTZ_OFFSET;
+  uint32_t *NCHDGTZ;      // = 40000;
+  uint32_t *ndgtz;        //= 1024;
+  uint32_t *SAMPLING;     //250;
   uint32_t *gDigBase;     //0x22220000;
   uint32_t *gDigLink;     //1
-  char **BoardName;
+  char     **BoardName;
 #endif
 
 
 #ifdef HAVE_CAMERA
   int nCamera = 1;
-  vector<HDCAM> gCam(NCAM_MAX, 0);
-  vector<HDCAMWAIT> hwait(NCAM_MAX, 0);
-  vector<bool> CamMask(NCAM_MAX, false);
+  vector<HDCAM>         gCam(NCAM_MAX, 0);
+  vector<HDCAMWAIT>     hwait(NCAM_MAX, 0);
+  vector<bool>          CamMask(NCAM_MAX, false);
   vector<DCAMWAIT_OPEN> waitopen(NCAM_MAX);
-  //HDCAMWAIT hwait = 0;
 #endif
 
 int rec_ev = 0;
-
 std::vector<int> cache_cam = {-999, -999, -999, -999, -999, -999, -999, -999, -999, -999};
 
 /*-- Frontend Init -------------------------------------------------*/
 
-INT frontend_init()
-{
+INT frontend_init() {
 
 #ifdef HAVE_CAEN_BRD
 
@@ -918,6 +914,7 @@ INT end_of_run(INT run_number, char *error)
           << " ACQ_STATUS ret=" << ret
           << " value=0x" << hex << acq << dec << endl << flush;
       if (IsV1742(BoardName[i])) {
+        // Diagnostic only after failed readout.
         ReadV1742GroupBusyOrFull(gDGTZ[i], i, true);
       }
     }
@@ -2508,117 +2505,103 @@ INT ClearDevice(BOOL clear_dgtz_data) {
 #ifdef HAVE_CAEN_DGTZ
 int read_dgtz(char* pevent){
 
-  //cout<<"Start reading..."<<endl<<flush;
-
-  uint32_t bsize;
-  char * evtptr = NULL;
-  uint32_t NumEvents;
-  uint32_t events_max = 128;
-  CAEN_DGTZ_EventInfo_t eventInfo;
+  const uint32_t events_max = 128;
 
   WORD* pdata16 = NULL;
-  //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
   bk_create(pevent, "DIG0", TID_WORD, &pdata16);
+  
   
   std::vector<std::vector<uint32_t>> TRGTTAG(nboard);
   std::vector<std::vector<uint32_t>> TRGTTAG1(nboard);
   std::vector<std::vector<uint16_t>> StartIndexCell(nboard);
-  std::vector<int> EVTSNUM(nboard);
-  std::vector<uint32_t> ADCMAX(nboard);
-
-  std::vector<std::vector<CAEN_DGTZ_UINT16_EVENT_t*> > Evt16(nboard);
-  std::vector<std::vector<CAEN_DGTZ_X742_EVENT_t*> > Evt742(nboard);
+  std::vector<int>                   EVTSNUM(nboard);
+  std::vector<uint32_t>              ADCMAX(nboard);
 
   std::vector<uint32_t> bsize_board(nboard, 0);
-  std::vector<bool> read_ok(nboard, false);
+  std::vector<bool>     read_ok(nboard, false);
     
-  /*
-    FIRST LOOP:
-    Read data from all boards, and store the size of the data read for each board in bsize_board[i].
-  */
+  // Read raw data from all boards before decoding.
   for(int i=0;i<nboard;i++){
-    
-    CAEN_DGTZ_ErrorCode retread = CAEN_DGTZ_ReadData(gDGTZ[i],
-                        CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, //CAEN_DGTZ_POLLING_MBLT,
-                        buffer_dgtz[i],
-                        &bsize_board[i]);
+    CAEN_DGTZ_ErrorCode retread = CAEN_DGTZ_ReadData(
+      gDGTZ[i],
+      CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, //CAEN_DGTZ_POLLING_MBLT,
+      buffer_dgtz[i],
+      &bsize_board[i]
+    );
 
     // If the first read fails, try one delayed retry after a short sleep
     // This is a workaround for occasional read failures that can occur with the CAEN digitizers
     if(retread != CAEN_DGTZ_Success) {
-      cerr << "Error in CAEN_DGTZ_ReadData for board " << i
-          << ". ErrorCode = " << retread
-          << ". Trying one delayed retry." << endl << flush;
-
-      usleep(200); // Must be at least 182 us for V1742, but 200 u is safe for all boards
+      cerr << "Error in CAEN_DGTZ_ReadData for board " << i << ". ErrorCode = " << retread << ". Trying one delayed retry." << endl << flush;
+      
+      usleep(200); // Minimum observed safe delay for V1742 read retry.
 
       uint32_t acq_after_fail = 0;
       CAEN_DGTZ_ErrorCode rstat = ReadRegisterRetry(gDGTZ[i], DGTZ_ACQ_STATUS, &acq_after_fail, 3, 100);
-
-      cerr << "After ReadData failure, board " << i
-          << " ACQ_STATUS ret=" << rstat
-          << " value=0x" << hex << acq_after_fail << dec
-          << endl << flush;
+      cerr << "After ReadData failure, board " << i << " ACQ_STATUS ret=" << rstat << " value=0x" << hex << acq_after_fail << dec << endl << flush;
 
       if(IsV1742(BoardName[i])) {
+          // Diagnostic only after failed readout.
           ReadV1742GroupBusyOrFull(gDGTZ[i], i, true);
       }
 
-      retread =
-        CAEN_DGTZ_ReadData(gDGTZ[i],
-                          CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,
-                          buffer_dgtz[i],
-                          &bsize_board[i]);
+      retread = CAEN_DGTZ_ReadData(
+        gDGTZ[i],
+        CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,
+        buffer_dgtz[i],
+        &bsize_board[i]
+      );
+
     }
 
     if(retread != CAEN_DGTZ_Success) {
-      cerr << "Persistent CAEN_DGTZ_ReadData failure for board " << i
-          << ". ErrorCode = " << retread << endl << flush;
-
+      cerr << "Persistent CAEN_DGTZ_ReadData failure for board " << i << ". ErrorCode = " << retread << endl << flush;
       EVTSNUM[i] = 0;
       continue;
     }
 
     read_ok[i] = true;
-
   }
 
-  /*
-    SECOND LOOP:
-    Decode the events and store them in the Evt16 or Evt742 vectors.
-    Also store the trigger time tags and patterns in TRGTTAG and TRGTTAG1, and the start index cell for V1742 boards.
-  */
+  // Decode events, write waveform samples to DIG0, and collect header metadata.
   for(int i=0; i<nboard; i++) {
     if(!read_ok[i]) continue;
 
-    //CAEN_DGTZ_ErrorCode retnum = CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize,&NumEvents);
+    uint32_t NumEvents = 0;
     CAEN_DGTZ_ErrorCode retnum = CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize_board[i],&NumEvents);
     if(retnum != CAEN_DGTZ_Success) {
       cerr << "Error in CAEN_DGTZ_GetNumEvents for board " << i << ". ErrorCode = " << retnum << endl << flush;
       EVTSNUM[i] = 0;
       continue;
     }
+    
     NumEvents =std::min(NumEvents, events_max);
 
+    // Get board info to determine ADC resolution
     CAEN_DGTZ_BoardInfo_t BoardInfo;
     CAEN_DGTZ_ErrorCode retinfo_board = CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
     if(retinfo_board != CAEN_DGTZ_Success) {
       cerr << "Error in CAEN_DGTZ_GetInfo for board " << i << ". ErrorCode = " << retinfo_board << endl << flush;
       ADCMAX[i] = 0;
     } else {
-      ADCMAX[i] = (uint32_t)pow(2, BoardInfo.ADC_NBits);
+      ADCMAX[i] = 1u << BoardInfo.ADC_NBits;
     }
 
     TRGTTAG[i].resize(NumEvents, 0);
     TRGTTAG1[i].resize(NumEvents, 0);
 
-    if(IsV1720E(BoardName[i])){
-      Evt16[i].resize(NumEvents, NULL);
+    if(IsV1742(BoardName[i])) {
+      StartIndexCell[i].resize(NumEvents, 0);
+    }
 
-      int nvalid = 0;
+    int nvalid = 0;
 
-      for(int iev=0;iev<NumEvents;iev++){
-        CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
+    for(uint32_t iev = 0; iev < NumEvents; iev++) {
+      CAEN_DGTZ_EventInfo_t eventInfo;
+      char* evtptr = NULL;
+
+      if(IsV1720E(BoardName[i])) {
+        CAEN_DGTZ_UINT16_EVENT_t* Evt = NULL;
 
         CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
         if(retall != CAEN_DGTZ_Success) {
@@ -2626,7 +2609,6 @@ int read_dgtz(char* pevent){
           continue;
         }
 
-        //CAEN_DGTZ_ErrorCode retinfo = CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize,iev,&eventInfo,&evtptr);
         CAEN_DGTZ_ErrorCode retinfo = CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize_board[i],iev,&eventInfo,&evtptr);
         if(retinfo != CAEN_DGTZ_Success) {
           cerr << "Unable to get DGTZ event info. ErrorCode = " << retinfo << endl << flush;
@@ -2647,24 +2629,19 @@ int read_dgtz(char* pevent){
 
         TRGTTAG[i][nvalid]  = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761
         TRGTTAG1[i][nvalid] = eventInfo.Pattern;
-        Evt16[i][nvalid] = Evt;
+
+        // Loop over channels and samples to write waveform data to the output MIDAS buffer
+        for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
+          for(uint32_t sample = 0; sample < ndgtz[i]; sample++) {
+            *pdata16++ = static_cast<uint16_t>(Evt->DataChannel[ch][sample]);
+          }
+        }
+        CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
 
         nvalid++;
-      }
-
-      EVTSNUM[i] = nvalid;
-      Evt16[i].resize(nvalid);
-      TRGTTAG[i].resize(nvalid);
-      TRGTTAG1[i].resize(nvalid);
-    } else if(IsV1742(BoardName[i])){
-      Evt742[i].resize(NumEvents, NULL);
-      StartIndexCell[i].resize(NumEvents, 0);
-
-      int nvalid = 0;
-
-      for(int iev=0;iev<NumEvents;iev++){
+      } else if(IsV1742(BoardName[i])) {
         CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
-        
+
         CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
         if(retall != CAEN_DGTZ_Success) {
           cerr <<"Error allocating event. ErrorCode = "<<retall<<endl<<flush;
@@ -2694,132 +2671,75 @@ int read_dgtz(char* pevent){
 
         StartIndexCell[i][nvalid] = Evt->DataGroup[0].StartIndexCell;
 
-        Evt742[i][nvalid] = Evt;
+        // Loop over channels and samples to write waveform data to the output MIDAS buffer
+        for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
+          uint32_t group = ch / 8;
+          uint32_t group_ch = ch % 8;
+
+          for(uint32_t sample = 0; sample < ndgtz[i]; sample++) {
+            uint16_t temp = static_cast<uint16_t>(Evt->DataGroup[group].DataChannel[group_ch][sample]);
+          }
+        }
 
         nvalid++;
+      } else {
+        cerr << "Unsupported digitizer model for board " << i
+             << ": " << BoardName[i] << endl << flush;
+        break;
       }
+    }
 
-      EVTSNUM[i] = nvalid;
-      Evt742[i].resize(nvalid);
-      TRGTTAG[i].resize(nvalid);
-      TRGTTAG1[i].resize(nvalid);
+    EVTSNUM[i] = nvalid;
+
+    TRGTTAG[i].resize(nvalid);
+    TRGTTAG1[i].resize(nvalid);
+
+    if(IsV1742(BoardName[i])) {
       StartIndexCell[i].resize(nvalid);
-    } else {
-      cerr << "Unsupported digitizer model for board " << i << ": " << BoardName[i] << endl << flush;
-      EVTSNUM[i] = 0;
-    }
-
-  }
-
-  /*
-    THIRD LOOP:
-    Loop over the decoded events and write the data to the output buffer.
-    Free the event memory after writing.
-  */
-  for(int i=0; i<nboard; i++){
-    if(IsV1720E(BoardName[i])){
-
-      for(unsigned int iev=0; iev<Evt16[i].size(); iev++){
-        CAEN_DGTZ_UINT16_EVENT_t *Evt = Evt16[i][iev];
-        if(Evt == NULL) continue;
-
-        // Loop over channels and samples
-        for(int j=0;j<NCHDGTZ[i];j++){
-          for (uint32_t k=0; k<ndgtz[i]; ++k) {
-            uint16_t temp = (uint16_t)(Evt->DataChannel[j][k]);
-            *pdata16++ = temp;
-          }
-        }
-        
-        CAEN_DGTZ_FreeEvent(gDGTZ[i],(void**)&Evt);
-        Evt16[i][iev] = NULL;
-      }
-    } else if(IsV1742(BoardName[i])){
-
-      for(unsigned int iev=0; iev<Evt742[i].size(); iev++){
-        CAEN_DGTZ_X742_EVENT_t *Evt = Evt742[i][iev];
-        if(Evt == NULL) continue;
-
-        // Loop over channels and samples
-        for(int j=0;j<NCHDGTZ[i];j++){
-          uint32_t ig = j/8;
-          uint32_t ich = j%8;
-
-          for (uint32_t k=0; k<ndgtz[i]; ++k) {
-            uint16_t temp = (uint16_t)(Evt->DataGroup[ig].DataChannel[ich][k]);
-            *pdata16++ = temp;
-          }
-        }
-
-        CAEN_DGTZ_FreeEvent(gDGTZ[i],(void**)&Evt);
-        Evt742[i][iev] = NULL;
-      }
     }
   }
-  
-  //cerr<<"Closing DIG0 bank..."<<endl<<flush;
+
   bk_close(pevent, pdata16);
-  //cerr<<"DIG0 bank closed"<<endl<<flush;
     
   uint32_t* hdata = NULL;
-  uint32_t header_data = 0;
-  //TIME_STAMP(pevent) = (std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
   bk_create(pevent, "DGH0", TID_DWORD, (void **)&hdata);
 
-  uint32_t DAQ_version = 1000;
+  const uint32_t DAQ_version = 1000;
   *hdata++ = DAQ_version;
+  *hdata++ = static_cast<uint32_t>(nboard);
 
-  header_data = nboard;
-  *hdata++ = header_data;
-
-  for(int i=0;i<nboard;i++){
+  for(int i = 0;i < nboard; i++){
+    *hdata++ = static_cast<uint32_t>(atoi(&BoardName[i][1]));
+    *hdata++ = static_cast<uint32_t>(ndgtz[i]);
+    *hdata++ = static_cast<uint32_t>(NCHDGTZ[i]);
+    *hdata++ = static_cast<uint32_t>(EVTSNUM[i]);
+    *hdata++ = static_cast<uint32_t>(ADCMAX[i]);
+    *hdata++ = static_cast<uint32_t>(SAMPLING[i]);
     
-    header_data = atoi(&BoardName[i][1]);
-    *hdata++ = header_data;
-    
-    header_data = ndgtz[i];
-    *hdata++ = header_data;
-    
-    header_data = NCHDGTZ[i];
-    *hdata++ = header_data;
-    
-    header_data = EVTSNUM[i];
-    *hdata++ = header_data;
-
-    header_data = ADCMAX[i];
-    *hdata++ = header_data;
-    
-    header_data = SAMPLING[i];
-    *hdata++ = header_data;
-    
-    for(int j=0;j<NCHDGTZ[i];j++){
-      header_data = (uint32_t)(DGTZ_OFFSET[i][j]*65536 + 32768);
-      *hdata++ = header_data;
+    for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
+      *hdata++ = static_cast<uint32_t>(DGTZ_OFFSET[i][ch]*65536 + 32768);
     }
     
-    //cout<<"=========="<<endl;
-    for(unsigned int j=0; j<EVTSNUM[i]; j++) {
-      //cout<<TRGTTAG[i][j]<<" "<<endl;
-      *hdata++ = TRGTTAG[i][j];
+    for(int iev = 0; iev < EVTSNUM[i]; iev++) {
+      *hdata++ = static_cast<uint32_t>(TRGTTAG[i][iev]);
     }
 
-    for(unsigned int j=0; j<EVTSNUM[i]; j++) {
-      //cout<<TRGTTAG[i][j]<<" "<<endl;
-      *hdata++ = TRGTTAG1[i][j];
+    for(int iev = 0; iev < EVTSNUM[i]; iev++) {
+      *hdata++ = static_cast<uint32_t>(TRGTTAG1[i][iev]);
     }
     
     if(IsV1742(BoardName[i])) {
-    	for(unsigned int j=0; j<EVTSNUM[i]; j++) {
-      		*hdata++ = (uint32_t)StartIndexCell[i][j];
+    	for(int iev = 0; iev < EVTSNUM[i]; iev++) {
+      		*hdata++ = static_cast<uint32_t>(StartIndexCell[i][iev]);
     	}
     }
-  }//end for on boards for header
+  }
   
   bk_close(pevent, hdata);
 
   return 0;
 }
-#endif
+#endif // HAVE_CAEN_DGTZ
 
 #ifdef HAVE_CAMERA
 INT read_camera(char *pevent, int icam, bool crop_image, int crop_size, int crop_origin_x, int crop_origin_y)
@@ -3026,8 +2946,6 @@ INT read_camera(char *pevent, int icam, bool crop_image, int crop_size, int crop
   return 1;
 
 }
-
-
 #endif
 
 #ifdef HAVE_CAEN_DGTZ
