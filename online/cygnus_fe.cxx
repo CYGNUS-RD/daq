@@ -11,6 +11,7 @@
 \********************************************************************/
 
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h> 
@@ -187,12 +188,361 @@ INT interrupt_configure(INT cmd, INT source, POINTER_T adr);
 
 #ifdef HAVE_CAEN_DGTZ
 
+CAEN_DGTZ_UINT16_EVENT_t **Evt16Global = NULL;
+CAEN_DGTZ_X742_EVENT_t   **Evt742Global = NULL;
+
+std::vector<uint32_t> buffer_dgtz_alloc_size;
+
 static constexpr uint32_t DGTZ_ACQ_STATUS      = CAEN_DGTZ_ACQ_STATUS_ADD; // usually 0x8104
 static constexpr uint32_t DGTZ_ACQ_CONTROL     = 0x8100;
 
 // x742/V1742 group registers
 static inline uint32_t V1742_GROUP_STATUS(int gr)    { return 0x1088 + 0x100 * gr; }
 static inline uint32_t V1742_GROUP_OCCUPANCY(int gr) { return 0x1094 + 0x100 * gr; }
+
+static bool DebugScanV1720Buffer(
+    int board,
+    const char* model,
+    char* buffer,
+    uint32_t bsize_bytes,
+    uint32_t NumEvents_CAEN,
+    uint32_t max_events_to_print = 8)
+{
+  if(buffer == NULL) {
+    cerr << "DBGSCAN board=" << board << " model=" << model
+         << " buffer=NULL" << endl << flush;
+    return false;
+  }
+
+  const uint32_t* base = reinterpret_cast<const uint32_t*>(buffer);
+  const uint32_t total_words = bsize_bytes / 4;
+  uint32_t off_words = 0;
+  uint32_t scanned_events = 0;
+  bool stopped_on_error = false;
+
+  cerr << "DBGSCAN START"
+       << " board=" << board
+       << " model=" << model
+       << " bsize_bytes=" << bsize_bytes
+       << " total_words=" << total_words
+       << " NumEvents_CAEN=" << NumEvents_CAEN
+       << " bsize_mod4=" << (bsize_bytes % 4)
+       << endl << flush;
+
+  while(off_words < total_words) {
+    const uint32_t e = scanned_events;
+    const bool do_print = e < max_events_to_print;
+
+    if(off_words + 4 > total_words) {
+      cerr << "DBGSCAN ERROR header_beyond_buffer"
+           << " board=" << board
+           << " e=" << e
+           << " off_words=" << off_words
+           << " off_bytes=" << off_words * 4
+           << " total_words=" << total_words
+           << " bsize_bytes=" << bsize_bytes
+           << endl << flush;
+
+      stopped_on_error = true;
+      break;
+    }
+
+    const uint32_t* ev = base + off_words;
+
+    uint32_t w0 = ev[0];
+    uint32_t w1 = ev[1];
+    uint32_t w2 = ev[2];
+    uint32_t w3 = ev[3];
+
+    uint32_t event_size_words = w0 & 0x0FFFFFFF;
+    uint32_t event_size_bytes = event_size_words * 4;
+
+    uint32_t type_tag     = (w0 >> 28) & 0xF;
+    uint32_t board_id     = (w1 >> 27) & 0x1F;
+    uint32_t board_fail   = (w1 >> 26) & 0x1;
+    uint32_t ettt_hi      = (w1 >> 8)  & 0xFFFF;
+    uint32_t channel_mask =  w1        & 0xFF;
+    uint32_t ev_counter   =  w2        & 0x00FFFFFF;
+    uint32_t ttt_lo       =  w3;
+    uint64_t ettt48       = ((uint64_t)ettt_hi << 32) | ttt_lo;
+
+    bool bad_type       = type_tag != 0xA;
+    bool size_too_small = event_size_words < 4;
+    bool size_past_end  = off_words + event_size_words > total_words;
+    bool chmask_zero    = channel_mask == 0;
+
+    if(do_print || bad_type || size_too_small || size_past_end || chmask_zero) {
+      cerr << "DBGSCAN EVT"
+           << " board=" << board
+           << " e=" << e
+           << " off_words=" << off_words
+           << " off_bytes=" << off_words * 4
+           << " w0=0x" << hex << w0
+           << " w1=0x" << w1
+           << " w2=0x" << w2
+           << " w3=0x" << w3
+           << dec
+           << " type_tag=0x" << hex << type_tag << dec
+           << " size_words=" << event_size_words
+           << " size_bytes=" << event_size_bytes
+           << " next_off_words=" << (off_words + event_size_words)
+           << " next_off_bytes=" << (off_words + event_size_words) * 4
+           << " board_id=" << board_id
+           << " board_fail=" << board_fail
+           << " chmask=0x" << hex << channel_mask
+           << " ettt_hi=0x" << ettt_hi
+           << " ttt_lo=0x" << ttt_lo
+           << " ettt48=0x" << ettt48
+           << dec
+           << " ev_counter=" << ev_counter
+           << " bad_type=" << bad_type
+           << " size_too_small=" << size_too_small
+           << " size_past_end=" << size_past_end
+           << " chmask_zero=" << chmask_zero
+           << endl << flush;
+    }
+
+    if(bad_type || size_too_small || size_past_end) {
+      cerr << "DBGSCAN STOP invalid_event"
+           << " board=" << board
+           << " e=" << e
+           << " off_words=" << off_words
+           << " event_size_words=" << event_size_words
+           << " total_words=" << total_words
+           << endl << flush;
+
+      stopped_on_error = true;
+      break;
+    }
+
+    off_words += event_size_words;
+    scanned_events++;
+  }
+
+  int64_t delta_words = (int64_t)total_words - (int64_t)off_words;
+  int64_t delta_bytes = (int64_t)bsize_bytes - (int64_t)off_words * 4;
+
+  bool size_match = (delta_bytes == 0);
+  bool event_count_match = (scanned_events == NumEvents_CAEN);
+  bool ok = size_match && event_count_match && !stopped_on_error && (bsize_bytes % 4 == 0);
+
+  cerr << "DBGSCAN END"
+       << " board=" << board
+       << " model=" << model
+       << " scanned_events=" << scanned_events
+       << " NumEvents_CAEN=" << NumEvents_CAEN
+       << " consumed_words=" << off_words
+       << " consumed_bytes=" << off_words * 4
+       << " total_words=" << total_words
+       << " bsize_bytes=" << bsize_bytes
+       << " delta_words=" << delta_words
+       << " delta_bytes=" << delta_bytes
+       << " size_match=" << size_match
+       << " event_count_match=" << event_count_match
+       << " stopped_on_error=" << stopped_on_error
+       << " ok=" << ok
+       << endl << flush;
+
+  return ok;
+}
+
+static bool DebugV1720AfterReadRegs(int board, int handle)
+{
+  uint32_t roctrl = 0;
+  uint32_t rostat = 0;
+  uint32_t acqstat = 0;
+  uint32_t evstored = 0;
+
+  CAEN_DGTZ_ErrorCode r_ef00 =
+      CAEN_DGTZ_ReadRegister(handle, 0xEF00, &roctrl);
+
+  CAEN_DGTZ_ErrorCode r_ef04 =
+      CAEN_DGTZ_ReadRegister(handle, 0xEF04, &rostat);
+
+  CAEN_DGTZ_ErrorCode r_8104 =
+      CAEN_DGTZ_ReadRegister(handle, 0x8104, &acqstat);
+
+  CAEN_DGTZ_ErrorCode r_812c =
+      CAEN_DGTZ_ReadRegister(handle, 0x812C, &evstored);
+
+  cerr << "V1720_AFTER_READ_REGS"
+       << " board=" << board
+       << " rEF00=" << r_ef00
+       << " 0xEF00=0x" << hex << roctrl
+       << " BERR=" << ((roctrl >> 4) & 0x1)
+       << " ALIGN64=" << ((roctrl >> 5) & 0x1)
+       << " rEF04=" << r_ef04
+       << " 0xEF04=0x" << rostat
+       << " r8104=" << r_8104
+       << " 0x8104=0x" << acqstat
+       << " r812C=" << r_812c
+       << " 0x812C_EVENTS_STORED=0x" << evstored
+       << dec << endl << flush;
+
+  bool ok =
+      r_ef00 == CAEN_DGTZ_Success &&
+      r_ef04 == CAEN_DGTZ_Success &&
+      r_8104 == CAEN_DGTZ_Success &&
+      r_812c == CAEN_DGTZ_Success &&
+      roctrl  != 0xffffffffu &&
+      rostat  != 0xffffffffu &&
+      acqstat != 0xffffffffu;
+
+  if(!ok) {
+    cerr << "V1720 COMMUNICATION ERROR"
+         << " board=" << board
+         << " rEF00=" << r_ef00
+         << " rEF04=" << r_ef04
+         << " r8104=" << r_8104
+         << " r812C=" << r_812c
+         << " roctrl=0x" << hex << roctrl
+         << " rostat=0x" << rostat
+         << " acqstat=0x" << acqstat
+         << dec
+         << endl << flush;
+  }
+
+  return ok;
+}
+
+static bool CheckV1720RawBufferFast(
+    int board,
+    const char* model,
+    char* buffer,
+    uint32_t bsize_bytes,
+    uint32_t NumEvents_CAEN)
+{
+  if(buffer == NULL || bsize_bytes < 16 || (bsize_bytes % 4) != 0) {
+    cerr << "V1720_RAW_CHECK_FAIL"
+         << " board=" << board
+         << " model=" << model
+         << " reason=bad_buffer_or_size"
+         << " buffer=" << (void*)buffer
+         << " bsize_bytes=" << bsize_bytes
+         << " NumEvents_CAEN=" << NumEvents_CAEN
+         << endl << flush;
+    return false;
+  }
+
+  const uint32_t* base = reinterpret_cast<const uint32_t*>(buffer);
+  uint32_t total_words = bsize_bytes / 4;
+  uint32_t off_words = 0;
+  uint32_t scanned_events = 0;
+
+  while(off_words < total_words) {
+    const uint32_t e = scanned_events;
+    if(off_words + 4 > total_words) {
+      cerr << "V1720_RAW_CHECK_FAIL"
+           << " board=" << board
+           << " model=" << model
+           << " reason=header_beyond_buffer"
+           << " e=" << e
+           << " off_words=" << off_words
+           << " total_words=" << total_words
+           << endl << flush;
+      return false;
+    }
+
+    const uint32_t* ev = base + off_words;
+
+    uint32_t w0 = ev[0];
+    uint32_t w1 = ev[1];
+
+    uint32_t type_tag = (w0 >> 28) & 0xF;
+    uint32_t event_size_words = w0 & 0x0FFFFFFF;
+    uint32_t channel_mask = w1 & 0xFF;
+
+    if(type_tag != 0xA) {
+      cerr << "V1720_RAW_CHECK_FAIL"
+           << " board=" << board
+           << " model=" << model
+           << " reason=bad_type_tag"
+           << " e=" << e
+           << " off_words=" << off_words
+           << " off_bytes=" << off_words * 4
+           << " w0=0x" << hex << w0
+           << " w1=0x" << w1
+           << dec
+           << " type_tag=0x" << hex << type_tag << dec
+           << endl << flush;
+      return false;
+    }
+
+    if(event_size_words < 4) {
+      cerr << "V1720_RAW_CHECK_FAIL"
+           << " board=" << board
+           << " model=" << model
+           << " reason=size_too_small"
+           << " e=" << e
+           << " event_size_words=" << event_size_words
+           << endl << flush;
+      return false;
+    }
+
+    if(off_words + event_size_words > total_words) {
+      cerr << "V1720_RAW_CHECK_FAIL"
+           << " board=" << board
+           << " model=" << model
+           << " reason=size_past_end"
+           << " e=" << e
+           << " off_words=" << off_words
+           << " event_size_words=" << event_size_words
+           << " total_words=" << total_words
+           << " bsize_bytes=" << bsize_bytes
+           << endl << flush;
+      return false;
+    }
+
+    if(channel_mask == 0) {
+      cerr << "V1720_RAW_CHECK_FAIL"
+           << " board=" << board
+           << " model=" << model
+           << " reason=zero_channel_mask"
+           << " e=" << e
+           << " off_words=" << off_words
+           << " w0=0x" << hex << w0
+           << " w1=0x" << w1
+           << dec
+           << endl << flush;
+      return false;
+    }
+
+    off_words += event_size_words;
+    scanned_events++;
+  }
+
+  if(scanned_events != NumEvents_CAEN) {
+    cerr << "V1720_RAW_CHECK_FAIL"
+         << " board=" << board
+         << " model=" << model
+         << " reason=event_count_mismatch"
+         << " scanned_events=" << scanned_events
+         << " NumEvents_CAEN=" << NumEvents_CAEN
+         << endl << flush;
+    return false;
+  }
+
+  if(off_words != total_words) {
+    cerr << "V1720_RAW_CHECK_FAIL"
+         << " board=" << board
+         << " model=" << model
+         << " reason=size_mismatch"
+         << " consumed_bytes=" << off_words * 4
+         << " bsize_bytes=" << bsize_bytes
+         << " delta_bytes=" << ((int64_t)bsize_bytes - (int64_t)off_words * 4)
+         << endl << flush;
+    return false;
+  }
+
+  cerr << "V1720_RAW_CHECK_OK"
+       << " board=" << board
+       << " model=" << model
+       << " scanned_events=" << scanned_events
+       << " bsize_bytes=" << bsize_bytes
+       << endl << flush;
+
+  return true;
+}
 
 static CAEN_DGTZ_ErrorCode ReadRegisterRetry(
     int handle,
@@ -344,7 +694,7 @@ INT ClearDevice(BOOL clear_dgtz_data);
  * @param pevent Pointer to the event buffer.
  * @return Status code.
  */
-INT read_dgtz(char *pevent);
+INT read_dgtz(char *pevent, int board);
 /**
  * @brief Read the camera data into an event buffer.
  * 
@@ -536,6 +886,7 @@ INT frontend_init() {
     exit(EXIT_FAILURE);
   }
 
+  cerr << "Ncamera = "<<nCamera<<endl<<flush;
   DCAMERR err;
 
   if(nCamera == 1) { // if only one camera is used, then use the default camera
@@ -556,15 +907,16 @@ INT frontend_init() {
       char query[256];
       sprintf(query,"/Equipment/Trigger/Settings/CameraSN[%i]",icam);
       db_get_value(hDB, 0, query,&cam_serial_n,&size,TID_STRING,TRUE);
-      // cout<<"DEBUG SN = "<<cam_serial_n<<endl; //DEBUG
+      cerr<<"DEBUG SN = "<<cam_serial_n<<endl; //DEBUG
 
       // Get camera handle by serial number
-      cout<<"Getting handle for camera "<<cam_serial_n<<"..."<<endl;
+      cerr<<"Getting handle for camera "<<cam_serial_n<<"..."<<endl;
       gCam[icam] = dcamcon_init_open_serial((string)cam_serial_n);
       if(gCam[icam] == NULL) {
         cout << "CAMERA WITH SN "<<cam_serial_n<<" NOT FOUND" << endl;
         exit(EXIT_FAILURE);
       }
+      dcamcon_show_dcamdev_info(gCam[icam]);
     }
 
     // Get cam mask from ODB
@@ -598,6 +950,7 @@ INT frontend_init() {
 
   // Configure cameras
   for(int icam =0; icam<nCamera; icam++) {
+    cerr<<"Configuring camera of index "<<icam<<endl<<flush;
     ConfigCamera(icam);
   }
 
@@ -655,29 +1008,29 @@ INT begin_of_run(INT run_number, char *error)
   for (int icam = 0; icam < nCamera; icam++) {
       if (!CamMask[icam]) continue;
 
-      cerr << "DEBUG: begin_of_run: reinitializing camera..." << endl;
+      //cerr << "DEBUG: begin_of_run: reinitializing camera..." << endl;
 
-      cerr << "DEBUG: begin_of_run: closing wait..." << endl;
+      //cerr << "DEBUG: begin_of_run: closing wait..." << endl;
       // 1. close wait
-      if (hwait[icam]) {
-          dcamwait_close(hwait[icam]);
-          hwait[icam] = NULL;
-      }
+      // if (hwait[icam]) {
+      //     dcamwait_close(hwait[icam]);
+      //     hwait[icam] = NULL;
+      // }
 
-      cerr << "DEBUG: begin_of_run: closing camera..." << endl;
+      //cerr << "DEBUG: begin_of_run: closing camera..." << endl;
       // 2. close camera
-      if (gCam[icam] != NULL) {
-          dcamdev_close(gCam[icam]);
-          gCam[icam] = NULL;
-      }
+      // if (gCam[icam] != NULL) {
+      //     dcamdev_close(gCam[icam]);
+      //     gCam[icam] = NULL;
+      // }
 
-      cerr << "DEBUG: begin_of_run: reopen camera..." << endl;
+      //cerr << "DEBUG: begin_of_run: reopen camera..." << endl;
       // 3. reopen
-      gCam[icam] = dcamcon_init_open(true);
-      if (gCam[icam] == NULL) {
-          cm_msg(MERROR, "cygnus_daq", "begin_of_run: Failed to reopen camera");
-          return FE_ERR_HW;
-      }
+      // gCam[icam] = dcamcon_init_open(true);
+      // if (gCam[icam] == NULL) {
+      //     cm_msg(MERROR, "cygnus_daq", "begin_of_run: Failed to reopen camera");
+      //     return FE_ERR_HW;
+      // }
   }
 #endif
 
@@ -728,12 +1081,32 @@ INT begin_of_run(INT run_number, char *error)
   #ifdef HAVE_CAEN_DGTZ
     // Configure digitizer
     ConfigDgtz();
+
+    cerr << "End of ConfigDgtz..." << endl << flush;
+
+    // for(int i = 0; i < nboard; i++) {
+    //   CAEN_DGTZ_ErrorCode rstop = CAEN_DGTZ_SWStopAcquisition(gDGTZ[i]);
+    //   CAEN_DGTZ_ErrorCode rclear = CAEN_DGTZ_ClearData(gDGTZ[i]);
+
+    //   cerr << "PRESTART_STOP_CLEAR"
+    //       << " board=" << i
+    //       << " model=" << BoardName[i]
+    //       << " rstop=" << rstop
+    //       << " rclear=" << rclear
+    //       << endl << flush;
+    // }
+
+    // // Give bridge/boards a short settling time after clear
+    // usleep(200000); // 200 ms
+
   #endif
 
 #endif
 
   
 #ifdef HAVE_CAMERA
+  cerr << "Configuring cameras..." << endl << flush;
+    
   for(int icam = 0; icam<nCamera; icam++) { 
     if(gCam[icam] == NULL) {
       cout << "CAMERA "<<icam<<" NOT FOUND" << endl;
@@ -826,6 +1199,8 @@ INT begin_of_run(INT run_number, char *error)
   
     // Setup wait handle for each camera
     
+    cerr << "Setting up wait handle for camera " << icam << "..." << endl << flush;
+
     memset( &waitopen[icam], 0, sizeof(waitopen[icam]) );
     waitopen[icam].size = sizeof(waitopen[icam]);
     waitopen[icam].hdcam = gCam[icam];
@@ -850,7 +1225,8 @@ INT begin_of_run(INT run_number, char *error)
   }
 
   // Enable trigger at the beginning of the run
-  //cerr<<"Enabling trigger..."<<endl<<flush;
+  cerr<<"Enabling trigger..."<<endl<<flush;
+
   enable_trigger();
   usleep(10);
 
@@ -1030,7 +1406,7 @@ INT frontend_loop()
     cm_get_experiment_database(&hDB, NULL);
 
     cm_msg(MERROR, "cygnus_daq", 
-           "frontend_loop: requesting TR_STOP due to camera error %u",
+           "frontend_loop: requesting TR_STOP due to DAQ error %u",
            stop_error_code);
 
     // The following must be intensively validated
@@ -1040,7 +1416,7 @@ INT frontend_loop()
     //             &v, sizeof(v), 1 TID_BOOL);
     
     char reason[32];
-    strcpy(reason, "camera fatal error");
+    strcpy(reason, "DAQ fatal error");
     
 
     INT8 one = 1;
@@ -1069,7 +1445,7 @@ INT frontend_loop()
     // }
     
   }
-  cerr << "DEBUG: end of frontend_loop..." << endl << flush;
+  //cerr << "DEBUG: end of frontend_loop..." << endl << flush;
   return SUCCESS;
 }
 
@@ -1093,7 +1469,7 @@ INT poll_event(INT source, INT count, BOOL test)
 
   // Do not poll if stop is requested
   if(stop_requested) {
-    cerr<<"Skip polling of event ...."<<endl<<flush;
+    //cerr<<"Skip polling of event ...."<<endl<<flush;
     usleep(1000000);
     return 0;
   }
@@ -1267,8 +1643,9 @@ INT poll_event(INT source, INT count, BOOL test)
     for(int icam = 0; icam < nCamera; icam++) {
       // Check camera mask flag
       if(!CamMask[icam]) continue;
-      //cerr<<"Starting camera "<<icam<<endl<<flush;
-      //cerr<<"Waiting for camera "<<icam<<endl<<flush;
+      cerr<<"Starting camera "<<icam<<endl<<flush;
+      cerr<<"Waiting for camera "<<icam<<endl<<flush;
+      //dcamcon_show_dcamdev_info(gCam[icam]);
       err1 = dcamwait_start( hwait[icam], &waitstart[icam] );
 
       // if(failed(err1)) {
@@ -1280,12 +1657,23 @@ INT poll_event(INT source, INT count, BOOL test)
         cerr << "poll_event: dcamwait_start failed for camera "
              << icam << " with error "<< err1 << endl << flush;
         
+        
+        double system_status;
+        dcamprop_getvalue( gCam[icam], DCAM_IDPROP_SYSTEM_ALIVE, &system_status);
+        if(system_status == DCAMPROP_SYSTEM_ALIVE__OFFLINE) {
+          cerr << "DEBUG: status of the camera is DCAMPROP_SYSTEM_ALIVE__OFFLINE"<<endl<<flush;
+        } else if(system_status == DCAMPROP_SYSTEM_ALIVE__ONLINE) {
+          cerr << "DEBUG: status of the camera is DCAMPROP_SYSTEM_ALIVE__ONLINE"<<endl<<flush;
+        } else if(system_status == DCAMPROP_SYSTEM_ALIVE__ERROR) {
+          cerr << "DEBUG: status of the camera is DCAMPROP_SYSTEM_ALIVE__ERROR"<<endl<<flush;
+        }
+        
         // Fatal errors must be added here to stop the run
         if(!stop_already_requested && ((DWORD)err1 == 2147483910u)) {
           stop_already_requested = TRUE;
           stop_requested = TRUE;
           stop_error_code = (DWORD)err1;
-	  fatal_camera_error = TRUE;
+	        fatal_camera_error = TRUE;
 
 
           cm_msg(MERROR, "cygnus_daq", "poll_event: fatal camera error %u on camera %d, requesting stop",
@@ -1502,17 +1890,22 @@ INT read_event(char *pevent, INT off)
 #ifdef HAVE_CAEN_BRD
 #ifdef HAVE_CAEN_DGTZ
 
-  if(!freerun && mode != 3) read_dgtz(pevent);
+  if(!freerun) {
+    for(int i = 0; i < nboard; ++i) {
+      status = read_dgtz(pevent, i);
 
-  else if(!freerun && mode == 3) {
-    int lamDGTZ = 1;
-
-    // Check if boards are data ready
-    vector<uint32_t> st(nboard);
-
-    read_dgtz(pevent);
-
+      if(status != SUCCESS) {
+        cm_msg(
+          MERROR,
+          "cygnus_daq",
+          "Digitizer readout failed for board %d with status %d",
+          i,
+          status
+        );
+      }
+    }
   }
+
 #endif
 #endif
   //////////////////
@@ -1600,6 +1993,7 @@ void ReadDgtzConfig(){
   gDigLink    = new uint32_t[nboard];     //1;
   BoardName   = new char*[nboard];
   buffer_dgtz = new char*[nboard];
+  buffer_dgtz_alloc_size.resize(nboard, 0);
   NCHDGTZ     = new uint32_t[nboard];        // = 40000;
   DGTZ_OFFSET = new double*[nboard];
   /////Number of samples per waveform and sampling rate
@@ -1628,7 +2022,10 @@ void ReadDgtzConfig(){
     gDigLink[i] = static_cast<uint32_t>(dig_link);
 
 
-    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,gDigLink[i],0,gDigBase[i],&gDGTZ[i]);
+    //CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,gDigLink[i],0,gDigBase[i],&gDGTZ[i]);
+    int link_number = gDigLink[i];
+    CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_OpenDigitizer2(CAEN_DGTZ_USB, &link_number,0, gDigBase[i],&gDGTZ[i]);
+
     if(ret != CAEN_DGTZ_Success) {
       //printf("Can't open digitizer, board number %d %d\n-- Error %d\n",i,gDigBase[i],ret);
       //ret = CAEN_DGTZ_Reset(gDGTZ[i]);
@@ -1650,6 +2047,15 @@ void ReadDgtzConfig(){
     if(!IsSupportedDigitizer(BoardName[i])) {
       cm_msg(MERROR, "cygnus_daq", "Unsupported digitizer model %s on board %d. Only V1742 and V1720E are supported.", BoardName[i], i);
       exit(EXIT_FAILURE);
+    }
+
+    // Init Evts objects
+    Evt16Global  = new CAEN_DGTZ_UINT16_EVENT_t*[nboard];
+    Evt742Global = new CAEN_DGTZ_X742_EVENT_t*[nboard];
+
+    for(int i = 0; i < nboard; i++) {
+      Evt16Global[i] = NULL;
+      Evt742Global[i] = NULL;
     }
 
     ////Buffer preparation
@@ -1750,7 +2156,7 @@ INT init_vme_modules(){
     ret |= CAEN_DGTZ_SetSWTriggerMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_DISABLED);
     //ret |= CAEN_DGTZ_SetChannelSelfTrigger(gDGTZ,CAEN_DGTZ_TRGMODE_DISABLED,???); //TO BE FIXED 
     ret |= CAEN_DGTZ_SetExtTriggerInputMode(gDGTZ[i],CAEN_DGTZ_TRGMODE_ACQ_ONLY);
-    ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i],256);//128);                                /* Set the max number of events to transfer in a sigle readout */
+    ret |= CAEN_DGTZ_SetMaxNumEventsBLT(gDGTZ[i], 128);  /* Set the max number of events to transfer in a sigle readout */
 
     //Acquisition mode
     ret |= CAEN_DGTZ_SetAcquisitionMode(gDGTZ[i],CAEN_DGTZ_SW_CONTROLLED);          /* Set the acquisition mode */
@@ -1920,6 +2326,25 @@ INT ConfigDgtz(){
       CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x811C, enable_egttt);
     }
 
+    if (IsV1720E(BoardName[i])) {
+      // Disable overlapping trigger acceptance on V1720E
+      // 0x8000 bit[1] = 0 -> overlapping triggers rejected
+      CAEN_DGTZ_ErrorCode rover =
+          CAEN_DGTZ_WriteRegister(gDGTZ[i], 0x8008, 0x00000002u);
+
+      if (rover != CAEN_DGTZ_Success) {
+          cerr << "ERROR: unable to disable trigger overlap on board "
+              << i << " ret=" << rover << endl;
+      }
+
+      uint32_t board_config_check = 0;
+      CAEN_DGTZ_ReadRegister(gDGTZ[i], 0x8000, &board_config_check);
+
+      cerr << "V1720E board " << i
+          << " overlap_enabled="
+          << ((board_config_check >> 1) & 0x1)
+          << endl;
+    }
     //}
 
     if(ret != CAEN_DGTZ_Success) {
@@ -2021,9 +2446,68 @@ INT ConfigDgtz(){
 
     //}
 
-    //Buffer allocation
-    uint32_t bsize;
-    ret |= CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i],&buffer_dgtz[i],&bsize);
+    // Readout control for V1720E
+    if(IsV1720E(BoardName[i])) {
+      uint32_t roctrl = 0;
+      CAEN_DGTZ_ErrorCode rread =
+          CAEN_DGTZ_ReadRegister(gDGTZ[i], 0xEF00, &roctrl);
+
+      if(rread == CAEN_DGTZ_Success) {
+        roctrl |= (1u << 4);  // BERR
+        roctrl |= (1u << 5);  // ALIGN64
+
+        CAEN_DGTZ_ErrorCode rwrite =
+            CAEN_DGTZ_WriteRegister(gDGTZ[i], 0xEF00, roctrl);
+
+        uint32_t roctrl_check = 0;
+        CAEN_DGTZ_ErrorCode rcheck =
+            CAEN_DGTZ_ReadRegister(gDGTZ[i], 0xEF00, &roctrl_check);
+
+        cerr << "V1720E READOUT_CTRL_SET"
+            << " board=" << i
+            << " rread=" << rread
+            << " rwrite=" << rwrite
+            << " rcheck=" << rcheck
+            << " 0xEF00=0x" << hex << roctrl_check
+            << " BERR=" << ((roctrl_check >> 4) & 0x1)
+            << " ALIGN64=" << ((roctrl_check >> 5) & 0x1)
+            << dec << endl << flush;
+
+        if(rwrite != CAEN_DGTZ_Success || rcheck != CAEN_DGTZ_Success) {
+          ret |= rwrite;
+          ret |= rcheck;
+        }
+      } else {
+        cerr << "ERROR: cannot read V1720E 0xEF00 board="
+            << i << " ret=" << rread << endl << flush;
+        ret |= rread;
+      }
+    }
+
+    // Buffer allocation
+    uint32_t bsize = 0;
+
+    if(buffer_dgtz[i] != NULL) {
+      CAEN_DGTZ_FreeReadoutBuffer(&buffer_dgtz[i]);
+      buffer_dgtz[i] = NULL;
+    }
+
+    CAEN_DGTZ_ErrorCode rmalloc =
+        CAEN_DGTZ_MallocReadoutBuffer(gDGTZ[i], &buffer_dgtz[i], &bsize);
+
+    ret |= rmalloc;
+
+    // IMPORTANT: usa il nome del tuo array globale già esistente.
+    // Se non esiste, crealo globale: uint32_t buffer_dgtz_alloc_size[MAX_NBOARDS];
+    buffer_dgtz_alloc_size[i] = bsize;
+
+    cerr << "MALLOC_READOUT_BUFFER"
+        << " board=" << i
+        << " model=" << BoardName[i]
+        << " ret=" << rmalloc
+        << " ptr=" << (void*)buffer_dgtz[i]
+        << " bsize_alloc=" << bsize
+        << endl << flush;
 
     if(ret != CAEN_DGTZ_Success) {
       printf("Errors during Digitizer Configuration.\n");
@@ -2032,6 +2516,35 @@ INT ConfigDgtz(){
     }
     
   }//end for cycle on boards
+
+  // Allocate evt objects
+  for(int i = 0; i < nboard; i++) {
+    cerr << "Allocating persistent event objects for board " << i << " (" << BoardName[i] << ")..." << endl << flush;
+    if(IsV1720E(BoardName[i]) && Evt16Global[i] == NULL) {
+      CAEN_DGTZ_ErrorCode ret =
+        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt16Global[i]);
+
+      if(ret != CAEN_DGTZ_Success || Evt16Global[i] == NULL) {
+        cm_msg(MERROR, "cygnus_daq",
+              "Cannot allocate persistent V1720E event for board %d. ErrorCode=%d",
+              i, ret);
+        return FE_ERR_HW;
+      }
+    }
+
+    if(IsV1742(BoardName[i]) && Evt742Global[i] == NULL) {
+      CAEN_DGTZ_ErrorCode ret =
+        CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt742Global[i]);
+
+      if(ret != CAEN_DGTZ_Success || Evt742Global[i] == NULL) {
+        cm_msg(MERROR, "cygnus_daq",
+              "Cannot allocate persistent V1742 event for board %d. ErrorCode=%d",
+              i, ret);
+        return FE_ERR_HW;
+      }
+    }
+  }
+
   return SUCCESS;
   
 }
@@ -2072,7 +2585,9 @@ INT ConfigCamera(int icam)
   else if(mode==2) err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__EMULATE); 
   else err = dcamprop_setvalue( gCam[icam], DCAM_IDPROP_TRIGGER_GLOBALEXPOSURE, DCAMPROP_TRIGGER_GLOBALEXPOSURE__DELAYED);
 
-
+  
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SENSORCOOLER, DCAMPROP_SENSORCOOLER__ON);
+  dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SENSORCOOLERFAN, DCAMPROP_MODE__ON);
   dcamprop_setvalue( gCam[icam], DCAM_IDPROP_SENSORMODE, DCAMPROP_SENSORMODE__AREA);
   dcamprop_setvalue( gCam[icam], DCAM_IDPROP_READOUTSPEED, DCAMPROP_READOUTSPEED__SLOWEST);
   dcamprop_setvalue( gCam[icam], DCAM_IDPROP_INTERNAL_FRAMEINTERVAL, 0.033326);
@@ -2503,243 +3018,275 @@ INT ClearDevice(BOOL clear_dgtz_data) {
 }
 
 #ifdef HAVE_CAEN_DGTZ
-int read_dgtz(char* pevent){
+INT read_dgtz(char* pevent, int board){
 
   const uint32_t events_max = 128;
 
-  WORD* pdata16 = NULL;
-  bk_create(pevent, "DIG0", TID_WORD, &pdata16);
-  
-  
-  std::vector<std::vector<uint32_t>> TRGTTAG(nboard);
-  std::vector<std::vector<uint32_t>> TRGTTAG1(nboard);
-  std::vector<std::vector<uint16_t>> StartIndexCell(nboard);
-  std::vector<int>                   EVTSNUM(nboard);
-  std::vector<uint32_t>              ADCMAX(nboard);
+  if(board < 0 || board >= nboard) {
+    cm_msg(MERROR, "read_dgtz", "Invalid digitizer board index %d; nboard=%d", board, nboard);
 
-  std::vector<uint32_t> bsize_board(nboard, 0);
-  std::vector<bool>     read_ok(nboard, false);
-    
-  // Read raw data from all boards before decoding.
-  for(int i=0;i<nboard;i++){
-    CAEN_DGTZ_ErrorCode retread = CAEN_DGTZ_ReadData(
-      gDGTZ[i],
-      CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, //CAEN_DGTZ_POLLING_MBLT,
-      buffer_dgtz[i],
-      &bsize_board[i]
+    return FE_ERR_HW;
+  }
+
+  /*
+   * MIDAS bank names have four characters:
+   * DIG0, DIG1, ...
+   * DGH0, DGH1, ...
+   */
+  char data_bank_name[5];
+  char header_bank_name[5];
+
+  snprintf(data_bank_name,   sizeof(data_bank_name),   "DIG%d", board);
+  snprintf(header_bank_name, sizeof(header_bank_name), "DGH%d", board);
+
+  uint32_t bsize = 0;
+  uint32_t num_events = 0;
+  uint32_t adc_max = 0;
+  uint32_t valid_events = 0;
+
+  std::vector<uint32_t> trigger_tags;
+  std::vector<uint32_t> trigger_patterns;
+  std::vector<uint16_t> start_index_cells;
+
+  // Reserving space for ttts and sics
+  trigger_tags.reserve(events_max);
+  trigger_patterns.reserve(events_max);
+
+  if(IsV1742(BoardName[board])) {
+    start_index_cells.reserve(events_max);
+  }
+
+  /*
+   * Read this board.
+   */
+
+  const CAEN_DGTZ_ErrorCode read_status = CAEN_DGTZ_ReadData(gDGTZ[board], CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, buffer_dgtz[board], &bsize);
+  if(read_status != CAEN_DGTZ_Success) {
+    cm_msg(MERROR, "read_dgtz",
+      "CAEN_DGTZ_ReadData failed for board %d: error %d", board, read_status
     );
-
-    // If the first read fails, try one delayed retry after a short sleep
-    // This is a workaround for occasional read failures that can occur with the CAEN digitizers
-    if(retread != CAEN_DGTZ_Success) {
-      cerr << "Error in CAEN_DGTZ_ReadData for board " << i << ". ErrorCode = " << retread << ". Trying one delayed retry." << endl << flush;
-      
-      usleep(200); // Minimum observed safe delay for V1742 read retry.
-
-      uint32_t acq_after_fail = 0;
-      CAEN_DGTZ_ErrorCode rstat = ReadRegisterRetry(gDGTZ[i], DGTZ_ACQ_STATUS, &acq_after_fail, 3, 100);
-      cerr << "After ReadData failure, board " << i << " ACQ_STATUS ret=" << rstat << " value=0x" << hex << acq_after_fail << dec << endl << flush;
-
-      if(IsV1742(BoardName[i])) {
-          // Diagnostic only after failed readout.
-          ReadV1742GroupBusyOrFull(gDGTZ[i], i, true);
-      }
-
-      retread = CAEN_DGTZ_ReadData(
-        gDGTZ[i],
-        CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,
-        buffer_dgtz[i],
-        &bsize_board[i]
-      );
-
+    if(!stop_already_requested) {
+      stop_already_requested = TRUE;
+      stop_requested = TRUE;
+      stop_error_code = read_status;
+      fatal_camera_error = TRUE;
+      cm_msg(MERROR, "cygnus_daq", "read_dgtz: ReadData error, requesting stop");
+      cerr << "DEBUG: setting stop_requested and leaving read_dgtz" << endl << flush;
     }
-
-    if(retread != CAEN_DGTZ_Success) {
-      cerr << "Persistent CAEN_DGTZ_ReadData failure for board " << i << ". ErrorCode = " << retread << endl << flush;
-      EVTSNUM[i] = 0;
-      continue;
-    }
-
-    read_ok[i] = true;
+    return FE_ERR_HW;
   }
 
-  // Decode events, write waveform samples to DIG0, and collect header metadata.
-  for(int i=0; i<nboard; i++) {
-    if(!read_ok[i]) continue;
+  cerr << "READDATA_SIZE_CHECK board=" << board << " model=" << BoardName[board] << " bsize_read=" << bsize 
+       << " bsize_alloc=" << buffer_dgtz_alloc_size[board] << " margin=" << static_cast<int64_t>(buffer_dgtz_alloc_size[board]) - static_cast<int64_t>(bsize)
+       << " ptr=" << static_cast<void*>(buffer_dgtz[board]) << endl << flush;
 
-    uint32_t NumEvents = 0;
-    CAEN_DGTZ_ErrorCode retnum = CAEN_DGTZ_GetNumEvents(gDGTZ[i],buffer_dgtz[i],bsize_board[i],&NumEvents);
-    if(retnum != CAEN_DGTZ_Success) {
-      cerr << "Error in CAEN_DGTZ_GetNumEvents for board " << i << ". ErrorCode = " << retnum << endl << flush;
-      EVTSNUM[i] = 0;
-      continue;
+  /*
+   * Safety Checks
+   */
+  if(IsV1720E(BoardName[board])) {
+    const bool regs_ok = DebugV1720AfterReadRegs(board, gDGTZ[board]);
+    const bool scan_ok = DebugScanV1720Buffer(board, BoardName[board], buffer_dgtz[board], bsize, num_events, 8);
+    const bool raw_ok  = CheckV1720RawBufferFast(board, BoardName[board], buffer_dgtz[board], bsize, num_events);
+
+    if(!regs_ok || !scan_ok || !raw_ok) {
+    //   if(!stop_already_requested) {
+    //     stop_already_requested = TRUE;
+    //     stop_requested = TRUE;
+    //     stop_error_code = FE_ERR_HW;
+    //     fatal_camera_error = TRUE;
+
+    //     cm_msg(MERROR, "cygnus_daq", "Invalid V1720 readout data on board %d", board );
+    //   }
+    //   return FE_ERR_HW;
+      cerr << "V1720_CHECK_SUMMARY" << " board=" << board << " regs_ok=" << regs_ok << " scan_ok=" << scan_ok << " raw_ok=" << raw_ok
+           << " num_events_caen=" << num_events << " bsize=" << bsize << endl << flush;
     }
-    
-    NumEvents =std::min(NumEvents, events_max);
+  }
 
-    // Get board info to determine ADC resolution
-    CAEN_DGTZ_BoardInfo_t BoardInfo;
-    CAEN_DGTZ_ErrorCode retinfo_board = CAEN_DGTZ_GetInfo(gDGTZ[i], &BoardInfo);
-    if(retinfo_board != CAEN_DGTZ_Success) {
-      cerr << "Error in CAEN_DGTZ_GetInfo for board " << i << ". ErrorCode = " << retinfo_board << endl << flush;
-      ADCMAX[i] = 0;
+  /*
+   * Get Number of Events
+   */
+  const CAEN_DGTZ_ErrorCode num_status = CAEN_DGTZ_GetNumEvents(gDGTZ[board], buffer_dgtz[board], bsize, &num_events);
+  cerr << "GET_NUM_EVENTS board=" << board << " model=" << BoardName[board] << " status=" << static_cast<int>(num_status)
+       << " bsize=" << bsize << " num_events=" << num_events << endl << flush;
+
+  if(num_status != CAEN_DGTZ_Success) {
+    cm_msg(MERROR,"read_dgtz",
+      "CAEN_DGTZ_GetNumEvents failed for board %d: error %d", board, num_status
+    );
+    return FE_ERR_HW;
+  }
+
+  num_events = std::min(num_events, events_max);
+
+  // DEBUG:
+  if(IsV1720E(BoardName[board])) {
+    if(buffer_dgtz[board] != nullptr && bsize >= 16) {
+      const uint32_t* words =
+          reinterpret_cast<const uint32_t*>(buffer_dgtz[board]);
+
+      const uint32_t first_word = words[0];
+      const uint32_t type_tag = (first_word >> 28) & 0xF;
+      const uint32_t event_size_words =
+          first_word & 0x0FFFFFFF;
+
+      cerr << "V1720_BUFFER_HEAD"
+          << " board=" << board
+          << " bsize=" << bsize
+          << " num_events_caen=" << num_events
+          << " w0=0x" << hex << words[0]
+          << " w1=0x" << words[1]
+          << " w2=0x" << words[2]
+          << " w3=0x" << words[3]
+          << dec
+          << " type_tag=0x" << hex << type_tag << dec
+          << " event_size_words=" << event_size_words
+          << " event_size_bytes="
+          << static_cast<uint64_t>(event_size_words) * 4
+          << endl
+          << flush;
     } else {
-      ADCMAX[i] = 1u << BoardInfo.ADC_NBits;
+      cerr << "V1720_BUFFER_HEAD"
+          << " board=" << board
+          << " cannot inspect buffer"
+          << " ptr=" << static_cast<void*>(buffer_dgtz[board])
+          << " bsize=" << bsize
+          << endl
+          << flush;
     }
+  }
 
-    TRGTTAG[i].resize(NumEvents, 0);
-    TRGTTAG1[i].resize(NumEvents, 0);
+  /*
+   * Create this board's waveform bank.
+   */
+  WORD* pdata16 = nullptr;
+  bk_create(pevent, data_bank_name, TID_WORD, reinterpret_cast<void**>(&pdata16));
 
-    if(IsV1742(BoardName[i])) {
-      StartIndexCell[i].resize(NumEvents, 0);
-    }
+  for(uint32_t iev = 0; iev < num_events; ++iev) {
+    CAEN_DGTZ_EventInfo_t event_info {};
+    char* event_ptr = nullptr;
+    const CAEN_DGTZ_ErrorCode info_status = CAEN_DGTZ_GetEventInfo(gDGTZ[board], buffer_dgtz[board], bsize, iev, &event_info, &event_ptr);
 
-    int nvalid = 0;
-
-    for(uint32_t iev = 0; iev < NumEvents; iev++) {
-      CAEN_DGTZ_EventInfo_t eventInfo;
-      char* evtptr = NULL;
-
-      if(IsV1720E(BoardName[i])) {
-        CAEN_DGTZ_UINT16_EVENT_t* Evt = NULL;
-
-        CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
-        if(retall != CAEN_DGTZ_Success) {
-          cerr <<"Error allocating event. ErrorCode = "<<retall<<endl<<flush;
-          continue;
-        }
-
-        CAEN_DGTZ_ErrorCode retinfo = CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize_board[i],iev,&eventInfo,&evtptr);
-        if(retinfo != CAEN_DGTZ_Success) {
-          cerr << "Unable to get DGTZ event info. ErrorCode = " << retinfo << endl << flush;
-          if(Evt != NULL) {
-            CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-          }
-          continue;
-        }
-
-        CAEN_DGTZ_ErrorCode retdec = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-        if(retdec != CAEN_DGTZ_Success) {
-          cerr <<"Unable to decode DGTZ event"<<endl<<flush;
-          if(Evt != NULL) {
-            CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-          }
-          continue;
-        }
-
-        TRGTTAG[i][nvalid]  = eventInfo.TriggerTimeTag; // TO BE CHECKED ON x761
-        TRGTTAG1[i][nvalid] = eventInfo.Pattern;
-
-        // Loop over channels and samples to write waveform data to the output MIDAS buffer
-        for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
-          for(uint32_t sample = 0; sample < ndgtz[i]; sample++) {
-            *pdata16++ = static_cast<uint16_t>(Evt->DataChannel[ch][sample]);
-          }
-        }
-        CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-
-        nvalid++;
-      } else if(IsV1742(BoardName[i])) {
-        CAEN_DGTZ_X742_EVENT_t *Evt = NULL;
-
-        CAEN_DGTZ_ErrorCode retall = CAEN_DGTZ_AllocateEvent(gDGTZ[i], (void**)&Evt);
-        if(retall != CAEN_DGTZ_Success) {
-          cerr <<"Error allocating event. ErrorCode = "<<retall<<endl<<flush;
-          continue;
-        }
-
-        CAEN_DGTZ_ErrorCode retinfo = CAEN_DGTZ_GetEventInfo(gDGTZ[i],buffer_dgtz[i],bsize_board[i],iev,&eventInfo,&evtptr);
-        if(retinfo != CAEN_DGTZ_Success) {
-          cerr << "Unable to get DGTZ event info. ErrorCode = " << retinfo << endl << flush;
-          if(Evt != NULL) {
-            CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-          }
-          continue;
-        }
-
-        CAEN_DGTZ_ErrorCode retdec = CAEN_DGTZ_DecodeEvent(gDGTZ[i],evtptr,(void**)&Evt);
-        if(retdec != CAEN_DGTZ_Success) {
-          cerr <<"Unable to decode DGTZ event"<<endl<<flush;
-          if(Evt != NULL) {
-            CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-          }
-          continue;
-        }
-
-        TRGTTAG[i][nvalid]    = Evt->DataGroup[0].TriggerTimeTag & 0x3FFFFFFF;
-        TRGTTAG1[i][nvalid]    = Evt->DataGroup[1].TriggerTimeTag & 0x3FFFFFFF;
-
-        StartIndexCell[i][nvalid] = Evt->DataGroup[0].StartIndexCell;
-
-        // Loop over channels and samples to write waveform data to the output MIDAS buffer
-        for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
-          uint32_t group = ch / 8;
-          uint32_t group_ch = ch % 8;
-
-          for(uint32_t sample = 0; sample < ndgtz[i]; sample++) {
-            *pdata16++ = static_cast<uint16_t>(Evt->DataGroup[group].DataChannel[group_ch][sample]);
-          }
-        }
-
-        CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt);
-
-        nvalid++;
-      } else {
-        cerr << "Unsupported digitizer model for board " << i
-             << ": " << BoardName[i] << endl << flush;
-        break;
+    if(info_status != CAEN_DGTZ_Success || event_ptr == nullptr) {
+      cerr << "Unable to get digitizer event info" << " board=" << board << " event=" << iev << " error=" << info_status << endl << flush;
+      if(!stop_already_requested) {
+        stop_already_requested = TRUE;
+        stop_requested = TRUE;
+        stop_error_code = info_status;
+        fatal_camera_error = TRUE;
+        cm_msg(MERROR, "cygnus_daq", "read_dgtz: geteventinfo error, requesting stop");
+        cerr << "DEBUG: setting stop_requested and leaving read_dgtz" << endl << flush;
       }
+      continue;
     }
 
-    EVTSNUM[i] = nvalid;
+    if(IsV1720E(BoardName[board])) {
+      CAEN_DGTZ_UINT16_EVENT_t* event = Evt16Global[board];
+      const CAEN_DGTZ_ErrorCode decode_status = CAEN_DGTZ_DecodeEvent(gDGTZ[board],event_ptr,reinterpret_cast<void**>(&event));
 
-    TRGTTAG[i].resize(nvalid);
-    TRGTTAG1[i].resize(nvalid);
+      if(decode_status != CAEN_DGTZ_Success) {
+        cerr << "Unable to decode V1720 event" << " board=" << board << " event=" << iev << " error=" << decode_status << endl << flush;
+        continue;
+      }
+      trigger_tags.push_back(event_info.TriggerTimeTag);
+      trigger_patterns.push_back(event_info.Pattern);
+      for(uint32_t ch = 0; ch < NCHDGTZ[board]; ++ch) {
+        for(uint32_t sample = 0; sample < ndgtz[board]; ++sample) {
+          *pdata16++ = static_cast<uint16_t>(event->DataChannel[ch][sample]);
+        }
+      }
 
-    if(IsV1742(BoardName[i])) {
-      StartIndexCell[i].resize(nvalid);
+      ++valid_events;
+    } else if(IsV1742(BoardName[board])) {
+      CAEN_DGTZ_X742_EVENT_t* event = Evt742Global[board];
+      const CAEN_DGTZ_ErrorCode decode_status = CAEN_DGTZ_DecodeEvent(gDGTZ[board],event_ptr,reinterpret_cast<void**>(&event));
+
+      if(decode_status != CAEN_DGTZ_Success) {
+        cerr << "Unable to decode V1742 event" << " board=" << board << " event=" << iev << " error=" << info_status << endl << flush;
+        if(!stop_already_requested) {
+          stop_already_requested = TRUE;
+          stop_requested = TRUE;
+          stop_error_code = decode_status;
+          fatal_camera_error = TRUE;
+          cm_msg(MERROR, "cygnus_daq", "read_dgtz: DecodeEvent error, requesting stop");
+          cerr << "DEBUG: setting stop_requested and leaving read_dgtz" << endl << flush;
+        }
+        continue;
+      }
+      trigger_tags.push_back(event->DataGroup[0].TriggerTimeTag & 0x3FFFFFFF);
+      trigger_patterns.push_back(event->DataGroup[1].TriggerTimeTag & 0x3FFFFFFF);
+      start_index_cells.push_back(event->DataGroup[0].StartIndexCell);
+
+      for(uint32_t ch = 0; ch < NCHDGTZ[board]; ++ch) {
+        const uint32_t group = ch / 8;
+        const uint32_t group_channel = ch % 8;
+        for(uint32_t sample = 0; sample < ndgtz[board]; ++sample) {
+          *pdata16++ = static_cast<uint16_t>(event->DataGroup[group].DataChannel[group_channel][sample]);
+        }
+      }
+      ++valid_events;
+    } else {
+      cm_msg(MERROR, "read_dgtz", "Unsupported digitizer model %s on board %d", BoardName[board], board);
+      bk_close(pevent, pdata16);
+      return FE_ERR_HW;
     }
   }
-
   bk_close(pevent, pdata16);
-    
-  uint32_t* hdata = NULL;
-  bk_create(pevent, "DGH0", TID_DWORD, (void **)&hdata);
 
-  const uint32_t DAQ_version = 1000;
+  CAEN_DGTZ_BoardInfo_t board_info;
+  CAEN_DGTZ_ErrorCode ret = CAEN_DGTZ_GetInfo(gDGTZ[board], &board_info);
+
+  if(ret != CAEN_DGTZ_Success) {
+    cm_msg(MERROR, "read_dgtz",
+        "CAEN_DGTZ_GetInfo failed for board %d, error %d", board, ret
+    );
+    adc_max = 0;
+  } else {
+    adc_max = 1u << board_info.ADC_NBits;
+  }
+
+  /*
+   * Create this board's header bank.
+   */
+  uint32_t* hdata = nullptr;
+  bk_create(pevent, header_bank_name, TID_DWORD, reinterpret_cast<void**>(&hdata));
+
+  const uint32_t DAQ_version = 1001;
   *hdata++ = DAQ_version;
-  *hdata++ = static_cast<uint32_t>(nboard);
 
-  for(int i = 0;i < nboard; i++){
-    *hdata++ = static_cast<uint32_t>(atoi(&BoardName[i][1]));
-    *hdata++ = static_cast<uint32_t>(ndgtz[i]);
-    *hdata++ = static_cast<uint32_t>(NCHDGTZ[i]);
-    *hdata++ = static_cast<uint32_t>(EVTSNUM[i]);
-    *hdata++ = static_cast<uint32_t>(ADCMAX[i]);
-    *hdata++ = static_cast<uint32_t>(SAMPLING[i]);
-    
-    for(uint32_t ch = 0; ch < NCHDGTZ[i]; ch++) {
-      *hdata++ = static_cast<uint32_t>(DGTZ_OFFSET[i][ch]*65536 + 32768);
-    }
-    
-    for(int iev = 0; iev < EVTSNUM[i]; iev++) {
-      *hdata++ = static_cast<uint32_t>(TRGTTAG[i][iev]);
-    }
+  /*
+   * The board index is useful because each DGH bank now describes
+   * exactly one board.
+   */
+  *hdata++ = static_cast<uint32_t>(nboard); // number of boards in total
+  *hdata++ = static_cast<uint32_t>(board);  // index of this board
+  *hdata++ = static_cast<uint32_t>(atoi(&BoardName[board][1]));
+  *hdata++ = ndgtz[board];
+  *hdata++ = NCHDGTZ[board];
+  *hdata++ = valid_events;
+  *hdata++ = adc_max;
+  *hdata++ = SAMPLING[board];
+   
+  for(uint32_t ch = 0; ch < NCHDGTZ[board]; ++ch) {
+    *hdata++ = static_cast<uint32_t>(DGTZ_OFFSET[board][ch] * 65536.0 + 32768.0);
+  }
 
-    for(int iev = 0; iev < EVTSNUM[i]; iev++) {
-      *hdata++ = static_cast<uint32_t>(TRGTTAG1[i][iev]);
-    }
-    
-    if(IsV1742(BoardName[i])) {
-    	for(int iev = 0; iev < EVTSNUM[i]; iev++) {
-      		*hdata++ = static_cast<uint32_t>(StartIndexCell[i][iev]);
-    	}
+  for(uint32_t i = 0; i < valid_events; ++i) {
+    *hdata++ = trigger_tags[i];
+  }
+
+  for(uint32_t i = 0; i < valid_events; ++i) {
+    *hdata++ = trigger_patterns[i];
+  }
+
+  if(IsV1742(BoardName[board])) {
+    for(uint32_t i = 0; i < valid_events; ++i) {
+      *hdata++ = static_cast<uint32_t>(start_index_cells[i]);
     }
   }
-  
-  bk_close(pevent, hdata);
 
-  return 0;
+  bk_close(pevent, hdata);
+  return SUCCESS;
 }
 #endif // HAVE_CAEN_DGTZ
 
@@ -2967,6 +3514,18 @@ void Free_arrays(){
       CAEN_DGTZ_CloseDigitizer(gDGTZ[i]);
     }
   }
+
+  for(int i = 0; i < nboard; i++) {
+    if(Evt16Global && Evt16Global[i] != NULL) {
+      CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt16Global[i]);
+    }
+    if(Evt742Global && Evt742Global[i] != NULL) {
+      CAEN_DGTZ_FreeEvent(gDGTZ[i], (void**)&Evt742Global[i]);
+    }
+  }
+
+  delete[] Evt16Global;
+  delete[] Evt742Global;
 
   delete[] gDGTZ;
   delete[] gDigBase;
