@@ -1839,9 +1839,12 @@ INT read_event(char *pevent, INT off)
   int mode;
   int size = sizeof(int);
   db_get_value(hDB, 0, "/Configurations/TriggerMode",&mode,&size,TID_INT,TRUE);
-  bool freerun;
-  size = 4*sizeof(bool);
-  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun,&size,TID_BOOL,TRUE);
+  BOOL freerun;
+  size = sizeof(freerun);
+  db_get_value(hDB, 0, "/Configurations/FreeRunning",&freerun   ,&size,TID_BOOL,TRUE);
+  BOOL save_images;
+  size = sizeof(save_images);
+  db_get_value(hDB, 0, "/Configurations/SaveImages",&save_images, &size,TID_BOOL,TRUE);
 
   int crop_size;
   size = sizeof(int);
@@ -1876,14 +1879,20 @@ INT read_event(char *pevent, INT off)
 
   //db_get_value(hDB, 0, "/Configurations/FreeRunning",&crop_image,&sizecam,TID_BOOL,TRUE);
 //#pragma omp parallel for// num_threads(nCamera)
-  for(int icam=0; icam <nCamera; icam++) {
-    // Check camera mask flag
-    if(!CamMask[icam]) continue;
+  if(!save_images) {
+    cerr<<"DEBUG: Not saving images, skipping camera readout"<<endl<<flush;
+  } else {
+    //cerr<<"DEBUG: Saving images, reading camera data"<<endl<<flush;
 
-    //cerr<<"Reading event from camera "<<icam<<".... "<<endl<<flush;
-    read_camera(pevent, icam, crop_image, crop_size, crop_origin_x, crop_origin_y);
+    for(int icam=0; icam <nCamera; icam++) {
+      // Check camera mask flag
+      if(!CamMask[icam]) continue;
+
+      //cerr<<"Reading event from camera "<<icam<<".... "<<endl<<flush;
+      read_camera(pevent, icam, crop_image, crop_size, crop_origin_x, crop_origin_y);
+    }
+    //read_camera(pevent);
   }
-  //read_camera(pevent);
 #endif
 
 
