@@ -1,4 +1,4 @@
-/********************************************************************\
+/******************************************************************** \
 
   Name:         scfe.c
   Created by:   Francesco Renga
@@ -8,6 +8,7 @@
   $Id$
 
 \********************************************************************/
+
 
 #include <stdio.h>
 #include <math.h>
@@ -26,6 +27,7 @@
 #include "opc.h"
 #include "arduino_motor.h"
 #include "bus/null.h"
+
 
 using namespace std;
 
@@ -254,7 +256,8 @@ void mscb_define(const char *submaster, const char *equipment, const char *devna
 void scfe_error(const char *error) {
    char str[256];
 
-   strlcpy(str, error, sizeof(str));
+   //strlcpy(str, error, sizeof(str));
+   snprintf(str, sizeof(str), "%s", error);
    cm_msg(MERROR, "scfe_error", "%s", str);
    al_trigger_alarm("MSCB", str, "MSCB Alarm", "Communication Problem", AT_INTERNAL);
 }

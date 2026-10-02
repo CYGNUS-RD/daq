@@ -147,8 +147,8 @@ INT iseg_hps_read (ISEGHPS_INFO * info, char *cmd, char *ans){
     crlf = strstr(answ, "\r\n");
 
   } while ( (retcode > 0) && (crlf == 0) );
-  
-  if (crlf > 0) {
+
+  if (crlf != nullptr) { /*if (crlf > 0) {*/
     *crlf = 0;
   }
 

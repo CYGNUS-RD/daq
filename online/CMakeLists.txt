@@ -42,7 +42,7 @@ message(STATUS "MIDAS cygnus_fe: MIDASSYS set to " $ENV{MIDASSYS})
 if (NOT EXISTS $ENV{MIDASSYS})
   message(FATAL_ERROR "Environment variable $MIDASSYS not defined, aborting.")
 endif()
-set(INC_PATH $ENV{MIDASSYS}/mscb/include $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR})
+set(INC_PATH $ENV{MIDASSYS}/mscb/include $ENV{MIDASSYS}/mjson  $ENV{MIDASSYS}/include $ENV{MIDASSYS}/mxml $ENV{MIDASSYS}/drivers $ENV{MYDRIVER_DIR} $ENV{CAENVME_INCDIR} $ENV{CAENHV_INCDIR} $ENV{ETHERNET_INCDIR} $ENV{CAMERA_INCDIR})
 link_directories($ENV{MIDASSYS}/lib)
 
 # default build type

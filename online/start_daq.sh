@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./kill_daq.sh
+kill_daq
 
 odbedit -c clean
 #odbedit -c "rm /Analyzer/Trigger/Statistics"

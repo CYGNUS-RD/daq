@@ -17,6 +17,8 @@
 #include "midas.h"
 #include "gem_dd_sy4527.h"
 
+#define FORMAT_YBOS -9999
+
 typedef struct {
 
    /* ODB keys */
